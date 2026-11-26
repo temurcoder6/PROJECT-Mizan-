@@ -1,4 +1,4 @@
-const CACHE = 'mizan-v2';
+const CACHE = 'mizan-v8';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/icon.svg', '/manifest.webmanifest'])));
@@ -12,15 +12,22 @@ self.addEventListener('activate', (e) => {
   );
 });
 
-// Network first so new versions show up; the cache is only an offline fallback for the app shell.
-// Private API answers (/api/) are never stored or served from the cache.
+// Network first so new versions show up; never intercept /api/ or byte-range media requests.
 self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
+  if (
+    e.request.method !== 'GET' ||
+    url.origin !== self.location.origin ||
+    url.pathname.startsWith('/api/') ||
+    e.request.headers.has('range') ||
+    /\.(mp4|webm)$/i.test(url.pathname)
+  ) {
+    return;
+  }
   e.respondWith(
     fetch(e.request)
       .then((res) => {
-        if (res.ok && res.type === 'basic') {
+        if (res.status === 200 && res.type === 'basic') {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(e.request, copy));
         }

@@ -98,9 +98,9 @@ function Quick() {
   return (
     <div className="p-5 text-white">
       <h3 className="font-display tracking-[-0.02em] text-2xl leading-tight font-bold">Ikki bosish, tayyor.</h3>
-      <div className="mt-5 rounded-2xl bg-[#F4F1EA] p-4 text-[#071633]">
-        <p className="text-[11px] font-semibold text-[#0E2A5C]/60">Summa</p>
-        <p className="mt-1 h-8 rounded-lg bg-white px-3 py-1 text-lg font-bold tabular-nums">
+      <div className="mt-5 rounded-2xl border border-ochre/35 bg-[#071633] p-4 text-plaster">
+        <p className="text-[11px] font-semibold text-plaster/60">Summa</p>
+        <p className="mt-1 h-8 rounded-lg border border-plaster/12 bg-[#050C1B] px-3 py-1 text-lg font-bold text-plaster tabular-nums">
           {'12 000'.slice(0, typed)}
           <span className="animate-pulse">|</span>
         </p>
@@ -108,7 +108,7 @@ function Quick() {
           {chips.map((c) => {
             const hit = stage >= 1 && c === 'Transport';
             return (
-              <span key={c} className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-300 ${hit ? 'scale-110 bg-[#1FA6A0] text-white' : 'bg-white text-[#0E2A5C]/70'}`}>
+              <span key={c} className={`rounded-full px-3 py-1 text-xs font-semibold transition-all duration-300 ${hit ? 'scale-110 bg-[#1FA6A0] text-cobalt-night' : 'border border-plaster/15 bg-[#0A1F45] text-plaster/80'}`}>
                 {c}
               </span>
             );

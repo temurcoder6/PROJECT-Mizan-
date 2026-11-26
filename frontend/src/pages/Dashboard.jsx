@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, ChartColumn, Minus, PiggyBank, Plus, Repeat, Sparkles, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { Bell, ChartColumn, CreditCard, Minus, PiggyBank, Plus, Repeat, Sparkles, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import AdviceCard from '../components/AdviceCard';
 import DailyPlanCard from '../components/DailyPlan';
 import { MissingDaysCard } from '../components/DayFill';
@@ -9,14 +9,15 @@ import TransactionForm from '../components/TransactionForm';
 import TxRow from '../components/TxRow';
 import { Button, Card, CardTitle, Empty, Estimate, Progress, Stat } from '../components/ui';
 import { categoryOf } from '../lib/categories';
-import { byDateDesc, dateLabel, monthLabel, money, percent, todayISO } from '../lib/format';
+import { byDateDesc, dateLabel, daysBetween, monthLabel, money, percent, todayISO } from '../lib/format';
 import {
   debtRemaining, detectRecurring, dueReminders, frequencyLabel, goalPlan, inRange, periodRange, summarize,
 } from '../lib/finance';
 import { useStore } from '../store';
 
 export default function Dashboard({ go }) {
-  const { transactions, debts, goals, settings, actions } = useStore();
+  const { auth, transactions, debts, goals, cards = [], settings, actions } = useStore();
+  const isAdmin = auth.status === 'in' && Boolean(auth.user?.isAdmin);
   const [form, setForm] = useState(null);
   const today = todayISO();
   const month = periodRange('month', today);
@@ -32,10 +33,13 @@ export default function Dashboard({ go }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm text-slate-500">{monthLabel(today)}</p>
-          <h1 className="text-2xl font-bold text-slate-900">Pulingiz holati</h1>
+          <p className="text-sm text-ochre">{monthLabel(today)}</p>
+          <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Pulingiz holati</h1>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => go('kartalar')}>
+            <CreditCard className="size-4 text-ochre" /> Kartalar{cards.length > 0 ? ` (${cards.length})` : ''}
+          </Button>
           <Button variant="outline" onClick={() => setForm({ type: 'income' })}>
             <Plus className="size-4" /> Daromad
           </Button>
@@ -46,36 +50,40 @@ export default function Dashboard({ go }) {
       </div>
 
       {empty && (
-        <Card className="bg-gradient-to-br from-emerald-50 to-white">
+        <Card className="border-ochre/35 bg-gradient-to-br from-[#0E2A5C]/80 to-[#071633]/90">
           <CardTitle icon={Sparkles}>Xush kelibsiz!</CardTitle>
-          <p className="text-sm text-slate-600">
-            Birinchi xarajatingizni qo'shing yoki yordamchiga yozing: «bugun yo'lga 12 ming sarfladim». Ilovani tez ko'rish uchun namuna
-            ma'lumot yuklashingiz mumkin, keyin uni bir tugma bilan o'chirasiz.
+          <p className="text-sm text-plaster/75">
+            Birinchi daromad yoki xarajatingizni qo'shing yoxud yordamchiga yozing: «bugun yo'lga 12 ming sarfladim».
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Button onClick={() => setForm({ type: 'expense' })}>Xarajat qo'shish</Button>
-            <Button variant="outline" onClick={actions.loadSample}>
-              Namuna ma'lumot bilan sinash
+            <Button variant="outline" onClick={() => setForm({ type: 'income' })}>
+              Daromad qo'shish
             </Button>
+            {isAdmin && (
+              <Button variant="ghost" onClick={actions.loadSample}>
+                Namuna yuklash (admin)
+              </Button>
+            )}
           </div>
         </Card>
       )}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <DailyPlanCard />
+        <DailyPlanCard onOpenCards={() => go('kartalar')} />
         <QuickEntry />
       </div>
       <ReminderCard />
       <MissingDaysCard />
 
       {reminders.length > 0 && (
-        <Card className="bg-amber-50/60 ring-amber-200">
+        <Card className="border-ochre/35 bg-[#1B160C]/85">
           <CardTitle icon={Bell} action={<Button variant="subtle" size="sm" onClick={() => go('qarzlar')}>Qarzlar</Button>}>
             Qarz eslatmalari
           </CardTitle>
-          <ul className="space-y-1.5 text-sm">
+          <ul className="space-y-1.5 text-sm text-plaster/85">
             {reminders.map((d) => {
-              const days = Math.round((new Date(d.dueDate) - new Date(today)) / 86400000);
+              const days = daysBetween(today, d.dueDate);
               return (
                 <li key={d.id} className="flex justify-between gap-3">
                   <span>
@@ -112,12 +120,12 @@ export default function Dashboard({ go }) {
                 return (
                   <li key={c.id}>
                     <div className="mb-1 flex justify-between text-sm">
-                      <span className="font-medium text-slate-700">{cat.uz}</span>
-                      <span className="tabular-nums text-slate-500">
+                      <span className="font-medium text-plaster/85">{cat.uz}</span>
+                      <span className="tabular-nums text-plaster/60">
                         {money(c.sum)} · {percent(c.pct)}
                       </span>
                     </div>
-                    <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-2.5 overflow-hidden rounded-full bg-[#061228] ring-1 ring-plaster/10">
                       <div className="h-full rounded-full" style={{ width: `${c.pct * 100}%`, background: cat.color }} />
                     </div>
                   </li>
@@ -126,7 +134,7 @@ export default function Dashboard({ go }) {
             </ul>
           )}
           {ms.categories.length > 0 && (
-            <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+            <p className="mt-4 rounded-xl border border-turq/30 bg-turq/12 px-3 py-2 text-sm text-turq-soft">
               «{categoryOf(ms.categories[0].id).uz}» ni 10% kamaytirsangiz, bu oydagi xarajat bo'yicha <b>{money(ms.categories[0].sum * 0.1)}</b> qoladi.
             </p>
           )}
@@ -141,12 +149,12 @@ export default function Dashboard({ go }) {
           ) : (
             <ul className="space-y-2.5">
               {habits.map((h) => (
-                <li key={h.key} className="rounded-xl bg-orange-50 px-3 py-2.5 ring-1 ring-orange-100">
+                <li key={h.key} className="rounded-xl border border-ochre/30 bg-ochre/12 px-3 py-2.5">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-semibold text-slate-900">{h.title}</span>
-                    <span className="font-bold text-orange-700 tabular-nums">~{money(h.monthly)} / oy</span>
+                    <span className="font-semibold text-plaster">{h.title}</span>
+                    <span className="font-bold text-[#F2C46B] tabular-nums">~{money(h.monthly)} / oy</span>
                   </div>
-                  <div className="text-xs text-slate-600">
+                  <div className="text-xs text-plaster/65">
                     {h.count} marta, {frequencyLabel(h.interval)}, o'rtacha {money(h.avg)}. Yiliga ~{money(h.yearly)}.
                   </div>
                 </li>
@@ -172,8 +180,8 @@ export default function Dashboard({ go }) {
                 return (
                   <li key={g.id}>
                     <div className="mb-1 flex justify-between text-sm">
-                      <span className="font-semibold text-slate-800">{g.name}</span>
-                      <span className="tabular-nums text-slate-500">{percent(p.progress)}</span>
+                      <span className="font-semibold text-plaster">{g.name}</span>
+                      <span className="tabular-nums text-plaster/60">{percent(p.progress)}</span>
                     </div>
                     <Progress value={p.progress} />
                     <GoalStepLine goal={g} />
@@ -194,7 +202,7 @@ export default function Dashboard({ go }) {
           {recent.length === 0 ? (
             <Empty title="Hali yozuv yo'q" />
           ) : (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-plaster/10">
               {recent.map((t) => (
                 <TxRow key={t.id} tx={t} />
               ))}

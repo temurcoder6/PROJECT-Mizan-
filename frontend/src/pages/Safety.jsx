@@ -4,10 +4,10 @@ import { Button, Card, CardTitle, inputCls } from '../components/ui';
 import { checkMessage } from '../lib/scam';
 
 const VERDICTS = {
-  high: { tone: 'bg-rose-50 text-rose-900 ring-rose-200', title: "Bir nechta jiddiy shubhali belgi bor. Ehtiyot bo'ling.", icon: ShieldAlert },
-  mid: { tone: 'bg-amber-50 text-amber-900 ring-amber-200', title: "Shubhali belgilar bor. Havolani bosmang va ma'lumot bermang.", icon: TriangleAlert },
-  low: { tone: 'bg-amber-50 text-amber-900 ring-amber-200', title: 'Kichik shubhali belgilar bor.', icon: TriangleAlert },
-  none: { tone: 'bg-slate-50 text-slate-800 ring-slate-200', title: "Men shubhali belgi topmadim, lekin bu xabar xavfsiz degani emas.", icon: ShieldCheck },
+  high: { tone: 'bg-rose-500/15 text-rose-200 ring-rose-400/35', title: "Bir nechta jiddiy shubhali belgi bor. Ehtiyot bo'ling.", icon: ShieldAlert },
+  mid: { tone: 'bg-ochre/18 text-[#F2C46B] ring-ochre/40', title: "Shubhali belgilar bor. Havolani bosmang va ma'lumot bermang.", icon: TriangleAlert },
+  low: { tone: 'bg-ochre/18 text-[#F2C46B] ring-ochre/40', title: 'Kichik shubhali belgilar bor.', icon: TriangleAlert },
+  none: { tone: 'bg-turq/14 text-turq-soft ring-turq/30', title: "Men shubhali belgi topmadim, lekin bu xabar xavfsiz degani emas.", icon: ShieldCheck },
 };
 
 const LEVEL = { high: 'Jiddiy', mid: "O'rtacha", low: 'Kichik' };
@@ -19,24 +19,24 @@ export default function Safety() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <h1 className="text-2xl font-bold text-slate-900">Xavfsizlik</h1>
+      <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Xavfsizlik</h1>
 
       <Card>
         <CardTitle icon={Lock}>Mizan nimani so'ramaydi</CardTitle>
-        <ul className="space-y-1.5 text-sm text-slate-700">
+        <ul className="space-y-1.5 text-sm text-plaster/80">
           <li>• Bank PIN-kodi, karta paroli, CVV yoki SMS tasdiqlash kodini hech qachon so'ramaydi va saqlamaydi.</li>
           <li>• Bank, Click yoki Payme hisobingizga kirish uchun parol so'ramaydi.</li>
           <li>• Telefondagi SMS'larni yashirincha o'qimaydi. Hech qanday SMS ruxsati so'ralmaydi.</li>
           <li>• Click, Payme yoki bankka ulanmagan. Barcha yozuvlarni siz o'zingiz kiritasiz.</li>
         </ul>
-        <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <p className="mt-3 rounded-xl border border-ochre/30 bg-ochre/12 px-3 py-2 text-xs text-[#F2C46B]">
           Eslatma: kimdir o'zini bank xodimi deb kod yoki parol so'rasa, bu firibgarlik. Rasmiy xodim ham bu ma'lumotni so'ramaydi.
         </p>
       </Card>
 
       <Card>
         <CardTitle icon={ShieldAlert}>Shubhali xabarni tekshirish</CardTitle>
-        <p className="mb-3 text-sm text-slate-600">
+        <p className="mb-3 text-sm text-plaster/70">
           Shubhali SMS yoki xabar matnini o'zingiz shu yerga qo'ying. Ilova boshqa xabarlaringizni o'qimaydi, matn qurilmangizdan chiqmaydi.
         </p>
         <textarea
@@ -66,8 +66,8 @@ export default function Safety() {
             {result.reasons.length > 0 && (
               <ul className="mt-3 space-y-2 text-sm">
                 {result.reasons.map((r, i) => (
-                  <li key={i} className="rounded-lg bg-white/70 px-3 py-2">
-                    <span className="mr-2 text-[11px] font-bold uppercase opacity-70">{LEVEL[r.level]}</span>
+                  <li key={i} className="rounded-lg border border-plaster/12 bg-[#071633]/85 px-3 py-2 text-plaster">
+                    <span className="mr-2 text-[11px] font-bold uppercase opacity-75">{LEVEL[r.level]}</span>
                     {r.text}
                   </li>
                 ))}

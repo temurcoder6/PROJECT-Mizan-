@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Mic, MicOff, Send, ShieldCheck, Sparkles, Trash2, Volume2, X } from 'lucide-react';
-import { Badge, Button, Card, Modal, inputCls } from '../components/ui';
+import { Badge, Button, Card, Modal, MoneyInput, inputCls } from '../components/ui';
 import { respond } from '../lib/assistant/assistant';
 import { categoryLabel, methodLabel } from '../lib/categories';
-import { dateLabel, money, todayISO, uid } from '../lib/format';
+import { dateLabel, formatDigitsInput, money, parseDigits, todayISO, uid } from '../lib/format';
 import { findVoice, listen, speak, stopSpeaking, voiceInputSupported, voiceOutputSupported, VOICE_LANGS } from '../lib/voice';
 import { useStore } from '../store';
 
@@ -27,13 +27,13 @@ function DraftCard({ draft, msgId }) {
 
   if (draft.status === 'saved') {
     return (
-      <div className="mt-2 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+      <div className="mt-2 flex items-center gap-2 rounded-xl border border-turq/30 bg-turq/15 px-3 py-2 text-sm text-turq-soft">
         <Check className="size-4" /> Saqlandi
       </div>
     );
   }
   if (draft.status === 'rejected') {
-    return <div className="mt-2 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-500">Bekor qilindi, hech narsa saqlanmadi.</div>;
+    return <div className="mt-2 rounded-xl border border-plaster/12 bg-[#061228] px-3 py-2 text-sm text-plaster/55">Bekor qilindi, hech narsa saqlanmadi.</div>;
   }
 
   const confirm = () => {
@@ -74,27 +74,25 @@ function DraftCard({ draft, msgId }) {
   const canEditTx = draft.kind === 'tx';
 
   return (
-    <div className="mt-2 rounded-2xl bg-white p-3 text-slate-800 ring-1 ring-slate-200">
+    <div className="mt-2 rounded-2xl border border-plaster/14 bg-[#071633] p-3 text-plaster">
       <div className="mb-1.5 flex items-center justify-between">
-        <span className="text-xs font-bold tracking-wide text-emerald-700 uppercase">{title}</span>
+        <span className="text-xs font-bold tracking-wide text-turq-soft uppercase">{title}</span>
         <Badge tone="amber">Tasdiq kutilmoqda</Badge>
       </div>
       {edit && canEditTx ? (
         <div className="grid grid-cols-2 gap-2">
           <input className={inputCls} value={local.title} onChange={(e) => setLocal({ ...local, title: e.target.value })} />
-          <input
-            className={inputCls}
-            inputMode="numeric"
-            value={local.amount}
-            onChange={(e) => setLocal({ ...local, amount: Number(e.target.value.replace(/\D/g, '')) || 0 })}
+          <MoneyInput
+            value={formatDigitsInput(local.amount)}
+            onChange={(v) => setLocal({ ...local, amount: parseDigits(v) })}
           />
         </div>
       ) : (
         <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
           {lines.map(([k, v]) => (
             <div key={k} className="contents">
-              <dt className="text-slate-500">{k}</dt>
-              <dd className="font-semibold">{v}</dd>
+              <dt className="text-plaster/55">{k}</dt>
+              <dd className="font-semibold text-plaster">{v}</dd>
             </div>
           ))}
         </dl>
@@ -120,7 +118,7 @@ function Bubble({ msg, onChoice, onSpeak, lastId }) {
   const mine = msg.role === 'user';
   return (
     <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${mine ? 'rounded-br-md bg-emerald-600 text-white' : 'rounded-bl-md bg-slate-100 text-slate-800'}`}>
+      <div className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${mine ? 'rounded-br-md border border-ochre/35 bg-cobalt text-plaster' : 'rounded-bl-md border border-plaster/12 bg-[#0A1F45]/90 text-plaster/90'}`}>
         <p className="whitespace-pre-line">{msg.text}</p>
         {msg.drafts?.map((d) => (
           <DraftCard key={d.id} draft={d} msgId={msg.id} />
@@ -128,14 +126,14 @@ function Bubble({ msg, onChoice, onSpeak, lastId }) {
         {msg.choices && msg.id === lastId && (
           <div className="mt-2 flex flex-wrap gap-2">
             {msg.choices.map((c) => (
-              <button key={c} type="button" onClick={() => onChoice(c)} className="rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-200 transition hover:bg-emerald-50">
+              <button key={c} type="button" onClick={() => onChoice(c)} className="rounded-full border border-turq/35 bg-[#071633] px-3 py-1.5 text-sm font-semibold text-turq-soft transition hover:bg-turq/15">
                 {c}
               </button>
             ))}
           </div>
         )}
         {!mine && voiceOutputSupported && (
-          <button type="button" onClick={() => onSpeak(msg)} className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800">
+          <button type="button" onClick={() => onSpeak(msg)} className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-plaster/55 hover:text-plaster">
             <Volume2 className="size-3.5" /> O'qib berish
           </button>
         )}
@@ -220,13 +218,13 @@ export default function Assistant() {
   const pendingCount = chat.reduce((n, m) => n + (m.drafts?.filter((d) => d.status === 'pending').length || 0), 0);
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-9.5rem)] max-w-3xl flex-col lg:h-[calc(100dvh-6rem)]">
+    <div className="mx-auto flex h-[calc(100dvh-10.5rem)] max-w-3xl flex-col md:h-[calc(100dvh-11.5rem)]">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold text-slate-900">
-            <Sparkles className="size-6 text-emerald-600" aria-hidden /> Yordamchi
+          <h1 className="font-display flex items-center gap-2 text-2xl font-semibold tracking-[-0.02em] text-plaster">
+            <Sparkles className="size-6 text-ochre" aria-hidden /> Yordamchi
           </h1>
-          <p className="text-xs text-slate-500">Yozuvni tayyorlaydi, siz tasdiqlamaguncha saqlamaydi. Hisob-kitobni dastur qiladi.</p>
+          <p className="text-xs text-plaster/55">Yozuvni tayyorlaydi, siz tasdiqlamaguncha saqlamaydi. Hisob-kitobni dastur qiladi.</p>
         </div>
         {chat.length > 0 && (
           <Button variant="subtle" size="sm" onClick={actions.clearChat}>
@@ -239,18 +237,18 @@ export default function Assistant() {
         <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite">
           {chat.length === 0 && (
             <div className="space-y-4 py-2">
-              <p className="text-slate-600">
+              <p className="text-plaster/75">
                 Salom! O'zbek (lotin va kirill), rus yoki ingliz tilida yozing yoki gapiring. Masalan:
               </p>
               <div className="flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
-                  <button key={s} type="button" onClick={() => send(s)} className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-emerald-50 hover:text-emerald-800">
+                  <button key={s} type="button" onClick={() => send(s)} className="rounded-full border border-plaster/12 bg-[#071633] px-3 py-1.5 text-sm text-plaster/85 transition hover:border-ochre/45 hover:bg-cobalt/60 hover:text-plaster">
                     {s}
                   </button>
                 ))}
               </div>
-              <p className="flex items-start gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-xs text-slate-500">
-                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+              <p className="flex items-start gap-2 rounded-xl border border-plaster/10 bg-[#071633]/80 px-3 py-2.5 text-xs text-plaster/60">
+                <ShieldCheck className="mt-0.5 size-4 shrink-0 text-turq-soft" aria-hidden />
                 Yordamchi shu qurilmada ishlaydi va yozuvlaringizni hech qayerga yubormaydi. Tushunmagan summani o'ylab topmaydi — so'raydi. Bu hali oddiy qoidalarga asoslangan yordamchi, katta
                 til modeli emas, shuning uchun murakkab jumlalarni tushunmasligi mumkin.
               </p>
@@ -263,13 +261,13 @@ export default function Assistant() {
         </div>
 
         {(notice || pendingCount > 0) && (
-          <div className="border-t border-slate-100 px-4 py-2 text-xs text-slate-600">
+          <div className="border-t border-plaster/12 px-4 py-2 text-xs text-plaster/70">
             {notice || `${pendingCount} ta yozuv tasdiq kutmoqda. Saqlash tugmasini bosmaguningizcha hech narsa saqlanmaydi.`}
           </div>
         )}
 
         <form
-          className="flex items-end gap-2 border-t border-slate-100 p-3"
+          className="flex items-end gap-2 border-t border-plaster/12 p-3"
           onSubmit={(e) => {
             e.preventDefault();
             send();
@@ -280,13 +278,13 @@ export default function Assistant() {
               type="button"
               onClick={onMic}
               aria-label={listening ? "Yozishni to'xtatish" : 'Ovoz bilan kiritish'}
-              className={`relative flex size-11 shrink-0 items-center justify-center rounded-full transition ${listening ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+              className={`relative flex size-11 shrink-0 items-center justify-center rounded-full transition ${listening ? 'bg-rose-600 text-white' : 'border border-plaster/14 bg-[#071633] text-plaster/80 hover:border-ochre/45 hover:text-plaster'}`}
             >
               {listening && settings.animations && <span className="absolute inset-0 animate-ping rounded-full bg-rose-500/40" />}
               {listening ? <MicOff className="relative size-5" /> : <Mic className="size-5" />}
             </button>
           ) : (
-            <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-300" title="Bu brauzer ovozli kiritishni qo'llamaydi. Chrome yoki Edge'dan foydalaning.">
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-full border border-plaster/10 bg-[#071633] text-plaster/30" title="Bu brauzer ovozli kiritishni qo'llamaydi. Chrome yoki Edge'dan foydalaning.">
               <MicOff className="size-5" />
             </span>
           )}
@@ -304,7 +302,7 @@ export default function Assistant() {
               }
             }}
           />
-          <button type="submit" aria-label="Yuborish" disabled={!text.trim()} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white transition hover:bg-emerald-700 disabled:opacity-40">
+          <button type="submit" aria-label="Yuborish" disabled={!text.trim()} className="flex size-11 shrink-0 items-center justify-center rounded-full bg-turq text-cobalt-night transition hover:bg-[#32BDB6] disabled:opacity-40">
             <Send className="size-5" />
           </button>
         </form>
@@ -312,7 +310,7 @@ export default function Assistant() {
 
       {consent && (
         <Modal title="Mikrofondan foydalanish" onClose={() => setConsent(false)}>
-          <div className="space-y-3 text-sm text-slate-700">
+          <div className="space-y-3 text-sm text-plaster/80">
             <p>
               Ovoz bilan kiritish uchun brauzer mikrofonga ruxsat so'raydi. Ovoz brauzerning nutqni tanish xizmati orqali matnga aylantiriladi (Chrome'da bu xizmat Google serverlari orqali
               ishlashi mumkin).
@@ -321,7 +319,7 @@ export default function Assistant() {
               <b>Mizan ovozni yozib olmaydi va saqlamaydi.</b> Faqat matn qoladi va siz uni tasdiqlamaguningizcha yozuv saqlanmaydi. Xohlasangiz, hamma narsani yozib ham kiritishingiz mumkin.
             </p>
             <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-slate-500 uppercase">Gapirish tili</span>
+              <span className="mb-1 block text-xs font-semibold text-plaster/55 uppercase">Gapirish tili</span>
               <select className={inputCls} value={settings.voiceLang} onChange={(e) => actions.setSetting('voiceLang', e.target.value)}>
                 {VOICE_LANGS.map((l) => (
                   <option key={l.value} value={l.value}>
@@ -330,7 +328,7 @@ export default function Assistant() {
                 ))}
               </select>
             </label>
-            <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
+            <p className="rounded-lg border border-ochre/30 bg-ochre/12 px-3 py-2 text-xs text-[#F2C46B]">
               O'zbek tilini tanish sifati qurilma va brauzerga bog'liq va ba'zan xato qiladi. Shuning uchun har doim tasdiqlash oynasida summani tekshiring.
             </p>
             <div className="flex gap-2 pt-1">

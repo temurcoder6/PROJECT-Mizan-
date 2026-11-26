@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ArrowRight, ArrowUpRight, ChevronDown, Lock, Menu, X } from 'lucide-react';
+import AuthPanel from '../components/AuthPanel';
 import Girih3D from '../components/Girih3D';
 import ExplainerVideo from '../components/ExplainerVideo';
 import { GirihField, StarBullet, StarMark, starPoints } from '../components/Girih';
@@ -7,8 +8,12 @@ import Intro from '../components/Intro';
 import Laptop3D from '../components/Laptop3D';
 import Phone3D from '../components/Phone3D';
 import PromoPhone from '../components/PromoPhone';
-import { money } from '../lib/format';
+import { OchreRule, Reveal } from '../components/Reveal';
+import Storyboard from '../components/Storyboard';
+import { MoneyInput } from '../components/ui';
+import { money, parseDigits } from '../lib/format';
 import { DEPENDS_ON_DEVICE, NEXT_STAGE, WORKS_NOW } from '../lib/status';
+import { useStore } from '../store';
 
 const NAV = [
   ['/', 'Bosh sahifa'],
@@ -18,13 +23,12 @@ const NAV = [
   ['/yordamchi', 'Yordamchi'],
   ['/xavfsizlik', 'Xavfsizlik'],
 ];
-export const SITE_PAGES = [...NAV.map(([p]) => p), '/film', '/reklama'];
+export const SITE_PAGES = [...NAV.map(([p]) => p), '/kirish', '/film', '/reklama'];
 
 const display = 'font-display tracking-[-0.02em]';
 const wrap = 'mx-auto w-full max-w-[76rem] px-5 sm:px-8';
-const btnLight = 'inline-flex items-center gap-2 rounded-md bg-plaster px-6 py-3.5 font-semibold text-cobalt shadow-[0_10px_24px_-12px_rgb(0_0_0/0.6)] transition hover:-translate-y-0.5 hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-turq';
+const btnLight = 'inline-flex items-center gap-2 rounded-md bg-turq px-6 py-3.5 font-semibold text-cobalt-night shadow-[0_10px_24px_-12px_rgb(0_0_0/0.6)] transition hover:-translate-y-0.5 hover:bg-[#32BDB6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-turq';
 const btnGhost = 'inline-flex items-center gap-2 rounded-md px-5 py-3.5 font-semibold text-plaster ring-1 ring-plaster/30 transition hover:bg-plaster/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-turq';
-const btnDark = 'inline-flex items-center gap-2 rounded-md bg-cobalt px-6 py-3.5 font-semibold text-plaster shadow-[0_12px_24px_-14px_rgb(14_42_92/0.8)] transition hover:-translate-y-0.5 hover:bg-cobalt-deep focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-turq';
 
 // ---------- phone with the real app inside ----------
 
@@ -76,10 +80,10 @@ function PhoneTabs({ tabs, size = 560 }) {
 
 // ---------- shared pieces ----------
 
-function Logo({ dark = false }) {
+function Logo() {
   return (
-    <a href="#/" className={`flex items-center gap-2.5 ${display} text-lg font-semibold ${dark ? 'text-cobalt' : 'text-plaster'}`}>
-      <StarMark className="size-8" />
+    <a href="#/" className={`flex items-center gap-2.5 ${display} text-lg font-semibold text-plaster`}>
+      <StarMark className="size-8" live />
       Mizan
     </a>
   );
@@ -87,35 +91,47 @@ function Logo({ dark = false }) {
 
 function Nav({ page, onOpen }) {
   const [open, setOpen] = useState(false);
+  const { auth } = useStore();
+  const signedIn = auth.status === 'in' && auth.user;
   return (
-    <header className="glaze-light sticky top-0 z-40 border-b border-cobalt/10">
+    <header className="app-glass sticky top-0 z-40 border-b border-plaster/12">
       <div className={`${wrap} flex h-16 items-center justify-between gap-4`}>
-        <Logo dark />
+        <Logo />
         <nav className="hidden items-center gap-6 lg:flex" aria-label="Sahifalar">
           {NAV.map(([p, label]) => (
             <a
               key={p}
               href={`#${p}`}
               aria-current={page === p ? 'page' : undefined}
-              className={`border-b py-1 text-sm font-medium transition ${page === p ? 'border-ochre text-cobalt' : 'border-transparent text-cobalt/65 hover:text-cobalt'}`}
+              className={`border-b py-1 text-sm font-medium transition ${page === p ? 'border-ochre text-plaster' : 'border-transparent text-plaster/65 hover:text-plaster'}`}
             >
               {label}
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-1">
-          <button type="button" onClick={onOpen} className="rounded-md bg-cobalt px-4 py-2 text-sm font-semibold text-plaster transition hover:bg-cobalt-deep">
+        <div className="flex items-center gap-2">
+          <a
+            href="#/kirish"
+            aria-current={page === '/kirish' ? 'page' : undefined}
+            className={`hidden items-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold transition sm:inline-flex ${
+              page === '/kirish' ? 'bg-plaster/12 text-plaster' : 'text-plaster/80 hover:bg-plaster/8 hover:text-plaster'
+            }`}
+          >
+            {signedIn && <span className="size-2 rounded-full bg-turq" />}
+            {signedIn ? auth.user.username : 'Kirish'}
+          </a>
+          <button type="button" onClick={onOpen} className="rounded-md bg-turq px-4 py-2 text-sm font-semibold text-cobalt-night transition hover:bg-[#32BDB6]">
             Ilovani ochish
           </button>
-          <button type="button" aria-label="Menyu" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="rounded-md p-2 text-cobalt hover:bg-cobalt/5 lg:hidden">
+          <button type="button" aria-label="Menyu" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="rounded-md p-2 text-plaster hover:bg-plaster/10 lg:hidden">
             {open ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
         </div>
       </div>
       {open && (
-        <nav className="border-t border-cobalt/10 bg-plaster px-5 pb-3 lg:hidden" aria-label="Sahifalar">
-          {NAV.map(([p, label]) => (
-            <a key={p} href={`#${p}`} onClick={() => setOpen(false)} className={`block border-b border-cobalt/10 py-3.5 font-medium ${page === p ? 'text-cobalt' : 'text-cobalt/70'}`}>
+        <nav className="border-t border-plaster/12 bg-[#071633] px-5 pb-3 lg:hidden" aria-label="Sahifalar">
+          {[...NAV, ['/kirish', signedIn ? `Hisob (${auth.user.username})` : "Kirish / Ro'yxatdan o'tish"]].map(([p, label]) => (
+            <a key={p} href={`#${p}`} onClick={() => setOpen(false)} className={`block border-b border-plaster/10 py-3.5 font-medium ${page === p ? 'text-plaster' : 'text-plaster/70'}`}>
               {label}
             </a>
           ))}
@@ -125,19 +141,19 @@ function Nav({ page, onOpen }) {
   );
 }
 
-function Footer({ onOpen }) {
+function Footer({ onOpen, isAdmin }) {
   return (
     <footer className="relative overflow-hidden bg-cobalt-night text-plaster/70">
       <GirihField id="g-foot" opacity={0.07} size={120} />
       <div className={`${wrap} relative grid gap-10 py-16 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]`}>
         <div>
           <Logo />
-          <p className="mt-4 max-w-xs text-sm">Bugun qancha sarflasam bo'ladi? Pul rejasi oddiy tilda, Chiroqchidan.</p>
+          <p className="mt-4 max-w-xs text-sm">Bugun qancha sarflasam bo'ladi? Pul rejasi oddiy tilda.</p>
         </div>
         <div>
           <p className="mb-4 text-sm font-semibold text-plaster">Sahifalar</p>
           <ul className="space-y-2.5 text-sm">
-            {NAV.map(([p, label]) => (
+            {[...NAV, ['/kirish', 'Hisob va kirish']].map(([p, label]) => (
               <li key={p}><a href={`#${p}`} className="hover:text-plaster">{label}</a></li>
             ))}
           </ul>
@@ -145,7 +161,7 @@ function Footer({ onOpen }) {
         <div>
           <p className="mb-4 text-sm font-semibold text-plaster">Ilova</p>
           <ul className="space-y-2.5 text-sm">
-            {[['bosh', 'Bosh sahifa'], ['yozuvlar', 'Yozuvlar'], ['qarzlar', 'Qarz daftari'], ['maqsadlar', 'Maqsadlar'], ['hisobot', 'Hisobot'], ['yordam', 'Yordam va shikoyat']].map(([r, l]) => (
+            {[['bosh', 'Bosh sahifa'], ['yozuvlar', 'Yozuvlar'], ['kartalar', 'Kartalar'], ['qarzlar', 'Qarz daftari'], ['maqsadlar', 'Maqsadlar'], ['hisobot', 'Hisobot'], ['yordam', 'Yordam va shikoyat']].map(([r, l]) => (
               <li key={r}><a href={`#${r}`} className="hover:text-plaster">{l}</a></li>
             ))}
           </ul>
@@ -156,12 +172,14 @@ function Footer({ onOpen }) {
             Ilovani ochish <ArrowRight className="size-4" />
           </button>
           <p className="mt-3 text-xs">Ro'yxatdan o'tish shart emas.</p>
-          <a href="#/film" className="mt-3 inline-block text-xs underline underline-offset-4 hover:text-plaster">Taqdimot rejimi (avtomatik namoyish)</a>
+          {isAdmin && (
+            <a href="#/film" className="mt-3 inline-block text-xs underline underline-offset-4 hover:text-plaster">Taqdimot rejimi (admin)</a>
+          )}
         </div>
       </div>
       <div className="relative border-t border-plaster/10 px-5 py-6 text-center text-xs">
         Mizan moliyaviy maslahat bermaydi va bank yoki to'lov tizimi bilan bog'liq emas. Hisob-kitoblar siz kiritgan ma'lumotga tayanadi.
-        <span className="mt-1 block text-plaster/35">Nusxa: {typeof __BUILD__ === 'string' ? __BUILD__ : 'dev'}</span>
+        {isAdmin && <span className="mt-1 block text-plaster/35">Nusxa: {typeof __BUILD__ === 'string' ? __BUILD__ : 'dev'}</span>}
       </div>
     </footer>
   );
@@ -187,21 +205,21 @@ function Cta({ onOpen, title = "Sinab ko'ring: bir daqiqada boshlash mumkin", te
 }
 
 function Calculator() {
-  const [cash, setCash] = useState('850000');
-  const [bills, setBills] = useState('300000');
+  const [cash, setCash] = useState('850 000');
+  const [bills, setBills] = useState('300 000');
   const [days, setDays] = useState('10');
-  const n = (s) => Number(String(s).replace(/\s/g, '')) || 0;
+  const n = parseDigits;
   const d = n(days);
   const rest = n(cash) - n(bills);
   const ready = d >= 1 && cash !== '';
-  const input = 'w-full border-0 border-b-2 border-cobalt/20 bg-transparent px-0 py-2.5 text-2xl font-semibold tabular-nums text-cobalt outline-none transition focus:border-cobalt';
-  const label = 'flex items-center gap-2.5 text-sm font-medium text-cobalt/70';
-  const step = 'flex size-5 items-center justify-center rounded-[3px] bg-cobalt text-[11px] font-semibold text-plaster';
+  const input = 'w-full border-0 border-b-2 border-plaster/25 bg-transparent px-0 py-2.5 text-2xl font-semibold tabular-nums text-plaster outline-none transition focus:border-turq';
+  const label = 'flex items-center gap-2.5 text-sm font-medium text-plaster/75';
+  const step = 'flex size-5 items-center justify-center rounded-[3px] bg-turq text-[11px] font-semibold text-cobalt-night';
   return (
-    <div className="grid overflow-hidden rounded-xl ring-1 ring-cobalt/10 lg:grid-cols-[1fr_1.1fr]">
-      <div className="space-y-7 bg-white/70 p-7 sm:p-10">
-        <label className="block"><span className={label}><b className={step}>1</b>Hozir qo'lingizda (so'm)</span><input className={input} inputMode="numeric" value={cash} onChange={(e) => setCash(e.target.value.replace(/\D/g, ''))} /></label>
-        <label className="block"><span className={label}><b className={step}>2</b>Daromadgacha zarur to'lovlar (so'm)</span><input className={input} inputMode="numeric" value={bills} onChange={(e) => setBills(e.target.value.replace(/\D/g, ''))} /></label>
+    <div className="grid overflow-hidden rounded-xl border border-ochre/35 lg:grid-cols-[1fr_1.1fr]">
+      <div className="space-y-7 bg-[#0A1F45] p-7 sm:p-10">
+        <label className="block"><span className={label}><b className={step}>1</b>Hozir qo'lingizda (so'm)</span><MoneyInput className={input} value={cash} onChange={setCash} /></label>
+        <label className="block"><span className={label}><b className={step}>2</b>Daromadgacha zarur to'lovlar (so'm)</span><MoneyInput className={input} value={bills} onChange={setBills} /></label>
         <label className="block"><span className={label}><b className={step}>3</b>Daromadgacha necha kun</span><input className={input} inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value.replace(/\D/g, ''))} /></label>
       </div>
       <div className="relative flex flex-col justify-center overflow-hidden bg-cobalt p-7 text-plaster sm:p-10">
@@ -235,25 +253,31 @@ function Calculator() {
 
 const FAQ = [
   ['Mizan bankka yoki Click/Payme ga ulanganmi?', "Yo'q. Bankdan hech qanday ma'lumot olinmaydi, hamma narsani siz o'zingiz kiritasiz. Shuning uchun kunlik reja siz kiritgan pul va sanaga tayanadi."],
-  ["Nega faqat nom va parol so'raladi?", "Ataylab: byudjet ilovasiga pochta, telefon yoki hujjat kerak emas, shuning uchun ularni yig'maymiz (pasport hech qachon so'ralmaydi). Parolni unutsangiz, ro'yxatdan o'tganda berilgan tiklash kodi bilan tiklaysiz. Pochta bilan kirish keyingi bosqichda ixtiyoriy bo'ladi."],
-  ["Ma'lumotlarim qayerda saqlanadi?", "Standart holatda faqat sizning qurilmangizdagi brauzerda. Hisob ochsangiz, ma'lumot server bazasiga ham saqlanadi va boshqa qurilmadan ochiladi. Istalgan vaqtda yuklab olish yoki butunlay o'chirish mumkin."],
+  ["Nega faqat nom va parol so'raladi?", "Ataylab: byudjet ilovasiga pochta, telefon yoki hujjat kerak emas, shuning uchun ularni yig'maymiz (pasport hech qachon so'ralmaydi). Parolni unutsangiz, ro'yxatdan o'tganda berilgan tiklash kodi bilan tiklaysiz."],
+  ["Ma'lumotlarim qayerda saqlanadi?", "Standart holatda faqat sizning qurilmangizdagi brauzerda. Hisob ochsangiz, ma'lumot himoyalangan server bazasiga ham saqlanadi va boshqa qurilmadan ochiladi. Istalgan vaqtda yuklab olish yoki butunlay o'chirish mumkin."],
   ['Parolni unutsam-chi?', "Hisob ochganda sizga bir martalik tiklash kodi ko'rsatiladi. Shu kod va nom bilan yangi parol qo'yasiz, ma'lumot joyida qoladi. Kodni ham yo'qotsangiz, hisobga kirib bo'lmaydi, shuning uchun uni saqlab qo'ying."],
   ['Ovozli kiritish qanchalik aniq?', "Brauzerning nutqni tanish xizmatiga bog'liq. O'zbek tilida ba'zan xato qiladi, shuning uchun summa har doim tasdiq oynasida tekshiriladi va hech narsa tasdiqsiz saqlanmaydi."],
   ["Bu moliyaviy maslahatmi?", "Yo'q. Hisoblar siz kiritgan ma'lumot asosida aniq formulalar bilan chiqariladi. Natija kiritgan ma'lumotingizga bog'liq, kafolatlangan mablag' emas va moliyaviy maslahat o'rnini bosmaydi."],
-  ['Narxi qancha?', "Narx hali belgilanmagan. Hozir bu birinchi ishlaydigan nusxa."],
+  ['Narxi qancha?', "Asosiy shaxsiy byudjet va hisob-kitob funksiyalaridan bepul foydalanish mumkin."],
 ];
 
 // ---------- home ----------
 
 const MOSAIC = [
-  { to: '/xarajatlar', title: 'Xarajatlar', text: "Summa yozing, toifani bosing. Hafta va oy hisoboti.", cls: 'sm:col-span-2 sm:row-span-2 bg-cobalt text-plaster', big: true },
-  { to: '/qarzlar', title: 'Qarzlar', text: "Kim kimga qancha, qancha qaytdi, qachon muddat.", cls: 'bg-plaster text-cobalt' },
-  { to: '/maqsadlar', title: 'Maqsadlar', text: "Telefon uchun haftasiga qancha kerak. Jamg'arma o'yini.", cls: 'bg-[#123569] text-plaster' },
-  { to: '/yordamchi', title: 'Yordamchi', text: "Yozing yoki gapiring. Siz tasdiqlamaguncha saqlamaydi.", cls: 'bg-[#123569] text-plaster' },
-  { to: '/xavfsizlik', title: 'Xavfsizlik', text: "Ma'lumotingiz qayerda turadi va hozir nima ishlaydi.", cls: 'bg-plaster text-cobalt' },
+  { to: '/xarajatlar', title: 'Xarajatlar', text: "Summa yozing, toifani bosing. Hafta va oy hisoboti.", cls: 'sm:col-span-2 sm:row-span-2 bg-[#0E2A5C] text-plaster hover:bg-[#12336E]', big: true },
+  { to: '/qarzlar', title: 'Qarzlar', text: "Kim kimga qancha, qancha qaytdi, qachon muddat.", cls: 'bg-[#071633] text-plaster hover:bg-[#0A1D42]' },
+  { to: '/maqsadlar', title: 'Maqsadlar', text: "Telefon uchun haftasiga qancha kerak. Jamg'arma o'yini.", cls: 'bg-[#0B224B] text-plaster hover:bg-[#0E2A5C]' },
+  { to: '/yordamchi', title: 'Yordamchi', text: "Yozing yoki gapiring. Siz tasdiqlamaguncha saqlamaydi.", cls: 'bg-[#0B224B] text-plaster hover:bg-[#0E2A5C]' },
+  { to: '/xavfsizlik', title: 'Xavfsizlik', text: "Ma'lumotingiz qayerda saqlanishi va himoya qoidalari.", cls: 'bg-[#071633] text-plaster hover:bg-[#0A1D42]' },
 ];
 
-function Home({ onOpen }) {
+function Home({ onOpen, isAdmin }) {
+  const heroTabs = [
+    { label: 'Kunlik reja', route: 'bosh' },
+    { label: 'Maqsad', route: 'maqsadlar' },
+    { label: 'Yordamchi', route: 'yordamchi' },
+    ...(isAdmin ? [{ label: 'Reklama', promo: true }] : []),
+  ];
   return (
     <>
       {/* Birinchi ekran: kobalt maydon, girih yulduzi ichida jonli telefon */}
@@ -281,27 +305,33 @@ function Home({ onOpen }) {
             </p>
           </div>
           <div>
-            <PhoneTabs size={800} tabs={[{ label: 'Kunlik reja', route: 'bosh' }, { label: 'Maqsad', route: 'maqsadlar' }, { label: 'Yordamchi', route: 'yordamchi' }, { label: 'Reklama', promo: true }]} />
+            <PhoneTabs size={800} tabs={heroTabs} />
           </div>
         </div>
       </section>
 
       {/* Uchta sabab: kartalar emas, keng satrlar, har biri o'z chizig'ida */}
       <ExplainerVideo />
-      <section className="bg-plaster text-cobalt">
+      <section className="bg-[#050C1B] text-plaster">
         <div className={`${wrap} pt-28 pb-24 sm:pt-36`}>
-          <h2 className={`${display} max-w-3xl text-[1.85rem] leading-[1.15] font-semibold text-balance sm:text-[2.6rem]`}>Pul kam emas, ko'rinmaydi. Uchta sabab.</h2>
-          <div className="mt-16 border-t border-ochre/50">
+          <Reveal>
+            <h2 className={`${display} max-w-3xl text-[1.85rem] leading-[1.15] font-semibold text-balance sm:text-[2.6rem]`}>Pul kam emas, ko'rinmaydi. Uchta sabab.</h2>
+          </Reveal>
+          <div className="mt-16">
+            <OchreRule />
             {[
               ['Yozish charchatadi', "Daftar uch kunda tashlanadi. Mizan'da xarajat — summa va bitta bosish; unutilgan kunni keyin bir summa bilan to'ldirasiz."],
               ["Naqd pul ko'rinmaydi", "Bank ilovasi faqat o'z kartangizni ko'radi. Mizan'da naqd ham, karta ham bir joyda, siz aytganingizcha."],
               ["Maqsad uzoq tuyuladi", "«Telefon 3 mln» katta raqam. «Haftasiga 140 ming» esa aniq qadam, hisobi bilan."],
-            ].map(([t, d], i) => (
-              <div key={t} className={`grid gap-3 border-b border-ochre/50 py-9 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-12`}>
-                <h3 className={`${display} flex items-start gap-3 text-2xl font-semibold sm:text-[1.7rem]`}>
-                  <StarBullet className="mt-2.5 text-ochre" /> {t}
-                </h3>
-                <p className="max-w-[38rem] text-[17px] leading-relaxed text-cobalt/75">{d}</p>
+            ].map(([t, d], idx) => (
+              <div key={t}>
+                <Reveal delay={idx * 70} className="grid gap-3 py-9 md:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] md:gap-12">
+                  <h3 className={`${display} flex items-start gap-3 text-2xl font-semibold sm:text-[1.7rem]`}>
+                    <StarBullet className="mt-2.5 text-ochre" /> {t}
+                  </h3>
+                  <p className="max-w-[38rem] text-[17px] leading-relaxed text-plaster/75">{d}</p>
+                </Reveal>
+                <OchreRule delay={idx * 70} />
               </div>
             ))}
           </div>
@@ -309,27 +339,31 @@ function Home({ onOpen }) {
       </section>
 
       {/* Bo'limlar: koshin mozaikasi, chok sifatida ingichka oltin chiziq */}
-      <section className="bg-plaster text-cobalt">
+      <section className="bg-[#050C1B] text-plaster">
         <div className={`${wrap} pb-28`}>
-          <h2 className={`${display} text-[1.85rem] font-semibold sm:text-[2.6rem]`}>Beshta bo'lim, bitta ilova.</h2>
-          <div className="mt-12 grid auto-rows-[minmax(12rem,auto)] gap-px overflow-hidden rounded-[2px] bg-ochre p-px sm:grid-cols-4">
-            {MOSAIC.map((b) => (
-              <a key={b.to} href={`#${b.to}`} className={`group relative flex flex-col justify-end overflow-hidden p-7 transition-colors ${b.cls}`}>
-                {b.big && <GirihField id="g-mosaic" opacity={0.14} size={88} />}
-                {b.big && (
-                  <svg viewBox="0 0 40 40" className="absolute top-7 left-7 size-12 opacity-80 transition-transform duration-700 group-hover:rotate-45" aria-hidden>
-                    <polygon points={starPoints(20, 20, 19)} fill="none" stroke="#C9962B" strokeWidth="1" />
-                  </svg>
-                )}
-                <div className="relative">
-                  <h3 className={`${display} flex items-center gap-2 font-semibold ${b.big ? 'text-4xl sm:text-5xl' : 'text-2xl'}`}>
-                    {b.title} <ArrowUpRight className="size-5 opacity-0 transition group-hover:opacity-100" />
-                  </h3>
-                  <p className={`mt-2 max-w-sm text-sm leading-relaxed opacity-75 ${b.big ? 'sm:text-base' : ''}`}>{b.text}</p>
-                </div>
-              </a>
-            ))}
-          </div>
+          <Reveal>
+            <h2 className={`${display} text-[1.85rem] font-semibold sm:text-[2.6rem]`}>Beshta bo'lim, bitta ilova.</h2>
+          </Reveal>
+          <Reveal delay={80}>
+            <div className="mt-12 grid auto-rows-[minmax(12rem,auto)] gap-px overflow-hidden rounded-[2px] bg-ochre p-px sm:grid-cols-4">
+              {MOSAIC.map((b) => (
+                <a key={b.to} href={`#${b.to}`} className={`group relative flex flex-col justify-end overflow-hidden p-7 transition-colors ${b.cls}`}>
+                  {b.big && <GirihField id="g-mosaic" opacity={0.14} size={88} />}
+                  {b.big && (
+                    <svg viewBox="0 0 40 40" className="absolute top-7 left-7 size-12 opacity-80 transition-transform duration-700 group-hover:rotate-45" aria-hidden>
+                      <polygon points={starPoints(20, 20, 19)} fill="none" stroke="#C9962B" strokeWidth="1" />
+                    </svg>
+                  )}
+                  <div className="relative">
+                    <h3 className={`${display} flex items-center gap-2 font-semibold ${b.big ? 'text-4xl sm:text-5xl' : 'text-2xl'}`}>
+                      {b.title} <ArrowUpRight className="size-5 opacity-0 transition group-hover:opacity-100" />
+                    </h3>
+                    <p className={`mt-2 max-w-sm text-sm leading-relaxed text-plaster/75 ${b.big ? 'sm:text-base' : ''}`}>{b.text}</p>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </Reveal>
         </div>
       </section>
 
@@ -337,10 +371,10 @@ function Home({ onOpen }) {
       <section className="relative overflow-hidden bg-cobalt-night text-plaster">
         <GirihField id="g-laptop" opacity={0.06} size={140} />
         <div className={`${wrap} relative py-28 sm:py-36`}>
-          <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr] lg:items-end">
+          <Reveal className="grid gap-6 lg:grid-cols-[1.2fr_1fr] lg:items-end">
             <h2 className={`${display} text-[1.85rem] leading-[1.15] font-semibold text-balance sm:text-[2.6rem]`}>Telefonda yozing, kompyuterda hisobotni ko'ring.</h2>
             <p className="max-w-md text-plaster/70 lg:justify-self-end">Bir xil ilova har qanday ekranga moslashadi. Hisob ochsangiz, ma'lumot qurilmalar orasida o'zi sinxronlanadi.</p>
-          </div>
+          </Reveal>
           <div className="mt-16">
             <LaptopTabs tabs={[{ label: 'Bosh sahifa', route: 'bosh' }, { label: 'Hisobot', route: 'hisobot' }, { label: 'Qarzlar', route: 'qarzlar' }]} />
           </div>
@@ -348,74 +382,132 @@ function Home({ onOpen }) {
       </section>
 
       {/* Ma'lumot yo'li: uch bekat bitta chiziqda */}
-      <section className="bg-plaster text-cobalt">
+      <section className="bg-[#060E1F] text-plaster">
         <div className={`${wrap} py-24 sm:py-28`}>
-          <h2 className={`${display} max-w-xl text-[2rem] font-semibold sm:text-[2.6rem]`}>Ma'lumotingiz qayerda turadi.</h2>
+          <Reveal>
+            <h2 className={`${display} max-w-xl text-[2rem] font-semibold sm:text-[2.6rem]`}>Ma'lumotingiz qayerda turadi.</h2>
+          </Reveal>
           <ol className="relative mt-14 grid gap-10 md:grid-cols-3 md:gap-8">
-            <span className="pointer-events-none absolute top-[15px] right-[16%] left-[2%] hidden h-px bg-ochre md:block" aria-hidden />
+            <OchreRule className="pointer-events-none absolute top-[15px] right-[16%] left-[2%] hidden !bg-ochre md:block" />
             {[
               ['Qurilmangizda', "Hisob ochmasangiz, hamma narsa faqat shu brauzerda saqlanadi. Serverga hech narsa ketmaydi."],
-              ['Serverdagi bazada', "Hisob ochsangiz, yozuvlar SQLite bazasiga saqlanadi va telefon bilan kompyuter bir xil ma'lumotni ko'radi."],
+              ['Serverdagi bazada', "Hisob ochsangiz, yozuvlar himoyalangan server bazasiga saqlanadi va telefon bilan kompyuter bir xil ma'lumotni ko'radi."],
               ["Sizning nazoratingizda", "Yuklab olish, nusxadan tiklash va hisobni butunlay o'chirish istalgan vaqtda mumkin."],
-            ].map(([t, d]) => (
+            ].map(([t, d], idx) => (
               <li key={t} className="relative">
-                <StarMark className="relative size-8" />
-                <h3 className={`${display} mt-5 text-xl font-semibold`}>{t}</h3>
-                <p className="mt-2 max-w-xs leading-relaxed text-cobalt/75">{d}</p>
+                <Reveal delay={idx * 90}>
+                  <StarMark className="relative size-8" />
+                  <h3 className={`${display} mt-5 text-xl font-semibold`}>{t}</h3>
+                  <p className="mt-2 max-w-xs leading-relaxed text-plaster/75">{d}</p>
+                </Reveal>
               </li>
             ))}
           </ol>
         </div>
       </section>
 
-      {/* Uch qadam: tartib muhim, raqam ma'lumot beradi */}
-      <section className="relative overflow-hidden bg-cobalt text-plaster">
-        <GirihField id="g-steps" opacity={0.1} />
-        <div className={`${wrap} relative grid gap-12 py-24 sm:py-32 lg:grid-cols-[0.8fr_1.2fr]`}>
-          <h2 className={`${display} text-4xl font-semibold sm:text-5xl lg:sticky lg:top-28 lg:self-start`}>Uch qadam.</h2>
-          <ol className="space-y-4">
-            {[
-              ['1', "Pulingizni bildiring", "Hozirgi pul va keyingi daromad sanasini bir marta kiriting. Bankka ulanish kerak emas."],
-              ['2', "Kunlik rejani ko'ring", "Mizan to'lovlar, qarz muddati va jamg'armani ajratib, bugun qancha sarflash mumkinligini ko'rsatadi."],
-              ['3', 'Tez yozing', "Xarajatni bir necha bosishda yozing. Yozmagan kun bo'lsa, keyin to'ldirasiz, maqsad hisobi buzilmaydi."],
-            ].map(([n, t, d], i) => (
-              <li key={n} className={`glaze flex gap-6 rounded-xl p-6 sm:p-8 ${i === 1 ? 'lg:ml-[3rem]' : i === 2 ? 'lg:ml-[6rem]' : ''}`}>
-                <span className="relative flex size-14 shrink-0 items-center justify-center">
-                  <svg viewBox="0 0 56 56" className="absolute inset-0" aria-hidden>
-                    <polygon points={starPoints(28, 28, 27)} fill="none" stroke="#C9962B" strokeWidth="1.2" />
-                  </svg>
-                  <span className={`${display} relative text-xl font-semibold`}>{n}</span>
-                </span>
-                <div>
-                  <h3 className={`${display} text-xl font-semibold sm:text-2xl`}>{t}</h3>
-                  <p className="mt-2 max-w-lg leading-relaxed text-plaster/75">{d}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
+      {/* Sticky scroll storyboard: qadam-baqadam hikoya */}
+      <Storyboard />
 
-      <section className="bg-plaster-dim/60 text-cobalt">
+      <section className="bg-[#071633] text-plaster">
         <div className={`${wrap} pt-28 pb-20`}>
-          <h2 className={`${display} mb-12 max-w-2xl text-[1.85rem] font-semibold sm:text-[2.6rem]`}>Kunlik reja shunday hisoblanadi.</h2>
-          <Calculator />
+          <Reveal>
+            <h2 className={`${display} mb-12 max-w-2xl text-[1.85rem] font-semibold sm:text-[2.6rem]`}>Kunlik reja shunday hisoblanadi.</h2>
+            <Calculator />
+          </Reveal>
         </div>
       </section>
 
-      <section className="bg-plaster-dim/60 text-cobalt">
+      <section className="bg-[#071633] text-plaster">
         <div className={`${wrap} grid gap-10 pt-12 pb-28 lg:grid-cols-[0.75fr_1.25fr]`}>
           <h2 className={`${display} text-3xl leading-tight font-semibold lg:sticky lg:top-28 lg:self-start`}>Ko'p so'raladigan savollar</h2>
-          <div className="border-t border-cobalt/15">
+          <div className="border-t border-plaster/15">
             {FAQ.map(([q, a]) => (
-              <details key={q} className="group border-b border-cobalt/15">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-[17px] font-medium transition hover:text-cobalt-deep">
+              <details key={q} className="group border-b border-plaster/15">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-[17px] font-medium transition hover:text-turq-soft">
                   {q}
                   <ChevronDown className="size-5 shrink-0 text-ochre transition group-open:rotate-180" />
                 </summary>
-                <p className="max-w-2xl pb-6 leading-relaxed text-cobalt/75">{a}</p>
+                <p className="max-w-2xl pb-6 leading-relaxed text-plaster/75">{a}</p>
               </details>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Ro'yxatdan o'tish va kirish bo'limi */}
+      <AuthSection onOpen={onOpen} />
+    </>
+  );
+}
+
+function AuthSection({ onOpen }) {
+  return (
+    <section id="hisob" className="border-t border-ochre/45 bg-[#050C1B] text-plaster">
+      <div className={`${wrap} grid gap-12 py-24 sm:py-28 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:gap-14`}>
+        <Reveal>
+          <h2 className={`${display} max-w-md text-[1.85rem] leading-[1.15] font-semibold text-balance sm:text-[2.5rem]`}>
+            Hisob oching yoki Google va GitHub bilan kiring.
+          </h2>
+          <p className="mt-5 max-w-md text-[17px] leading-relaxed text-plaster/75">
+            Hisob ochish shart emas — hisobsiz ham ilova shu brauzerda ishlayveradi. Hisob ochsangiz, ma'lumotlaringiz server bazasida saqlanadi va telefon, kompyuter hamda Telegram botda bir xil ko'rinadi.
+          </p>
+          <ul className="mt-8 space-y-3.5 border-t border-ochre/45 pt-6 text-[15px] text-plaster/85">
+            <li className="flex gap-3">
+              <StarBullet className="text-ochre" /> Google, GitHub yoki foydalanuvchi nomi va parol bilan kirish
+            </li>
+            <li className="flex gap-3">
+              <StarBullet className="text-ochre" /> Pochta, telefon raqami va pasport so'ralmaydi
+            </li>
+            <li className="flex gap-3">
+              <StarBullet className="text-ochre" /> Tiklash kodi bilan parolni tiklash va istalgan vaqtda hisobni o'chirish
+            </li>
+          </ul>
+        </Reveal>
+        <Reveal delay={90}>
+          <AuthPanel onOpen={onOpen} defaultMode="register" nextHash="#bosh" />
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+function AuthPage({ onOpen }) {
+  return (
+    <>
+      <section className="relative overflow-hidden bg-cobalt text-plaster">
+        <GirihField id="g-login-hero" opacity={0.12} />
+        <div className={`${wrap} relative pt-20 pb-16 sm:pt-24 sm:pb-20`}>
+          <h1 className={`${display} max-w-3xl text-[2rem] leading-[1.12] font-semibold text-balance sm:text-[3rem]`}>
+            Hisob ochish va kirish
+          </h1>
+          <p className="mt-4 max-w-xl text-lg text-plaster/78">
+            Bitta hisob: sayt, telefon va Telegram botdagi yozuvlar server bazasida sinxronlanadi.
+          </p>
+        </div>
+      </section>
+
+      <section className="bg-[#060E1F] text-plaster">
+        <div className={`${wrap} grid gap-12 py-16 sm:py-24 lg:grid-cols-[1.08fr_0.92fr] lg:items-start lg:gap-16`}>
+          <AuthPanel onOpen={onOpen} defaultMode="register" nextHash="#bosh" />
+          <div className="space-y-8 lg:pt-4">
+            <div>
+              <h2 className={`${display} text-2xl font-semibold`}>Nimalar bor</h2>
+              <ul className="mt-5 divide-y divide-plaster/12 border-y border-plaster/12 text-[15px] text-plaster/85">
+                <li className="flex gap-3 py-4"><StarBullet className="text-ochre" /> Google va GitHub orqali xavfsiz kirish</li>
+                <li className="flex gap-3 py-4"><StarBullet className="text-ochre" /> Oddiy foydalanuvchi nomi va parol (shifrlangan holda saqlanadi)</li>
+                <li className="flex gap-3 py-4"><StarBullet className="text-ochre" /> Bir martalik tiklash kodi va kirilgan qurilmalar ro'yxati</li>
+                <li className="flex gap-3 py-4"><StarBullet className="text-ochre" /> Sozlamalarda Google/GitHub hisoblarini bir hisobga ulash yoki uzish</li>
+              </ul>
+            </div>
+            <div className="border-t border-ochre/45 pt-6">
+              <p className="text-sm leading-relaxed text-plaster/75">
+                Hisob ochish majburiy emas. Avval sinab ko'rmoqchi bo'lsangiz, ro'yxatdan o'tmasdan ham ilovaga kirishingiz mumkin.
+              </p>
+              <button type="button" onClick={onOpen} className="mt-4 inline-flex items-center gap-2 rounded-md border border-plaster/25 px-5 py-2.5 text-sm font-semibold text-plaster transition hover:border-ochre/50 hover:bg-plaster/10">
+                Hisobsiz sinab ko'rish <ArrowRight className="size-4" />
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -491,14 +583,14 @@ function FeaturePage({ path, onOpen }) {
         </div>
       </section>
 
-      <section className="bg-plaster text-cobalt">
+      <section className="bg-[#060E1F] text-plaster">
         <div className={`${wrap} py-24 sm:py-28`}>
           <ol className="grid gap-10 border-t border-ochre/50 pt-10 md:grid-cols-3 md:gap-8">
             {f.steps.map(([t, d], i) => (
               <li key={t}>
-                <span className={`${display} text-sm font-semibold text-cobalt/60`}>{i + 1} / {f.steps.length}</span>
+                <span className={`${display} text-sm font-semibold text-turq-soft`}>{i + 1} / {f.steps.length}</span>
                 <h3 className={`${display} mt-3 text-2xl font-semibold`}>{t}</h3>
-                <p className="mt-2 max-w-xs leading-relaxed text-cobalt/75">{d}</p>
+                <p className="mt-2 max-w-xs leading-relaxed text-plaster/75">{d}</p>
               </li>
             ))}
           </ol>
@@ -508,13 +600,13 @@ function FeaturePage({ path, onOpen }) {
               <h3 className={`${display} text-3xl font-semibold`}>Nimalar bor</h3>
               <ul className="mt-7 space-y-4">
                 {f.points.map((p) => (
-                  <li key={p} className="flex gap-3.5 text-[17px] leading-relaxed text-cobalt/85">
+                  <li key={p} className="flex gap-3.5 text-[17px] leading-relaxed text-plaster/85">
                     <StarBullet className="text-ochre" /> {p}
                   </li>
                 ))}
               </ul>
             </div>
-            <div className="relative self-start overflow-hidden rounded-xl bg-cobalt p-8 text-plaster lg:mt-14">
+            <div className="relative self-start overflow-hidden rounded-xl border border-ochre/35 bg-cobalt p-8 text-plaster lg:mt-14">
               <GirihField id="g-formula" opacity={0.1} size={72} />
               <div className="relative">
                 <h3 className="text-sm font-semibold text-plaster/70">{f.formula[0]}</h3>
@@ -532,95 +624,100 @@ function FeaturePage({ path, onOpen }) {
 
 // ---------- safety and honest status ----------
 
-function SafetyPage({ onOpen }) {
+function SafetyPage({ onOpen, isAdmin }) {
   return (
     <>
       <section className="relative overflow-hidden bg-cobalt text-plaster">
         <GirihField id="g-safe" opacity={0.12} />
         <div className={`${wrap} relative pt-24 pb-24 sm:pt-32`}>
           <h1 className={`${display} max-w-4xl text-[2rem] leading-[1.12] font-semibold text-balance sm:text-[3.2rem]`}>Sizdan kerak bo'lmagan hech narsani so'ramaymiz.</h1>
-          <p className="mt-6 max-w-2xl text-lg text-plaster/78 sm:ml-[18%]">Nima qilmasligimiz, ma'lumotingiz qayerdaligi va hozir nima ishlashi — hammasi shu yerda.</p>
+          <p className="mt-6 max-w-2xl text-lg text-plaster/78 sm:ml-[18%]">Nima qilmasligimiz, ma'lumotingiz qayerdaligi va himoya qoidalari — hammasi shu yerda.</p>
         </div>
       </section>
 
-      <section className="bg-plaster text-cobalt">
+      <section className="bg-[#060E1F] text-plaster">
         <div className={`${wrap} grid gap-16 py-24 lg:grid-cols-2 lg:gap-20`}>
           <div>
             <h2 className={`${display} text-2xl font-semibold sm:text-3xl`}>Mizan nima qilmaydi</h2>
-            <ul className="mt-7 divide-y divide-cobalt/10 border-y border-cobalt/10">
+            <ul className="mt-7 divide-y divide-plaster/12 border-y border-plaster/12">
               {[
                 "Bank, Click yoki Payme ga ulanmagan: karta, PIN yoki SMS-kod so'ralmaydi va SMS'lar o'qilmaydi",
                 "Yordamchi tasdiqsiz yozuv qo'shmaydi, o'chirmaydi va o'zgartirmaydi",
                 "Ovozni yozib olmaydi va saqlamaydi",
                 "Qarz bermaydi, qarz undirmaydi, to'lov qilmaydi",
               ].map((t) => (
-                <li key={t} className="flex gap-3.5 py-4 leading-relaxed text-cobalt/85"><Lock className="mt-1 size-4 shrink-0 text-ochre" /> {t}</li>
+                <li key={t} className="flex gap-3.5 py-4 leading-relaxed text-plaster/85"><Lock className="mt-1 size-4 shrink-0 text-ochre" /> {t}</li>
               ))}
             </ul>
           </div>
           <div className="lg:mt-20">
             <h2 className={`${display} text-2xl font-semibold sm:text-3xl`}>Ma'lumotingiz</h2>
-            <ul className="mt-7 divide-y divide-cobalt/10 border-y border-cobalt/10">
+            <ul className="mt-7 divide-y divide-plaster/12 border-y border-plaster/12">
               {[
                 "Standart holatda faqat sizning qurilmangizdagi brauzerda saqlanadi",
-                "Hisob ochsangiz, serverdagi SQLite bazasiga ham saqlanadi: parol xeshlanadi, har foydalanuvchi faqat o'z ma'lumotini ko'radi",
+                "Hisob ochsangiz, himoyalangan server bazasiga ham saqlanadi: parol shifrlanadi, har foydalanuvchi faqat o'z ma'lumotini ko'radi",
                 "JSON/CSV yuklab olish, tiklash va hisobni butunlay o'chirish mumkin",
                 "Ro'yxatdan o'tishda faqat nom va parol so'raladi (pochta, telefon yoki hujjat yo'q); parol tiklash kodi bilan tiklanadi",
                 "Shubhali xabarni o'zingiz qo'yasiz; tekshiruv qurilmada ishlaydi va hech qachon «to'liq xavfsiz» demaydi",
               ].map((t) => (
-                <li key={t} className="flex gap-3.5 py-4 leading-relaxed text-cobalt/85"><StarBullet className="text-ochre" /> {t}</li>
+                <li key={t} className="flex gap-3.5 py-4 leading-relaxed text-plaster/85"><StarBullet className="text-ochre" /> {t}</li>
               ))}
             </ul>
           </div>
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-cobalt-night text-plaster">
-        <GirihField id="g-status" opacity={0.06} size={140} />
-        <div className={`${wrap} relative py-24 sm:py-28`}>
-          <h2 className={`${display} text-3xl font-semibold sm:text-4xl`}>Hozirgi holat</h2>
-          <p className="mt-3 text-plaster/65">Bu birinchi ishlaydigan nusxa. Nima tayyor, nima hali yo'qligini yashirmaymiz.</p>
-          <div className="mt-14 grid gap-4 lg:grid-cols-3">
-            <div className="glaze rounded-xl p-7">
-              <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-turq-soft"><span className="size-2 rounded-full bg-turq" /> Hozir ishlaydi</h3>
-              <ul className="space-y-2.5 text-sm leading-relaxed">
-                {WORKS_NOW.map((t) => (
-                  <li key={t} className="flex gap-2.5"><StarBullet className="text-turq-soft" /> {t}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-xl p-7 ring-1 ring-plaster/15">
-              <h3 className="mb-4 text-sm font-semibold text-[#F2C46B]">Qurilmaga bog'liq</h3>
-              <ul className="space-y-2.5 text-sm leading-relaxed text-plaster/80">
-                {DEPENDS_ON_DEVICE.map((t) => <li key={t} className="flex gap-2.5"><StarBullet className="text-ochre" /> {t}</li>)}
-              </ul>
-            </div>
-            <div className="rounded-xl p-7 ring-1 ring-plaster/10">
-              <h3 className="mb-4 text-sm font-semibold text-plaster/60">Keyingi bosqich</h3>
-              <ul className="space-y-2.5 text-sm leading-relaxed text-plaster/60">
-                {NEXT_STAGE.map((t) => <li key={t} className="flex gap-2.5"><StarBullet className="text-plaster/30" /> {t}</li>)}
-              </ul>
+      {isAdmin && (
+        <section className="relative overflow-hidden bg-cobalt-night text-plaster">
+          <GirihField id="g-status" opacity={0.06} size={140} />
+          <div className={`${wrap} relative py-24 sm:py-28`}>
+            <h2 className={`${display} text-3xl font-semibold sm:text-4xl`}>Hozirgi holat (faqat admin uchun)</h2>
+            <p className="mt-3 text-plaster/65">Ichki texnik holat va keyingi bosqich rejasi.</p>
+            <div className="mt-14 grid gap-4 lg:grid-cols-3">
+              <div className="glaze rounded-xl p-7">
+                <h3 className="mb-4 flex items-center gap-2 text-sm font-semibold text-turq-soft"><span className="size-2 rounded-full bg-turq" /> Hozir ishlaydi</h3>
+                <ul className="space-y-2.5 text-sm leading-relaxed">
+                  {WORKS_NOW.map((t) => (
+                    <li key={t} className="flex gap-2.5"><StarBullet className="text-turq-soft" /> {t}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="rounded-xl p-7 ring-1 ring-plaster/15">
+                <h3 className="mb-4 text-sm font-semibold text-[#F2C46B]">Qurilmaga bog'liq</h3>
+                <ul className="space-y-2.5 text-sm leading-relaxed text-plaster/80">
+                  {DEPENDS_ON_DEVICE.map((t) => <li key={t} className="flex gap-2.5"><StarBullet className="text-ochre" /> {t}</li>)}
+                </ul>
+              </div>
+              <div className="rounded-xl p-7 ring-1 ring-plaster/10">
+                <h3 className="mb-4 text-sm font-semibold text-plaster/60">Keyingi bosqich</h3>
+                <ul className="space-y-2.5 text-sm leading-relaxed text-plaster/60">
+                  {NEXT_STAGE.map((t) => <li key={t} className="flex gap-2.5"><StarBullet className="text-plaster/30" /> {t}</li>)}
+                </ul>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
       <Cta onOpen={onOpen} />
     </>
   );
 }
 
 export default function Site({ page, onOpen }) {
-  const [intro, setIntro] = useState(true);
+  const { auth } = useStore();
+  const isAdmin = auth.status === 'in' && Boolean(auth.user?.isAdmin);
+  const [intro, setIntro] = useState(() => page === '/' && typeof window !== 'undefined' && !window.location.search.includes('oauth'));
   return (
-    <div className="site min-h-dvh overflow-x-clip bg-plaster font-body text-cobalt">
+    <div className="site min-h-dvh overflow-x-clip bg-[#050C1B] font-body text-plaster">
       {intro && <Intro onDone={() => setIntro(false)} />}
       <Nav page={page} onOpen={onOpen} />
       <main>
-        {page === '/' && <Home onOpen={onOpen} />}
+        {page === '/' && <Home onOpen={onOpen} isAdmin={isAdmin} />}
         {FEATURES[page] && <FeaturePage path={page} onOpen={onOpen} />}
-        {page === '/xavfsizlik' && <SafetyPage onOpen={onOpen} />}
+        {page === '/xavfsizlik' && <SafetyPage onOpen={onOpen} isAdmin={isAdmin} />}
+        {page === '/kirish' && <AuthPage onOpen={onOpen} />}
       </main>
-      <Footer onOpen={onOpen} />
+      <Footer onOpen={onOpen} isAdmin={isAdmin} />
     </div>
   );
 }

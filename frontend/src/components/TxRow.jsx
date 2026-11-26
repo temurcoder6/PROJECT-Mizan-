@@ -14,23 +14,23 @@ export default function TxRow({ tx, onEdit, onDelete, showDate = true }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="truncate font-semibold text-slate-900">{tx.title}</span>
+          <span className="truncate font-semibold text-plaster">{tx.title}</span>
           {!income && tx.planned === false && <Badge tone="amber">Kutilmagan</Badge>}
         </div>
-        <div className="truncate text-xs text-slate-500">
+        <div className="truncate text-xs text-plaster/55">
           {cat.uz} · {methodLabel(tx.method)}
           {showDate && ` · ${dateLabel(tx.date)}`}
           {tx.note && ` · ${tx.note}`}
         </div>
       </div>
-      <span className={`shrink-0 text-right font-bold tabular-nums ${income ? 'text-emerald-600' : 'text-slate-900'}`}>
+      <span className={`shrink-0 text-right font-bold tabular-nums ${income ? 'text-turq-soft' : 'text-plaster'}`}>
         {income ? '+' : '−'}
         {money(tx.amount)}
       </span>
       {(onEdit || onDelete) && (
         <div className="flex shrink-0">
           {onEdit && <IconButton label="Tahrirlash" icon={Pencil} onClick={() => onEdit(tx)} />}
-          {onDelete && <IconButton label="O'chirish" icon={Trash2} className="hover:bg-rose-50! hover:text-rose-600!" onClick={() => onDelete(tx)} />}
+          {onDelete && <IconButton label="O'chirish" icon={Trash2} className="hover:bg-rose-500/15! hover:text-rose-300!" onClick={() => onDelete(tx)} />}
         </div>
       )}
     </li>

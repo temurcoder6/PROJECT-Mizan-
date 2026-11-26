@@ -8,7 +8,7 @@ import { exportCSV, exportJSON, useStore } from '../store';
 
 function List({ items, icon: Icon, tone }) {
   return (
-    <ul className="space-y-1.5 text-sm text-slate-700">
+    <ul className="space-y-1.5 text-sm text-plaster/80">
       {items.map((t) => (
         <li key={t} className="flex gap-2">
           <Icon className={`mt-0.5 size-4 shrink-0 ${tone}`} aria-hidden />
@@ -19,9 +19,10 @@ function List({ items, icon: Icon, tone }) {
   );
 }
 
-export default function Settings() {
+export default function Settings({ go }) {
   const store = useStore();
-  const { settings, actions, transactions, debts, goals, profile } = store;
+  const { settings, actions, transactions, debts, goals, profile, auth } = store;
+  const isAdmin = auth.status === 'in' && Boolean(auth.user?.isAdmin);
   const fileRef = useRef(null);
   const [msg, setMsg] = useState('');
   const hasSample = [...transactions, ...debts, ...goals].some((x) => x.sample);
@@ -50,15 +51,15 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <h1 className="text-2xl font-bold text-slate-900">Sozlamalar</h1>
+      <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Sozlamalar</h1>
 
       <Card>
         <CardTitle icon={Sparkles}>Ko'rinish va eslatma</CardTitle>
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-semibold text-slate-800">Animatsiyalar</p>
-              <p className="text-xs text-slate-500">O'chirsangiz, kirish sahifasi va harakatlar sokin bo'ladi (kuchsiz telefonlar uchun).</p>
+              <p className="font-semibold text-plaster">Animatsiyalar</p>
+              <p className="text-xs text-plaster/55">O'chirsangiz, kirish sahifasi va harakatlar sokin bo'ladi (kuchsiz telefonlar uchun).</p>
             </div>
             <Toggle label="Animatsiyalar" checked={settings.animations} onChange={(v) => actions.setSetting('animations', v)} />
           </div>
@@ -82,15 +83,15 @@ export default function Settings() {
           </Field>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-semibold text-slate-800">Javoblarni ovoz chiqarib o'qish</p>
-              <p className="text-xs text-slate-500">Yordamchi javobi avtomatik o'qiladi. Qurilmada shu til uchun ovoz bo'lishi kerak{voiceOutputSupported ? '' : "; bu brauzerda ovoz chiqarish yo'q"}.</p>
+              <p className="font-semibold text-plaster">Javoblarni ovoz chiqarib o'qish</p>
+              <p className="text-xs text-plaster/55">Yordamchi javobi avtomatik o'qiladi. Qurilmada shu til uchun ovoz bo'lishi kerak{voiceOutputSupported ? '' : "; bu brauzerda ovoz chiqarish yo'q"}.</p>
             </div>
             <Toggle label="Javoblarni o'qish" checked={settings.autoSpeak} onChange={(v) => actions.setSetting('autoSpeak', v)} />
           </div>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-semibold text-slate-800">Mikrofon roziligi</p>
-              <p className="text-xs text-slate-500">Yoqilgan bo'lsa, mikrofon tugmasi darhol eshitishni boshlaydi. Ovoz saqlanmaydi.</p>
+              <p className="font-semibold text-plaster">Mikrofon roziligi</p>
+              <p className="text-xs text-plaster/55">Yoqilgan bo'lsa, mikrofon tugmasi darhol eshitishni boshlaydi. Ovoz saqlanmaydi.</p>
             </div>
             <Toggle label="Mikrofon roziligi" checked={settings.voiceConsent} onChange={(v) => actions.setSetting('voiceConsent', v)} />
           </div>
@@ -105,8 +106,8 @@ export default function Settings() {
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-semibold text-slate-800">Kunlik eslatma</p>
-              <p className="text-xs text-slate-500">Kuniga bir marta, yumshoq: «Bugun xarajat bo'ldimi?». Yozgan yoki «xarajat bo'lmadi» deb belgilagan kuni chiqmaydi.</p>
+              <p className="font-semibold text-plaster">Kunlik eslatma</p>
+              <p className="text-xs text-plaster/55">Kuniga bir marta, yumshoq: «Bugun xarajat bo'ldimi?». Yozgan yoki «xarajat bo'lmadi» deb belgilagan kuni chiqmaydi.</p>
             </div>
             <Toggle label="Kunlik eslatma" checked={profile.reminder.enabled} onChange={(v) => actions.updateProfile({ reminder: { ...profile.reminder, enabled: v } })} />
           </div>
@@ -120,9 +121,8 @@ export default function Settings() {
                   Bildirishnomaga ruxsat berish
                 </Button>
               )}
-              <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                Hozircha eslatma ilova (yoki brauzer) ochiq bo'lganda ishlaydi: vaqt kelganda bildirishnoma yoki bosh sahifada eslatma chiqadi. Telefon yopiq bo'lganda keladigan push eslatma uchun server tomonidagi
-                bildirishnoma kerak, u keyingi bosqichda.
+              <p className="rounded-lg border border-ochre/30 bg-ochre/12 px-3 py-2 text-xs text-[#F2C46B]">
+                Eslatma ilova yoki brauzer ochiq bo'lganda ishlaydi: belgilangan vaqtda eslatma chiqadi.
               </p>
             </>
           )}
@@ -131,9 +131,8 @@ export default function Settings() {
 
       <Card>
         <CardTitle icon={Database}>Ma'lumotlaringiz</CardTitle>
-        <p className="mb-3 text-sm text-slate-600">
-          Hamma ma'lumot faqat shu qurilmadagi brauzerda saqlanadi. Hozircha server yo'q, shuning uchun brauzer ma'lumotini tozalasangiz yoki telefonni almashtirsangiz, yuklab
-          olmagan ma'lumot yo'qoladi. Vaqti-vaqti bilan nusxa oling.
+        <p className="mb-3 text-sm text-plaster/70">
+          Hisob ochmasangiz, ma'lumot faqat shu qurilmadagi brauzerda saqlanadi. Hisobga kirsangiz, server bazasi bilan avtomatik sinxronlanadi. Har ehtimolga qarshi vaqti-vaqti bilan JSON yoki CSV nusxa olib turing.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => exportJSON(store)}>
@@ -153,28 +152,41 @@ export default function Settings() {
               Namuna ma'lumotni olib tashlash
             </Button>
           ) : (
-            <Button variant="ghost" size="sm" onClick={actions.loadSample}>
-              Namuna ma'lumot yuklash
-            </Button>
+            isAdmin && (
+              <Button variant="ghost" size="sm" onClick={actions.loadSample}>
+                Namuna ma'lumot yuklash
+              </Button>
+            )
           )}
           <Button variant="danger" size="sm" onClick={wipe}>
             <Trash2 className="size-3.5" /> Hammasini o'chirish
           </Button>
         </div>
-        {msg && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{msg}</p>}
+        {msg && <p className="mt-3 rounded-lg border border-turq/30 bg-turq/15 px-3 py-2 text-sm text-turq-soft">{msg}</p>}
       </Card>
 
-      <Card>
-        <CardTitle icon={Info}>Hozir nima ishlaydi</CardTitle>
-        <List items={WORKS_NOW} icon={Check} tone="text-emerald-600" />
-        <h3 className="mt-5 mb-2 text-sm font-bold text-slate-900">Qurilma va brauzerga bog'liq</h3>
-        <List items={DEPENDS_ON_DEVICE} icon={Info} tone="text-amber-500" />
-        <p className="mt-2 text-xs text-slate-500">
-          Sizning brauzeringizda: ovozli kiritish {voiceInputSupported ? 'bor' : "yo'q"}, ovoz chiqarib o'qish {voiceOutputSupported ? 'bor' : "yo'q"}.
-        </p>
-        <h3 className="mt-5 mb-2 text-sm font-bold text-slate-900">Keyingi bosqich (hali ishlamaydi)</h3>
-        <List items={NEXT_STAGE} icon={Clock} tone="text-slate-400" />
-      </Card>
+      {isAdmin && (
+        <Card>
+          <CardTitle
+            icon={Info}
+            action={
+              <Button size="sm" variant="outline" onClick={() => go?.('admin')}>
+                Admin boshqaruvi
+              </Button>
+            }
+          >
+            Hozir nima ishlaydi (faqat admin uchun)
+          </CardTitle>
+          <List items={WORKS_NOW} icon={Check} tone="text-turq-soft" />
+          <h3 className="mt-5 mb-2 text-sm font-bold text-plaster">Qurilma va brauzerga bog'liq</h3>
+          <List items={DEPENDS_ON_DEVICE} icon={Info} tone="text-[#F2C46B]" />
+          <p className="mt-2 text-xs text-plaster/55">
+            Sizning brauzeringizda: ovozli kiritish {voiceInputSupported ? 'bor' : "yo'q"}, ovoz chiqarib o'qish {voiceOutputSupported ? 'bor' : "yo'q"}.
+          </p>
+          <h3 className="mt-5 mb-2 text-sm font-bold text-plaster">Keyingi bosqich (hali ishlamaydi)</h3>
+          <List items={NEXT_STAGE} icon={Clock} tone="text-plaster/45" />
+        </Card>
+      )}
     </div>
   );
 }

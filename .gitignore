@@ -6,5 +6,8 @@ dist-single/
 *.db-wal
 *.db-shm
 data/
+backend/data/
+*.exe
+backend/public-url.txt
 __pycache__/
 .claude/settings.local.json

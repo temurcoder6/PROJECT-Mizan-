@@ -91,18 +91,17 @@ export function upcomingBills(bills, today, days) {
 
 // Money the user said they have, adjusted only by things recorded AFTER that statement,
 // so past-dated entries added later never get subtracted twice.
-export function cashNow(profile, transactions, debts, goals) {
+export function cashNow(profile, transactions, debts, goals, today = toISODate(new Date())) {
   const since = profile.cashSetAt || 0;
   const sinceDate = profile.cashDate || '';
   let cash = Number(profile.cash) || 0;
   let spentToday = 0;
-  const todayStr = toISODate(new Date());
   for (const t of transactions) {
     if (t.date < sinceDate || (t.createdAt || 0) <= since) continue;
     if (t.type === 'income') cash += t.amount;
     else {
       cash -= t.amount;
-      if (t.date === todayStr) spentToday += t.amount;
+      if (t.date === today) spentToday += t.amount;
     }
   }
   for (const d of debts) {
@@ -123,7 +122,7 @@ export function dailyPlan({ profile, transactions, debts, goals, today }) {
   if (days < 1) return { status: 'income_passed' };
 
   const lastDay = addDays(profile.nextIncome, -1);
-  const { cash, spentToday } = cashNow(profile, transactions, debts, goals);
+  const { cash, spentToday } = cashNow(profile, transactions, debts, goals, today);
 
   const bills = [];
   for (const b of profile.bills) for (const o of billDue(b, today, lastDay)) bills.push({ name: b.name, ...o, billId: b.id });

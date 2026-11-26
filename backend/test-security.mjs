@@ -81,6 +81,7 @@ assert.equal(r1.status, 413); ok("kirmagan foydalanuvchi katta so'rov yubora olm
 const h = (await raw('/')).headers;
 assert.equal(h['x-content-type-options'], 'nosniff');
 assert.match(h['content-security-policy'], /script-src 'self'/);
+assert.match(h['content-security-policy'], /font-src 'self' data:/);
 assert.equal(h['x-powered-by'], undefined);
 const api = await raw('/api/health');
 assert.equal(api.headers['cache-control'], 'no-store'); ok('xavfsizlik sarlavhalari bor, API javoblari keshlanmaydi');

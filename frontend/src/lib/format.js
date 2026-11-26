@@ -6,6 +6,18 @@ export function money(n, currency = "so'm") {
   return `${sign}${Math.abs(v).toLocaleString('en-US').replace(/,/g, ' ')} ${currency}`;
 }
 
+export function formatDigitsInput(raw, maxDigits = 12) {
+  let digits = String(raw ?? '').replace(/\D/g, '');
+  if (!digits) return '';
+  digits = digits.replace(/^0+(?=\d)/, '').slice(0, maxDigits);
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+}
+
+export function parseDigits(raw) {
+  const digits = String(raw ?? '').replace(/\D/g, '');
+  return digits ? Number(digits) : 0;
+}
+
 export function percent(x) {
   return `${Math.round((x || 0) * 100)}%`;
 }

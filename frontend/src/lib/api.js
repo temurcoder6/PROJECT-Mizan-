@@ -26,12 +26,14 @@ async function call(method, path, body) {
 
 export const api = {
   me: () => call('GET', '/me'),
+  authProviders: () => call('GET', '/auth/providers'),
+  unlinkOAuth: (provider) => call('DELETE', `/auth/oauth/${provider}`),
   register: (username, password) => call('POST', '/register', { username, password }),
   login: (username, password) => call('POST', '/login', { username, password }),
   logout: () => call('POST', '/logout', {}),
   getData: () => call('GET', '/data'),
   putData: (payload) => call('PUT', '/data', payload),
-  deleteAccount: (password) => call('DELETE', '/account', { password }),
+  deleteAccount: (payload) => call('DELETE', '/account', typeof payload === 'string' ? { password: payload } : payload),
   changePassword: (oldPassword, newPassword) => call('POST', '/password', { oldPassword, newPassword }),
   sessions: () => call('GET', '/sessions'),
   revokeSession: (id) => call('DELETE', `/sessions/${id}`),
@@ -44,4 +46,7 @@ export const api = {
   recoveryCode: (password) => call('POST', '/recovery-code', { password }),
   support: (payload) => call('POST', '/support', payload),
   mySupport: () => call('GET', '/support/mine'),
+  adminOverview: () => call('GET', '/admin/overview'),
+  adminTickets: () => call('GET', '/admin/tickets'),
+  adminReply: (payload) => call('POST', '/admin/tickets/reply', payload),
 };

@@ -4,7 +4,7 @@ import { categoryLabel, methodLabel } from './lib/categories';
 import { addDays, todayISO, uid } from './lib/format';
 import { DEFAULT_PROFILE, normProfile, profileHasData } from './lib/plan';
 import { downloadFile, toCSV, useStored } from './lib/storage';
-import { cleanDebts, cleanGoals, cleanTransactions } from './lib/sanitize';
+import { cleanCards, cleanDebts, cleanGoals, cleanTransactions } from './lib/sanitize';
 
 // ?demo=1 runs the real app on separate storage with sample data (used inside the phone on the website).
 export const DEMO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo');
@@ -23,6 +23,7 @@ const KEYS = {
   tx: `${P}transactions`,
   debts: `${P}debts`,
   goals: `${P}goals`,
+  cards: `${P}cards`,
   settings: `${P}settings`,
   profile: `${P}profile`,
   rev: `${P}rev`,
@@ -56,7 +57,7 @@ const lsSet = (k, v) => {
   }
 };
 
-const sigOf = (d) => JSON.stringify([d.transactions, d.debts, d.goals, d.profile]);
+const sigOf = (d) => JSON.stringify([d.transactions, d.debts, d.goals, d.profile, d.cards || []]);
 
 function unionById(a, b) {
   const m = new Map(a.map((x) => [x.id, x]));
@@ -72,6 +73,7 @@ function mergeData(server, local) {
     transactions: unionById(server.transactions, local.transactions),
     debts: unionById(server.debts, local.debts),
     goals: unionById(server.goals, local.goals),
+    cards: unionById(server.cards || [], local.cards || []),
     profile: normProfile({
       ...base,
       bills: unionById(sp.bills, lp.bills),
@@ -108,7 +110,12 @@ function buildSample(today) {
     { id: uid(), name: 'Telefon', target: 3000000, saved: 600000, deadline: addDays(today, 90), createdAt: ago(20), adds: [], sample: true },
     { id: uid(), name: "O'qish kontrakti", target: 8000000, saved: 1500000, deadline: addDays(today, 240), createdAt: ago(30), adds: [], sample: true },
   ];
-  return { tx, debts, goals };
+  const cards = [
+    { id: uid(), label: 'Asosiy Uzcard', network: 'uzcard', last4: '4812', balance: 620000, createdAt: Date.now() - 5000 },
+    { id: uid(), label: 'Humo maosh', network: 'humo', last4: '9034', balance: 430000, createdAt: Date.now() - 4000 },
+    { id: uid(), label: 'Naqd hamyon', network: 'naqd', last4: '', balance: 150000, createdAt: Date.now() - 3000 },
+  ];
+  return { tx, debts, goals, cards };
 }
 
 // The sample is written before any state is created, so several demo frames on one page all see the same data.
@@ -118,6 +125,7 @@ if (DEMO && !lsGet(`${P}seeded`, false)) {
   lsSet(KEYS.tx, s.tx);
   lsSet(KEYS.debts, s.debts);
   lsSet(KEYS.goals, s.goals);
+  lsSet(KEYS.cards, s.cards);
   lsSet(KEYS.profile, { ...DEFAULT_PROFILE, cash: 1200000, cashDate: today, cashSetAt: Date.now(), nextIncome: addDays(today, 9) });
   lsSet(`${P}seeded`, true);
 }
@@ -126,6 +134,7 @@ export function StoreProvider({ children }) {
   const [transactions, setTransactions] = useStored(KEYS.tx, []);
   const [debts, setDebts] = useStored(KEYS.debts, []);
   const [goals, setGoals] = useStored(KEYS.goals, []);
+  const [cards, setCards] = useStored(KEYS.cards, []);
   const [rawProfile, setRawProfile] = useStored(KEYS.profile, DEFAULT_PROFILE);
   const [rawSettings, setSettings] = useStored(KEYS.settings, DEFAULT_SETTINGS);
   const [chat, setChat] = useState([]);
@@ -142,9 +151,9 @@ export function StoreProvider({ children }) {
 
   const latest = useRef({});
   useEffect(() => {
-    latest.current = { transactions, debts, goals, profile };
-  }, [transactions, debts, goals, profile]);
-  const dataSig = useMemo(() => sigOf({ transactions, debts, goals, profile }), [transactions, debts, goals, profile]);
+    latest.current = { transactions, debts, goals, profile, cards };
+  }, [transactions, debts, goals, profile, cards]);
+  const dataSig = useMemo(() => sigOf({ transactions, debts, goals, profile, cards }), [transactions, debts, goals, profile, cards]);
 
   const revRef = useRef(Number(lsGet(KEYS.rev, 0)) || 0);
   const dirtyRef = useRef(Boolean(lsGet(KEYS.dirty, false)));
@@ -161,17 +170,19 @@ export function StoreProvider({ children }) {
 
   const apply = useCallback((s) => {
     const p = normProfile(s.profile);
-    syncedSig.current = sigOf({ transactions: s.transactions, debts: s.debts, goals: s.goals, profile: p });
+    const c = Array.isArray(s.cards) ? s.cards : [];
+    syncedSig.current = sigOf({ transactions: s.transactions, debts: s.debts, goals: s.goals, profile: p, cards: c });
     setTransactions(s.transactions);
     setDebts(s.debts);
     setGoals(s.goals);
+    setCards(c);
     setRawProfile(p);
     revRef.current = s.revision;
     lsSet(KEYS.rev, s.revision);
     setDirty(false);
     setConflict(null);
     setSync({ state: 'saved', at: Date.now(), error: '' });
-  }, [setTransactions, setDebts, setGoals, setRawProfile]);
+  }, [setTransactions, setDebts, setGoals, setCards, setRawProfile]);
 
   const pushNow = useCallback(async (force = false, baseRevision) => {
     const d = latest.current;
@@ -206,7 +217,7 @@ export function StoreProvider({ children }) {
     try {
       const s = await api.getData();
       const L = latest.current;
-      const localHas = L.transactions.length > 0 || L.debts.length > 0 || L.goals.length > 0 || profileHasData(L.profile);
+      const localHas = L.transactions.length > 0 || L.debts.length > 0 || L.goals.length > 0 || L.cards.length > 0 || profileHasData(L.profile);
       const sameUser = lsGet(KEYS.syncUser, null) === user.id;
       if (!s.hasData && localHas) {
         revRef.current = s.revision;
@@ -300,6 +311,12 @@ export function StoreProvider({ children }) {
         return r;
       },
       markRecovery: () => setAuth((a) => (a.user ? { ...a, user: { ...a.user, hasRecovery: true } } : a)),
+      setUser: (user) => setAuth((a) => ({ ...a, user })),
+      async unlinkOAuth(provider) {
+        const r = await api.unlinkOAuth(provider);
+        if (r.user) setAuth((a) => ({ ...a, user: r.user }));
+        return r;
+      },
       async logout() {
         await api.logout().catch(() => {});
         setAuth({ status: 'out', user: null });
@@ -312,8 +329,8 @@ export function StoreProvider({ children }) {
         setSync({ state: 'idle', at: null, error: '' });
         ready.current = false;
       },
-      async deleteAccount(password) {
-        await api.deleteAccount(password);
+      async deleteAccount(payload) {
+        await api.deleteAccount(payload);
         setAuth({ status: 'out', user: null });
         setSync({ state: 'idle', at: null, error: '' });
         lsSet(KEYS.syncUser, null);
@@ -368,6 +385,9 @@ export function StoreProvider({ children }) {
       addGoal: (g) => setGoals((l) => [...l, { ...g, id: uid(), createdAt: todayISO(), adds: [] }]),
       updateGoal: patchList(setGoals),
       deleteGoal: removeFrom(setGoals),
+      addCard: (c) => setCards((l) => [...l, { ...c, id: uid(), createdAt: Date.now() }]),
+      updateCard: patchList(setCards),
+      deleteCard: removeFrom(setCards),
       addToGoal: (id, amount) =>
         setGoals((l) =>
           l.map((g) => {
@@ -415,22 +435,24 @@ export function StoreProvider({ children }) {
         setTransactions(cleanTransactions(data.transactions));
         setDebts(cleanDebts(data.debts));
         setGoals(cleanGoals(data.goals));
+        setCards(cleanCards(data.cards));
         setRawProfile(normProfile(data.profile));
       },
       clearAll: () => {
         setTransactions([]);
         setDebts([]);
         setGoals([]);
+        setCards([]);
         setRawProfile(DEFAULT_PROFILE);
         setChat([]);
         setPending(null);
       },
     };
-  }, [setTransactions, setDebts, setGoals, setRawProfile, setSettings]);
+  }, [setTransactions, setDebts, setGoals, setCards, setRawProfile, setSettings]);
 
   const value = useMemo(
-    () => ({ transactions, debts, goals, profile, settings, chat, pending, actions, auth, sync, conflict, authActions }),
-    [transactions, debts, goals, profile, settings, chat, pending, actions, auth, sync, conflict, authActions],
+    () => ({ transactions, debts, goals, cards, profile, settings, chat, pending, actions, auth, sync, conflict, authActions }),
+    [transactions, debts, goals, cards, profile, settings, chat, pending, actions, auth, sync, conflict, authActions],
   );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
@@ -439,8 +461,8 @@ export function useStore() {
   return useContext(StoreContext);
 }
 
-export function exportJSON({ transactions, debts, goals, profile }) {
-  const data = { app: 'pulim', version: 3, exportedAt: new Date().toISOString(), transactions, debts, goals, profile };
+export function exportJSON({ transactions, debts, goals, cards, profile }) {
+  const data = { app: 'pulim', version: 3, exportedAt: new Date().toISOString(), transactions, debts, goals, cards: cards || [], profile };
   downloadFile(`mizan-${todayISO()}.json`, JSON.stringify(data, null, 2), 'application/json');
 }
 

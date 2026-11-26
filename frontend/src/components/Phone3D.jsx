@@ -22,7 +22,7 @@ const shadowShift = (t) => `translateX(calc(-50% + ${-t.y * 2.2}px))`;
 // Yaltiroq qatlam konteynerdan 2 marta katta; uni siljitamiz (fonni qayta chizish o'rniga).
 const glareShift = (t) => `translate(${(t.gx - 50) / 2}%, ${(t.gy - 50) / 2}%)`;
 
-export default function Phone3D({ route, className = '', iframeRef, runKey = 0, fresh = false, showCaption = true, still = false, screen = null, dark = false }) {
+export default function Phone3D({ route, className = '', iframeRef, runKey = 0, fresh = false, showCaption = true, still = false, screen = null, dark = true }) {
   const { settings } = useStore();
   const animate = settings.animations && !still;
   const motion = animate && !LITE;
@@ -140,8 +140,8 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
                 className="p-[6px]"
                 style={{ borderRadius: `calc(${R} - 5px)`, background: '#040b1a', boxShadow: '0 0 0 1px rgba(201,150,43,.32)' }}
               >
-                <div className="relative overflow-hidden bg-white" style={{ borderRadius: `calc(${R} - 11px)` }}>
-                  <div className={`relative flex h-9 items-center justify-between px-7 pt-1.5 text-[11px] font-bold ${dark ? 'bg-[#0E2A5C] text-white' : 'bg-white text-slate-900'}`} aria-hidden>
+                <div className="relative overflow-hidden bg-[#060E1F]" style={{ borderRadius: `calc(${R} - 11px)` }}>
+                  <div className={`relative flex h-9 items-center justify-between px-7 pt-1.5 text-[11px] font-bold ${dark ? 'bg-[#071633] text-plaster' : 'bg-[#0E2A5C] text-plaster'}`} aria-hidden>
                     <span>9:41</span>
                     <span className="flex items-center gap-1">
                       <span className="flex items-end gap-[1.5px]">
@@ -171,12 +171,12 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
                       ref={iframeRef}
                       title="Mizan ilovasi (namuna ma'lumot bilan)"
                       src={src}
-                      className="block h-[556px] w-full border-0 bg-white"
+                      className="block h-[556px] w-full border-0 bg-[#060E1F]"
                       style={{ transform: 'translateZ(0)' }}
                     />
                   )}
-                  <div className={`flex h-[16px] items-center justify-center ${dark ? 'bg-[#071633]' : 'bg-white'}`} aria-hidden>
-                    <span className={`h-1 w-24 rounded-full ${dark ? 'bg-white/80' : 'bg-slate-900/80'}`} />
+                  <div className="flex h-[16px] items-center justify-center bg-[#060E1F]" aria-hidden>
+                    <span className="h-1 w-24 rounded-full bg-plaster/70" />
                   </div>
                   {/* oyna yaltirog'i: statik chiziq + siljiydigan dog' */}
                   <span

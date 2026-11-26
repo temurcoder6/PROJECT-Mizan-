@@ -39,7 +39,7 @@ export default function Transactions() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900">Yozuvlar</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Yozuvlar</h1>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setForm({ type: 'income' })}>
             <Plus className="size-4" /> Daromad
@@ -53,15 +53,15 @@ export default function Transactions() {
       <Card className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1">
           <IconButton label="Oldingi oy" icon={ChevronLeft} onClick={() => setRef(shiftMonth(ref, -1))} />
-          <span className="min-w-32 text-center font-semibold text-slate-900">{monthLabel(ref)}</span>
+          <span className="min-w-32 text-center font-semibold text-plaster">{monthLabel(ref)}</span>
           <IconButton label="Keyingi oy" icon={ChevronRight} onClick={() => setRef(shiftMonth(ref, 1))} />
         </div>
         <div className="flex gap-4 text-sm tabular-nums">
-          <span className="text-emerald-600">+{money(s.income)}</span>
-          <span className="text-slate-700">−{money(s.expense)}</span>
+          <span className="text-turq-soft">+{money(s.income)}</span>
+          <span className="text-plaster/80">−{money(s.expense)}</span>
         </div>
         <label className="relative block w-full sm:w-48">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-plaster/45" />
           <input type="search" aria-label="Yozuvlardan qidirish" placeholder="Qidirish" value={query} onChange={(e) => { setQuery(e.target.value); setLimit(80); }} className={`${inputCls} pl-8`} />
         </label>
         <Segmented
@@ -81,10 +81,10 @@ export default function Transactions() {
         ) : (
           groups.map((g) => (
             <div key={g.date} className="mb-2 last:mb-0">
-              <div className="sticky top-14 z-[1] -mx-1 bg-white/95 px-1 py-1 text-xs font-semibold tracking-wide text-slate-400 uppercase backdrop-blur">
+              <div className="sticky top-16 z-[1] -mx-1 rounded bg-[#081734]/95 px-2 py-1 text-xs font-semibold tracking-wide text-ochre uppercase backdrop-blur">
                 {dateLabel(g.date)}
               </div>
-              <ul className="divide-y divide-slate-100">
+              <ul className="divide-y divide-plaster/10">
                 {g.items.map((t) => (
                   <TxRow key={t.id} tx={t} showDate={false} onEdit={setForm} onDelete={remove} />
                 ))}

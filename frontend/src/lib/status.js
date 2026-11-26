@@ -11,7 +11,7 @@ export const WORKS_NOW = [
   "Bir nechta jamg'arma maqsadi, haftalik/oylik formula, «Agar sarflasam-chi?» va keyingi kichik qadam",
   "Yordamchi: matndan yozuv tayyorlaydi (tasdiqdan keyin saqlanadi), o'zbek (lotin/kirill), rus va ingliz tilida javob beradi",
   "Shubhali SMS yoki havolani tushuntirish (matnni o'zingiz qo'yasiz, tekshiruv qurilmada)",
-  "Hisob va SQLite ma'lumotlar bazasi: serverda saqlash, qurilmalar orasida sinxronlash, ziddiyatni hal qilish, tiklash kodi bilan parolni tiklash (backend ishlab turganda)",
+  "Hisob va SQLite ma'lumotlar bazasi: serverda saqlash, qurilmalar orasida sinxronlash, ziddiyatni hal qilish, Google/GitHub OAuth (kalitlar sozlanganda) va tiklash kodi bilan parolni tiklash (backend ishlab turganda)",
   "Yordam va shikoyat xizmati: murojaat yuborish, holat va javobni ko'rish",
   "Telegram bot (@mizan_uzbot): sayt bilan bitta hisob va baza; «non 5000» yozasiz, tasdiqlaysiz; /reja, /hisobot, kunlik eslatma (server va bot ishlab turganda)",
   "Kirilgan qurilmalar ro'yxati va birini uzish",
@@ -28,6 +28,6 @@ export const DEPENDS_ON_DEVICE = [
 export const NEXT_STAGE = [
   "Ilova uchun brauzer push eslatma (hozircha eslatma Telegram bot orqali keladi)",
   "Katta til modeli (AI) — faqat serverda, maxfiy kalit brauzerga yozilmaydi",
-  "Pochta yoki Google orqali kirish (ixtiyoriy), PostgreSQL ga o'tish (foydalanuvchilar ko'payganda)",
+  "Pochta orqali kirish (ixtiyoriy), PostgreSQL ga o'tish (foydalanuvchilar ko'payganda)",
   "Oilaviy umumiy maqsad, PDF hisobot, Android ilova",
 ];

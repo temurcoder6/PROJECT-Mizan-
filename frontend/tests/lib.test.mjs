@@ -5,7 +5,7 @@ import { repliesFor } from '../src/lib/assistant/replies.js';
 import { detectLang, scanNumbers, isAmbiguous } from '../src/lib/assistant/nlp.js';
 import { matchCategory, guessCategory } from '../src/lib/categories.js';
 import { debtPlan, debtRemaining, debtStatus, detectRecurring, goalPlan, summarize, whatIf } from '../src/lib/finance.js';
-import { addDays, daysBetween } from '../src/lib/format.js';
+import { addDays, daysBetween, formatDigitsInput, parseDigits } from '../src/lib/format.js';
 import { savingStreak, weeklySummary } from '../src/lib/insights.js';
 import { billDue, cashNow, dailyPlan, DEFAULT_PROFILE, missingDays, monthlyLoad, nextBillDate, normProfile } from '../src/lib/plan.js';
 import { checkMessage } from '../src/lib/scam.js';
@@ -68,8 +68,19 @@ test('kunlik reja: qarz va maqsadga qo\'shilgan pul pul qoldig\'iga ta\'sir qila
     { id: 'b', direction: 'borrowed', amount: 30000, date: TODAY, createdAt: since + 1, payments: [] },
   ];
   const goals = [{ id: 'g', adds: [{ amount: 7000, at: since + 5 }] }];
-  const r = cashNow(profile({ cashSetAt: since }), [], debts, goals);
+  const r = cashNow(profile({ cashSetAt: since }), [], debts, goals, TODAY);
   assert.equal(r.cash, 850000 - 20000 + 5000 + 30000 - 7000);
+});
+
+test('kunlik reja: cashNow bugungi xarajatni berilgan today sanasi bo\'yicha sanaydi', () => {
+  const since = 1000;
+  const tx = [
+    { id: '1', type: 'expense', amount: 12000, date: TODAY, createdAt: since + 1 },
+    { id: '2', type: 'expense', amount: 9000, date: addDays(TODAY, -1), createdAt: since + 2 },
+  ];
+  const r = cashNow(profile({ cashSetAt: since }), tx, [], [], TODAY);
+  assert.equal(r.spentToday, 12000);
+  assert.equal(r.cash, 850000 - 12000);
 });
 
 test('davriy to\'lov: oylik, haftalik, oy oxiri qisqartirish', () => {
@@ -305,4 +316,17 @@ test('sarlavhaga so\'zli raqam kirmaydi', () => {
   const t = ask('bugun yolga on ikki ming sarfladim').reply.drafts[0].data;
   assert.equal(t.amount, 12000);
   assert.ok(!/ikki|\bon\b/.test(t.title), t.title);
+});
+
+test('summa kiritishda raqamlar orasiga bo\'shliq qo\'yiladi', () => {
+  assert.equal(formatDigitsInput(''), '');
+  assert.equal(formatDigitsInput('0'), '0');
+  assert.equal(formatDigitsInput('000'), '0');
+  assert.equal(formatDigitsInput('00500'), '500');
+  assert.equal(formatDigitsInput('12000'), '12 000');
+  assert.equal(formatDigitsInput('850000'), '850 000');
+  assert.equal(formatDigitsInput('1250000'), '1 250 000');
+  assert.equal(formatDigitsInput('1 500 000 so\'m'), '1 500 000');
+  assert.equal(parseDigits('1 500 000'), 1500000);
+  assert.equal(parseDigits(''), 0);
 });

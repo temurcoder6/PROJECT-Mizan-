@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Check, Plus, Undo2 } from 'lucide-react';
 import { categoryLabel, categoryOf, matchCategory } from '../lib/categories';
-import { money, todayISO } from '../lib/format';
+import { money, parseDigits, todayISO } from '../lib/format';
 import { normalize } from '../lib/text';
 import { useStore } from '../store';
-import { Card, CardTitle, inputCls } from './ui';
+import { Card, CardTitle, MoneyInput, inputCls } from './ui';
 
 const DEFAULTS = ['oziq', 'transport', 'bozor', 'kommunal', 'salomatlik', 'boshqa'];
 
@@ -45,7 +45,7 @@ export default function QuickEntry() {
     return { cats: cats.map((id) => ({ id, last: lastTitle[id] })), repeats, method: exp[0]?.method || 'naqd' };
   }, [transactions]);
 
-  const value = Number(amount.replace(/\s/g, '')) || 0;
+  const value = parseDigits(amount);
 
   const save = ({ category, name, sum }) => {
     const t = {
@@ -80,15 +80,14 @@ export default function QuickEntry() {
     <Card>
       <CardTitle icon={Plus}>Tez kiritish</CardTitle>
       <div className="flex gap-2">
-        <input
+        <MoneyInput
           ref={inputRef}
           className={`${inputCls} text-lg font-semibold`}
-          inputMode="numeric"
           placeholder="Summa, masalan 12 000"
           aria-label="Xarajat summasi"
           value={amount}
-          onChange={(e) => {
-            setAmount(e.target.value.replace(/[^\d\s]/g, ''));
+          onChange={(v) => {
+            setAmount(v);
             setHint('');
           }}
         />
@@ -96,12 +95,12 @@ export default function QuickEntry() {
       {showTitle ? (
         <input className={`${inputCls} mt-2`} placeholder="Nomi (ixtiyoriy)" value={title} onChange={(e) => setTitle(e.target.value)} />
       ) : (
-        <button type="button" onClick={() => setShowTitle(true)} className="mt-1.5 text-xs font-semibold text-slate-500 hover:text-slate-800">
+        <button type="button" onClick={() => setShowTitle(true)} className="mt-1.5 text-xs font-semibold text-plaster/55 hover:text-plaster">
           + Nom yozish (shart emas)
         </button>
       )}
 
-      <p className="mt-3 mb-1.5 text-xs font-semibold tracking-wide text-slate-400 uppercase">Toifani bosing, saqlanadi</p>
+      <p className="mt-3 mb-1.5 text-xs font-semibold tracking-wide text-plaster/45 uppercase">Toifani bosing, saqlanadi</p>
       <div className="flex flex-wrap gap-2">
         {cats.map((c) => {
           const cat = categoryOf(c.id);
@@ -110,8 +109,8 @@ export default function QuickEntry() {
               key={c.id}
               type="button"
               onClick={() => pickCategory(c)}
-              className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold ring-1 transition active:scale-95"
-              style={{ background: `${cat.color}14`, color: cat.color, boxShadow: `inset 0 0 0 1px ${cat.color}40` }}
+              className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold text-plaster ring-1 transition hover:brightness-110 active:scale-95"
+              style={{ background: `${cat.color}1c`, boxShadow: `inset 0 0 0 1px ${cat.color}55` }}
             >
               <span className="size-2 rounded-full" style={{ background: cat.color }} />
               {cat.uz}
@@ -122,14 +121,14 @@ export default function QuickEntry() {
 
       {repeats.length > 0 && (
         <>
-          <p className="mt-3 mb-1.5 text-xs font-semibold tracking-wide text-slate-400 uppercase">Yaqinda yozilganlar (bir bosishda takrorlash)</p>
+          <p className="mt-3 mb-1.5 text-xs font-semibold tracking-wide text-plaster/45 uppercase">Yaqinda yozilganlar (bir bosishda takrorlash)</p>
           <div className="flex flex-wrap gap-2">
             {repeats.map((r) => (
               <button
                 key={r.title}
                 type="button"
                 onClick={() => save({ category: r.category, name: r.title, sum: value > 0 ? value : r.amount })}
-                className="rounded-full bg-slate-100 px-3 py-1.5 text-sm text-slate-700 transition hover:bg-slate-200 active:scale-95"
+                className="rounded-full border border-plaster/12 bg-[#071633] px-3 py-1.5 text-sm text-plaster/85 transition hover:border-ochre/40 hover:text-plaster active:scale-95"
               >
                 {r.title} · {money(value > 0 ? value : r.amount)}
               </button>
@@ -138,15 +137,15 @@ export default function QuickEntry() {
         </>
       )}
 
-      {hint && <p className="mt-2 text-sm text-amber-700">{hint}</p>}
+      {hint && <p className="mt-2 text-sm text-[#F2C46B]">{hint}</p>}
       {toast && (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-900" role="status">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-turq/30 bg-turq/15 px-3 py-2 text-sm text-turq-soft" role="status">
           <span className="flex items-center gap-2">
             <Check className="size-4" /> Saqlandi: {toast.text}
           </span>
           <button
             type="button"
-            className="flex items-center gap-1 font-semibold text-emerald-800 underline"
+            className="flex items-center gap-1 font-semibold text-plaster underline"
             onClick={() => {
               actions.deleteTx(toast.id);
               setToast(null);

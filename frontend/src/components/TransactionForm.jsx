@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, PAYMENT_METHODS, categoryLabel, matchCategory } from '../lib/categories';
-import { todayISO } from '../lib/format';
-import { Button, Field, Modal, Segmented, inputCls } from './ui';
+import { formatDigitsInput, parseDigits, todayISO } from '../lib/format';
+import { Button, Field, Modal, MoneyInput, Segmented, inputCls } from './ui';
 
 export default function TransactionForm({ initial, onSave, onClose }) {
   const editing = Boolean(initial?.id);
@@ -14,7 +14,7 @@ export default function TransactionForm({ initial, onSave, onClose }) {
     planned: true,
     note: '',
     ...initial,
-    amount: initial?.amount ? String(initial.amount) : '',
+    amount: initial?.amount ? formatDigitsInput(Math.round(initial.amount)) : '',
   }));
   const [catTouched, setCatTouched] = useState(editing);
   const [error, setError] = useState('');
@@ -36,7 +36,7 @@ export default function TransactionForm({ initial, onSave, onClose }) {
 
   const submit = (e) => {
     e.preventDefault();
-    const amount = Number(String(f.amount).replace(/\s/g, ''));
+    const amount = parseDigits(f.amount);
     if (!amount || amount <= 0) return setError("Summani to'g'ri kiriting.");
     if (!f.date) return setError('Sanani tanlang.');
     onSave({
@@ -69,7 +69,7 @@ export default function TransactionForm({ initial, onSave, onClose }) {
             <input autoFocus className={inputCls} value={f.title} onChange={(e) => onTitle(e.target.value)} placeholder={f.type === 'income' ? 'masalan: maosh' : 'masalan: non, taksi'} />
           </Field>
           <Field label="Summa (so'm)" className="col-span-2 sm:col-span-1">
-            <input className={inputCls} inputMode="numeric" value={f.amount} onChange={(e) => set('amount', e.target.value.replace(/[^\d\s]/g, ''))} placeholder="12 000" />
+            <MoneyInput value={f.amount} onChange={(v) => set('amount', v)} placeholder="12 000" />
           </Field>
           <Field label="Toifa" hint={!catTouched && f.title ? "Nomidan avtomatik tanlandi, o'zgartirish mumkin." : undefined} className="col-span-2">
             <select
@@ -102,7 +102,7 @@ export default function TransactionForm({ initial, onSave, onClose }) {
         </div>
         {f.type === 'expense' && (
           <div>
-            <span className="mb-1.5 block text-xs font-semibold tracking-wide text-slate-500 uppercase">Xarajat turi</span>
+            <span className="mb-1.5 block text-xs font-semibold tracking-wide text-plaster/55 uppercase">Xarajat turi</span>
             <Segmented
               className="w-full"
               value={f.planned ? 'planned' : 'unplanned'}
@@ -117,7 +117,7 @@ export default function TransactionForm({ initial, onSave, onClose }) {
         <Field label="Izoh (ixtiyoriy)">
           <textarea className={`${inputCls} min-h-18`} value={f.note} onChange={(e) => set('note', e.target.value)} />
         </Field>
-        {error && <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
+        {error && <p className="rounded-lg bg-rose-500/15 px-3 py-2 text-sm text-rose-300 ring-1 ring-rose-400/25">{error}</p>}
         <div className="flex gap-2 pt-1">
           <Button variant="ghost" className="flex-1" onClick={onClose}>
             Bekor qilish

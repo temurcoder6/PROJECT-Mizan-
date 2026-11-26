@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { EXPENSE_CATEGORIES } from '../lib/categories';
-import { dateLabel, monthLabel, parseISODate, shiftMonth, toISODate, todayISO } from '../lib/format';
+import { dateLabel, monthLabel, parseDigits, parseISODate, shiftMonth, toISODate, todayISO } from '../lib/format';
 import { daysWithEntries, firstEntryDate, missingDays } from '../lib/plan';
 import { useStore } from '../store';
 import TxRow from './TxRow';
-import { Button, Card, CardTitle, Field, IconButton, Modal, inputCls } from './ui';
+import { Button, Card, CardTitle, Field, IconButton, Modal, MoneyInput, inputCls } from './ui';
 
 export function DayModal({ date, onClose }) {
   const { transactions, profile, actions } = useStore();
@@ -18,7 +18,7 @@ export function DayModal({ date, onClose }) {
 
   const save = (e) => {
     e.preventDefault();
-    const v = Number(amount.replace(/\s/g, ''));
+    const v = parseDigits(amount);
     if (!v || v <= 0) return setError('Summani kiriting.');
     actions.addTx({ type: 'expense', title: category === 'kunjami' ? 'Kun jami' : EXPENSE_CATEGORIES.find((c) => c.id === category).uz, amount: Math.round(v), category, date, method: 'naqd', planned: true, note: '', dayTotal: true });
     setAmount('');
@@ -27,11 +27,11 @@ export function DayModal({ date, onClose }) {
 
   return (
     <Modal title={dateLabel(date)} onClose={onClose}>
-      <p className="mb-3 text-sm text-slate-600">
+      <p className="mb-3 text-sm text-plaster/75">
         Mayda xarajatlarni alohida yozish shart emas. Shu kun uchun umumiy summani kiritsangiz yetadi.
       </p>
       {entries.length > 0 && (
-        <ul className="mb-3 divide-y divide-slate-100 rounded-xl bg-slate-50 px-3">
+        <ul className="mb-3 divide-y divide-plaster/10 rounded-xl border border-plaster/12 bg-[#071633] px-3">
           {entries.map((t) => (
             <TxRow key={t.id} tx={t} showDate={false} onDelete={(x) => actions.deleteTx(x.id)} />
           ))}
@@ -40,7 +40,7 @@ export function DayModal({ date, onClose }) {
       <form onSubmit={save} className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
           <Field label="Shu kun jami (so'm)">
-            <input autoFocus className={inputCls} inputMode="numeric" value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^\d\s]/g, ''))} placeholder="masalan 85 000" />
+            <MoneyInput autoFocus value={amount} onChange={setAmount} placeholder="masalan 85 000" />
           </Field>
           <Field label="Toifa">
             <select className={inputCls} value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -52,7 +52,7 @@ export function DayModal({ date, onClose }) {
             </select>
           </Field>
         </div>
-        {error && <p className="text-sm text-rose-700">{error}</p>}
+        {error && <p className="text-sm text-rose-300">{error}</p>}
         <div className="flex flex-wrap gap-2">
           <Button type="submit">Saqlash</Button>
           {expenses.length === 0 && (
@@ -86,10 +86,10 @@ export function CalendarModal({ onClose, onPick }) {
     <Modal title="Kunlar kalendari" onClose={onClose}>
       <div className="mb-3 flex items-center justify-between">
         <IconButton label="Oldingi oy" icon={ChevronLeft} onClick={() => setRef(shiftMonth(ref, -1))} />
-        <span className="font-semibold">{monthLabel(ref)}</span>
+        <span className="font-semibold text-plaster">{monthLabel(ref)}</span>
         <IconButton label="Keyingi oy" icon={ChevronRight} onClick={() => setRef(shiftMonth(ref, 1))} />
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-slate-400">
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-plaster/45">
         {['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'].map((d) => (
           <div key={d}>{d}</div>
         ))}
@@ -108,18 +108,18 @@ export function CalendarModal({ onClose, onPick }) {
               disabled={future}
               onClick={() => onPick(d)}
               className={`flex aspect-square items-center justify-center rounded-lg text-sm font-semibold transition ${
-                future ? 'text-slate-300' : filled ? 'bg-emerald-100 text-emerald-800' : none ? 'bg-slate-100 text-slate-500' : missing ? 'bg-amber-50 text-amber-800 ring-1 ring-amber-200' : 'text-slate-600 hover:bg-slate-100'
-              } ${d === today ? 'outline-2 outline-emerald-600' : ''}`}
+                future ? 'text-plaster/20' : filled ? 'bg-turq/20 text-turq-soft ring-1 ring-turq/30' : none ? 'bg-plaster/10 text-plaster/55' : missing ? 'bg-ochre/18 text-[#F2C46B] ring-1 ring-ochre/35' : 'text-plaster/75 hover:bg-plaster/10'
+              } ${d === today ? 'outline-2 outline-turq' : ''}`}
             >
               {Number(d.slice(8))}
             </button>
           );
         })}
       </div>
-      <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
-        <span className="flex items-center gap-1"><span className="size-3 rounded bg-emerald-100" /> yozilgan</span>
-        <span className="flex items-center gap-1"><span className="size-3 rounded bg-amber-50 ring-1 ring-amber-200" /> yozilmagan</span>
-        <span className="flex items-center gap-1"><span className="size-3 rounded bg-slate-100" /> xarajat bo'lmagan</span>
+      <div className="mt-3 flex flex-wrap gap-3 text-xs text-plaster/55">
+        <span className="flex items-center gap-1"><span className="size-3 rounded bg-turq/25" /> yozilgan</span>
+        <span className="flex items-center gap-1"><span className="size-3 rounded bg-ochre/20 ring-1 ring-ochre/40" /> yozilmagan</span>
+        <span className="flex items-center gap-1"><span className="size-3 rounded bg-plaster/12" /> xarajat bo'lmagan</span>
       </div>
     </Modal>
   );
@@ -139,13 +139,13 @@ export function MissingDaysCard() {
         Unutilgan kunni to'ldirish
       </CardTitle>
       {missing.length === 0 ? (
-        <p className="text-sm text-slate-600">So'nggi 7 kunda yozilmagan kun yo'q. Xohlagan kunni kalendardan ochib, umumiy summani qo'shishingiz mumkin.</p>
+        <p className="text-sm text-plaster/70">So'nggi 7 kunda yozilmagan kun yo'q. Xohlagan kunni kalendardan ochib, umumiy summani qo'shishingiz mumkin.</p>
       ) : (
         <>
-          <p className="mb-2 text-sm text-slate-600">Bu kunlar uchun yozuv yo'q. Xohlasangiz, umumiy summani kiriting. Shart emas.</p>
+          <p className="mb-2 text-sm text-plaster/70">Bu kunlar uchun yozuv yo'q. Xohlasangiz, umumiy summani kiriting. Shart emas.</p>
           <div className="flex flex-wrap gap-2">
             {missing.map((d) => (
-              <button key={d} type="button" onClick={() => setDay(d)} className="rounded-full bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-800 ring-1 ring-amber-200 transition hover:bg-amber-100">
+              <button key={d} type="button" onClick={() => setDay(d)} className="rounded-full bg-ochre/18 px-3 py-1.5 text-sm font-semibold text-[#F2C46B] ring-1 ring-ochre/35 transition hover:bg-ochre/28">
                 {dateLabel(d)}
               </button>
             ))}
@@ -153,7 +153,7 @@ export function MissingDaysCard() {
         </>
       )}
       {todayEmpty && (
-        <button type="button" onClick={() => setDay(today)} className="mt-3 text-sm font-semibold text-emerald-700 underline">
+        <button type="button" onClick={() => setDay(today)} className="mt-3 text-sm font-semibold text-turq-soft underline">
           Bugun uchun jami summa yoki «xarajat bo'lmadi»
         </button>
       )}

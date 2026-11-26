@@ -7,8 +7,9 @@
   "engines": { "node": ">=24" },
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
-    "test": "node test.mjs && node test-bot.mjs && node test-security.mjs && node test-proxy.mjs && node test-tools.mjs",
+    "test": "node test.mjs && node test-bot.mjs && node test-security.mjs && node test-proxy.mjs && node test-tools.mjs && node test-oauth.mjs && node test-api-hardening.mjs",
     "tickets": "node --env-file-if-exists=.env tickets.mjs",
+    "admin": "node --env-file-if-exists=.env admin.mjs",
     "stats": "node --env-file-if-exists=.env stats.mjs",
     "restore": "node --env-file-if-exists=.env restore.mjs"
   }

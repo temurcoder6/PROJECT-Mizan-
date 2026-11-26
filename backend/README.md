@@ -35,6 +35,9 @@ npm test
 |---|---|
 | `POST /api/register` | Hisob ochish (`username`, `password` ≥ 8 belgi) |
 | `POST /api/login`, `POST /api/logout`, `GET /api/me` | Kirish, chiqish, joriy foydalanuvchi |
+| `GET /api/auth/providers` | Google va GitHub OAuth sozlangan-sozlanmaganini tekshirish |
+| `GET /api/auth/google`, `GET /api/auth/github` | Google/GitHub orqali kirish yoki ulangan hisobga qo'shish (PKCE + `state` himoyasi) |
+| `DELETE /api/auth/oauth/:provider` | Google/GitHub ulanishini uzish (boshqa kirish usuli bo'lsa) |
 | `GET /api/data` | Foydalanuvchining hamma ma'lumoti va `revision` |
 | `PUT /api/data` | Hammasini saqlash. `baseRevision` serverdagidan farq qilsa `409` va serverdagi ma'lumot qaytadi |
 | `DELETE /api/account` | Parolni tasdiqlab, hisob va ma'lumotni o'chirish |
@@ -102,9 +105,23 @@ Hisobni o'chirgan foydalanuvchining murojaatlari ham o'chadi. Javob muddati kafo
 - Umumiy chegara: bir manzildan daqiqasiga 300 so'rov; kirish va parol xatolariga alohida chegara.
 - `COOKIE_SECURE=1` bo'lsa, `Strict-Transport-Security` sarlavhasi ham yuboriladi.
 
+## Google va GitHub orqali kirish (localhost:8787 uchun sozlash)
+
+Server haqiqiy OAuth 2.0 bilan ishlaydi. Lokal sinov (`http://localhost:8787`) uchun `backend/.env` fayliga quyidagi kalitlarni qo'ying:
+
+1. **Google Cloud Console** → *APIs & Services* → *Credentials* → *Create Credentials* → *OAuth client ID* (*Web application*):
+   - Authorized JavaScript origins: `http://localhost:8787`
+   - Authorized redirect URIs: `http://localhost:8787/api/auth/google/callback`
+   - `.env` ga yozing: `GOOGLE_CLIENT_ID=...` va `GOOGLE_CLIENT_SECRET=...`
+2. **GitHub** → *Settings* → *Developer settings* → *OAuth Apps* → *New OAuth App*:
+   - Homepage URL: `http://localhost:8787`
+   - Authorization callback URL: `http://localhost:8787/api/auth/github/callback`
+   - `.env` ga yozing: `GITHUB_CLIENT_ID=...` va `GITHUB_CLIENT_SECRET=...`
+3. `.env` da `PUBLIC_URL=http://localhost:8787` qoldiring va `npm start` ni qayta ishga tushiring. (Kalitlar bo'sh bo'lsa, sayt bu usullarni halol holatda «sozlanmagan» deb ko'rsatadi.)
+
 ## Cheklovlar (ochiq aytamiz)
 
-- **Parolni tiklash faqat tiklash kodi bilan.** Ro'yxatdan o'tganda bir martalik kod ko'rsatiladi (bazada faqat xeshi turadi). Kod ham, parol ham yo'qolsa, hisobga kirib bo'lmaydi: pochta yoki Google orqali kirish keyingi bosqichda ixtiyoriy bo'ladi. Pasport yoki boshqa hujjat so'ralmaydi va so'ralmaydi.
+- **Parolni tiklash faqat tiklash kodi bilan** (agar foydalanuvchi nom+parol bilan ochgan bo'lsa). Google yoki GitHub bilan ochilgan hisobga parol keyinchalik Sozlamalardan qo'shilishi mumkin. Pasport yoki boshqa hujjat so'ralmaydi.
 - Sinxronlash butun ma'lumotni almashtirish usulida. Ikki qurilmada bir vaqtda o'zgartirilsa, ziddiyat oynasi chiqadi; birlashtirishda oldin o'chirilgan yozuv qayta paydo bo'lishi mumkin (o'chirish belgisi saqlanmaydi).
 - SQLite bir server uchun mo'ljallangan. Foydalanuvchilar ko'payganda yoki bir nechta server kerak bo'lganda PostgreSQL ga o'tish kerak; jadvallar shunga mos tuzilgan.
 - `https` va monitoring hali sozlanmagan. Haqiqiy foydalanuvchilarga ochishdan oldin serverni `https` ostiga qo'ying va `data/backups/` papkasini boshqa joyga ham nusxalab turing.
@@ -118,7 +135,8 @@ Hisobni o'chirgan foydalanuvchining murojaatlari ham o'chadi. Javob muddati kafo
 
 ## Egasi uchun buyruqlar
 
+- `npm run admin -- foydalanuvchi_nomi` — foydalanuvchiga web admin huquqini berish (`off` bilan olish mumkin; yoki `.env` da `ADMIN_USERNAMES=admin`).
 - `npm run stats` — umumiy sonlar (hisoblar, yozuvlar, ulangan botlar). Shaxsiy yozuv chiqmaydi.
 - `npm run tickets` — murojaatlar.
 - `node restore.mjs` — zaxiradan tiklash.
-- Baza sxemasi `PRAGMA user_version` bilan versiyalanadi: server ochilganda yetishmagan migratsiyalar o'zi qo'llanadi (hozir v2).
+- Baza sxemasi `PRAGMA user_version` bilan versiyalanadi: server ochilganda yetishmagan migratsiyalar o'zi qo'llanadi (hozir v5).

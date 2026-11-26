@@ -22,7 +22,7 @@ export default function Reports() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-slate-900">Hisobot</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Hisobot</h1>
         <Button variant="outline" disabled={!items.length} onClick={() => exportCSV(items, `mizan-hisobot-${from}_${to}.csv`)}>
           <Download className="size-4" /> CSV yuklab olish
         </Button>
@@ -42,7 +42,7 @@ export default function Reports() {
         />
         <div className="flex items-center gap-1">
           <IconButton label="Oldingi" icon={ChevronLeft} onClick={() => shift(-1)} />
-          <span className="min-w-40 text-center font-semibold text-slate-900">{label}</span>
+          <span className="min-w-40 text-center font-semibold text-plaster">{label}</span>
           <IconButton label="Keyingi" icon={ChevronRight} onClick={() => shift(1)} />
         </div>
       </Card>
@@ -65,15 +65,15 @@ export default function Reports() {
                 return (
                   <li key={c.id}>
                     <div className="mb-1 flex justify-between text-sm">
-                      <span className="flex items-center gap-2 font-medium text-slate-700">
+                      <span className="flex items-center gap-2 font-medium text-plaster/85">
                         <span className="size-2.5 rounded-full" style={{ background: cat.color }} />
                         {cat.uz}
                       </span>
-                      <span className="tabular-nums text-slate-500">
+                      <span className="tabular-nums text-plaster/60">
                         {money(c.sum)} · {percent(c.pct)}
                       </span>
                     </div>
-                    <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                    <div className="h-2.5 overflow-hidden rounded-full bg-[#061228] ring-1 ring-plaster/10">
                       <div className="h-full rounded-full" style={{ width: `${c.pct * 100}%`, background: cat.color }} />
                     </div>
                   </li>
@@ -90,22 +90,22 @@ export default function Reports() {
               <Empty title="Ma'lumot yo'q" />
             ) : (
               <>
-                <div className="flex h-4 overflow-hidden rounded-full bg-slate-100">
-                  <div className="bg-emerald-500" style={{ width: `${(s.planned / s.expense) * 100}%` }} />
-                  <div className="bg-amber-400" style={{ width: `${(s.unplanned / s.expense) * 100}%` }} />
+                <div className="flex h-4 overflow-hidden rounded-full bg-[#061228] ring-1 ring-plaster/10">
+                  <div className="bg-turq" style={{ width: `${(s.planned / s.expense) * 100}%` }} />
+                  <div className="bg-ochre" style={{ width: `${(s.unplanned / s.expense) * 100}%` }} />
                 </div>
                 <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                   <div>
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                      <span className="size-2.5 rounded-full bg-emerald-500" /> Rejalangan
+                    <div className="flex items-center gap-1.5 text-plaster/60">
+                      <span className="size-2.5 rounded-full bg-turq" /> Rejalangan
                     </div>
-                    <div className="font-bold tabular-nums">{money(s.planned)}</div>
+                    <div className="font-bold text-plaster tabular-nums">{money(s.planned)}</div>
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5 text-slate-500">
-                      <span className="size-2.5 rounded-full bg-amber-400" /> Kutilmagan
+                    <div className="flex items-center gap-1.5 text-plaster/60">
+                      <span className="size-2.5 rounded-full bg-ochre" /> Kutilmagan
                     </div>
-                    <div className="font-bold tabular-nums">{money(s.unplanned)}</div>
+                    <div className="font-bold text-plaster tabular-nums">{money(s.unplanned)}</div>
                   </div>
                 </div>
               </>
@@ -120,8 +120,8 @@ export default function Reports() {
               <ul className="space-y-1.5 text-sm">
                 {s.methods.map((m) => (
                   <li key={m.id} className="flex justify-between">
-                    <span className="text-slate-600">{methodLabel(m.id)}</span>
-                    <span className="font-semibold tabular-nums">
+                    <span className="text-plaster/70">{methodLabel(m.id)}</span>
+                    <span className="font-semibold text-plaster tabular-nums">
                       {money(m.sum)} · {percent(m.pct)}
                     </span>
                   </li>
@@ -143,7 +143,7 @@ export default function Reports() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-slate-400 uppercase">
+                  <tr className="text-left text-xs text-plaster/45 uppercase">
                     <th className="py-2 font-semibold">Nomi</th>
                     <th className="py-2 font-semibold">Necha marta</th>
                     <th className="py-2 font-semibold">Qanchalik tez-tez</th>
@@ -151,20 +151,20 @@ export default function Reports() {
                     <th className="py-2 text-right font-semibold">Yiliga</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-plaster/10">
                   {habits.map((h) => (
                     <tr key={h.key}>
-                      <td className="py-2 font-semibold text-slate-900">{h.title}</td>
-                      <td className="py-2 tabular-nums">{h.count}</td>
-                      <td className="py-2 text-slate-600">{frequencyLabel(h.interval)}</td>
-                      <td className="py-2 text-right font-semibold tabular-nums">{money(h.monthly)}</td>
-                      <td className="py-2 text-right tabular-nums text-slate-500">{money(h.yearly)}</td>
+                      <td className="py-2 font-semibold text-plaster">{h.title}</td>
+                      <td className="py-2 text-plaster/85 tabular-nums">{h.count}</td>
+                      <td className="py-2 text-plaster/65">{frequencyLabel(h.interval)}</td>
+                      <td className="py-2 text-right font-semibold text-plaster tabular-nums">{money(h.monthly)}</td>
+                      <td className="py-2 text-right tabular-nums text-plaster/60">{money(h.yearly)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-slate-500">
+            <p className="mt-3 text-xs text-plaster/50">
               Hisob: o'rtacha summa × (yozuvlar soni − 1) ÷ birinchi va oxirgi yozuv orasidagi kunlar × 30. Hozirgi odat davom etsa shunday bo'ladi; sizning yozuvlaringizga asoslangan.
             </p>
           </>

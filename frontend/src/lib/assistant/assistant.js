@@ -53,7 +53,6 @@ function sameName(a, b) {
 function txDrafts(proc, lang, today, type, forcedAmount) {
   const date = detectDate(proc, today);
   const method = detectMethod(proc) || 'naqd';
-  const { amounts } = scanNumbers(proc, lang);
   // Bo'laklarga ajratamiz, agar kamida ikkitasida o'z summasi bo'lsa ("nonga 5000 va taksiga o'n ming").
   const parts = splitClauses(proc);
   const clauses = parts.length > 1 && parts.filter((p) => scanNumbers(p, lang).amounts.length).length > 1 ? parts : [proc];

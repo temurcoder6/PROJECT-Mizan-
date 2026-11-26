@@ -35,3 +35,19 @@ export function cleanGoals(list) {
     .filter((g) => isObj(g) && num(g.target) && g.target > 0)
     .map((g) => ({ ...g, id: str(String(g.id ?? ''), 64) || `g${Math.random().toString(36).slice(2, 10)}`, name: str(g.name), saved: num(g.saved) && g.saved >= 0 ? g.saved : 0, adds: Array.isArray(g.adds) ? g.adds.filter((a) => isObj(a) && num(a.amount)) : [] }));
 }
+
+export function cleanCards(list) {
+  if (!Array.isArray(list)) return [];
+  const allowed = new Set(['uzcard', 'humo', 'visa', 'mastercard', 'naqd', 'boshqa']);
+  return list
+    .slice(0, 50)
+    .filter((c) => isObj(c))
+    .map((c) => ({
+      id: str(String(c.id ?? ''), 64) || `c${Math.random().toString(36).slice(2, 10)}`,
+      label: str(c.label, 60) || 'Karta',
+      network: allowed.has(c.network) ? c.network : 'uzcard',
+      last4: String(c.last4 ?? '').replace(/\D/g, '').slice(-4),
+      balance: num(c.balance) && c.balance >= 0 ? c.balance : 0,
+      createdAt: num(c.createdAt) ? Math.trunc(c.createdAt) : 0,
+    }));
+}

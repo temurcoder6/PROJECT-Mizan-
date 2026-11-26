@@ -20,35 +20,35 @@ export default function RecurringCard() {
         Davriy to'lovlar
       </CardTitle>
       {profile.bills.length === 0 ? (
-        <p className="text-sm text-slate-600">Ijara, internet, kredit kabi har oy yoki har hafta takrorlanadigan to'lovlarni kiriting. Ular kunlik rejadan ajratib qo'yiladi va oldindan ko'rinadi.</p>
+        <p className="text-sm text-plaster/70">Ijara, internet, kredit kabi har oy yoki har hafta takrorlanadigan to'lovlarni kiriting. Ular kunlik rejadan ajratib qo'yiladi va oldindan ko'rinadi.</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="rounded-xl bg-slate-50 p-3">
-              <div className="text-xs text-slate-500">Davriy yuk (oyiga)</div>
-              <div className="font-bold tabular-nums">{money(load)}</div>
+            <div className="rounded-xl border border-plaster/12 bg-[#071633] p-3">
+              <div className="text-xs text-plaster/55">Davriy yuk (oyiga)</div>
+              <div className="font-bold text-plaster tabular-nums">{money(load)}</div>
             </div>
-            <div className="rounded-xl bg-slate-50 p-3">
-              <div className="text-xs text-slate-500">Keyingi 30 kunda</div>
-              <div className="font-bold tabular-nums">{money(total30)}</div>
+            <div className="rounded-xl border border-plaster/12 bg-[#071633] p-3">
+              <div className="text-xs text-plaster/55">Keyingi 30 kunda</div>
+              <div className="font-bold text-plaster tabular-nums">{money(total30)}</div>
             </div>
           </div>
           {next.length > 0 ? (
-            <ul className="mt-3 divide-y divide-slate-100 text-sm">
+            <ul className="mt-3 divide-y divide-plaster/10 text-sm">
               {next.slice(0, 8).map((b) => (
                 <li key={`${b.billId}-${b.date}`} className="flex items-center justify-between gap-3 py-2">
-                  <span className="min-w-0 truncate">
-                    <b>{b.name}</b> <span className="text-slate-500">· {dateLabel(b.date)}</span> {b.repeat === 'weekly' && <Badge tone="blue">Har hafta</Badge>}
+                  <span className="min-w-0 truncate text-plaster">
+                    <b>{b.name}</b> <span className="text-plaster/55">· {dateLabel(b.date)}</span> {b.repeat === 'weekly' && <Badge tone="blue">Har hafta</Badge>}
                     {b.repeat === 'monthly' && <Badge tone="blue">Har oy</Badge>}
                   </span>
-                  <span className="shrink-0 font-semibold tabular-nums">{money(b.amount)}</span>
+                  <span className="shrink-0 font-semibold text-plaster tabular-nums">{money(b.amount)}</span>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-sm text-slate-500">Keyingi 30 kunda to'lov yo'q.</p>
+            <p className="mt-3 text-sm text-plaster/55">Keyingi 30 kunda to'lov yo'q.</p>
           )}
-          <p className="mt-3 text-xs text-slate-500">Hisob: oylik to'lov o'z summasi, haftalik to'lov summa × 52 ÷ 12. Bir martalik to'lovlar davriy yukka kirmaydi.</p>
+          <p className="mt-3 text-xs text-plaster/50">Hisob: oylik to'lov o'z summasi, haftalik to'lov summa × 52 ÷ 12. Bir martalik to'lovlar davriy yukka kirmaydi.</p>
         </>
       )}
       {open && <BillsModal onClose={() => setOpen(false)} />}

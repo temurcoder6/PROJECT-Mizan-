@@ -17,6 +17,7 @@ const COMMANDS = [
   ['bugun', 'Bugun yozilganlar'],
   ['hafta', 'Oxirgi 7 kun hisoboti'],
   ['hisobot', 'Shu oy hisoboti'],
+  ['kartalar', 'Kartalar va hamyonlar'],
   ['ochir', "Oxirgi yozuvni o'chirish (tasdiq bilan)"],
   ['qarz', 'Qarzlar'],
   ['maqsad', 'Jamg\'arma maqsadlari'],
@@ -144,6 +145,30 @@ function weekText(d, day) {
   return lines.join('\n');
 }
 
+const CARD_NET_LABEL = { uzcard: 'Uzcard', humo: 'Humo', visa: 'Visa', mastercard: 'Mastercard', naqd: 'Naqd hamyon', boshqa: 'Boshqa' };
+
+function cardsText(d) {
+  const cards = d.cards || [];
+  if (!cards.length) {
+    return "Hali karta yoki hamyon qo'shilmagan. Saytda «Kartalar» bo'limidan qo'shing (faqat nom, oxirgi 4 raqam va qoldiq saqlanadi).";
+  }
+  const lines = ['Kartalar va hamyonlar:'];
+  let total = 0;
+  let cardSum = 0;
+  let cashSum = 0;
+  for (const c of cards.slice(0, 20)) {
+    const bal = Number(c.balance) || 0;
+    total += bal;
+    if (c.network === 'naqd') cashSum += bal;
+    else cardSum += bal;
+    const net = CARD_NET_LABEL[c.network] || 'Karta';
+    const mask = c.network === 'naqd' ? 'naqd' : c.last4 ? `•••• ${c.last4}` : 'raqamsiz';
+    lines.push(`• ${c.label} (${net}, ${mask}): ${money(bal)}`);
+  }
+  lines.push('', `Kartalar jami: ${money(cardSum)}`, `Naqd jami: ${money(cashSum)}`, `Umumiy qoldiq: ${money(total)}`);
+  return lines.join('\n');
+}
+
 function parseDate(arg, day) {
   const a = arg.trim();
   let m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(a);
@@ -160,12 +185,30 @@ function parseDate(arg, day) {
   return null;
 }
 
+const DRAFT_TTL_MS = 24 * 3600000;
+const MAX_DRAFTS_PER_CHAT = 25;
+
 export function createBot({ call, today = todayISO, clock = () => new Date() }) {
   const sessions = new Map();
   const linkTries = new Map();
   const S = (chat) => {
+    if (sessions.size > 5000) {
+      for (const [k, v] of sessions) {
+        if (!v.pending && v.drafts.size === 0) sessions.delete(k);
+        if (sessions.size <= 3000) break;
+      }
+    }
     if (!sessions.has(chat)) sessions.set(chat, { pending: null, drafts: new Map(), choices: [] });
-    return sessions.get(chat);
+    const s = sessions.get(chat);
+    const cutoff = Date.now() - DRAFT_TTL_MS;
+    for (const [id, dr] of s.drafts) {
+      if ((dr._at || 0) < cutoff) s.drafts.delete(id);
+    }
+    while (s.drafts.size > MAX_DRAFTS_PER_CHAT) {
+      const oldest = s.drafts.keys().next().value;
+      s.drafts.delete(oldest);
+    }
+    return s;
   };
 
   const send = (chat, text, keyboard) =>
@@ -179,7 +222,9 @@ export function createBot({ call, today = todayISO, clock = () => new Date() }) 
     s.choices = reply.choices || [];
     if (reply.drafts?.length) {
       await send(chat, reply.text);
+      const now = Date.now();
       for (const dr of reply.drafts) {
+        dr._at = now;
         s.drafts.set(dr.id, dr);
         await send(chat, draftText(dr), [[{ text: 'Saqlash', callback_data: `ok:${dr.id}` }, { text: 'Bekor qilish', callback_data: `no:${dr.id}` }]]);
       }
@@ -195,6 +240,7 @@ export function createBot({ call, today = todayISO, clock = () => new Date() }) 
     if (cmd === 'hisobot') return send(chat, reportText(loadAll(userId), day));
     if (cmd === 'bugun') return send(chat, todayText(loadAll(userId), day));
     if (cmd === 'hafta') return send(chat, weekText(loadAll(userId), day));
+    if (cmd === 'kartalar' || cmd === 'karta') return send(chat, cardsText(loadAll(userId)));
     if (cmd === 'ochir') {
       const last = loadAll(userId).transactions.filter((t) => !t.sample).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))[0];
       if (!last) return send(chat, "O'chirish uchun yozuv yo'q.");
@@ -322,11 +368,15 @@ export function createBot({ call, today = todayISO, clock = () => new Date() }) 
     if (cmd === 'yordam' || cmd === 'help') return send(chat, HELP);
 
     if (cmd === 'ulash') {
+      const now = Date.now();
+      if (linkTries.size > 5000) {
+        for (const [k, v] of linkTries) if (v.until <= now) linkTries.delete(k);
+      }
       const tries = linkTries.get(chat) || { n: 0, until: 0 };
-      if (tries.until > Date.now() && tries.n >= 5) return send(chat, "Juda ko'p xato urinish. Bir soatdan keyin qayta urinib ko'ring.");
+      if (tries.until > now && tries.n >= 5) return send(chat, "Juda ko'p xato urinish. Bir soatdan keyin qayta urinib ko'ring.");
       const userId = arg ? consumeLinkCode(arg, chat) : null;
       if (!userId) {
-        linkTries.set(chat, { n: tries.until > Date.now() ? tries.n + 1 : 1, until: tries.until > Date.now() ? tries.until : Date.now() + 3600000 });
+        linkTries.set(chat, { n: tries.until > now ? tries.n + 1 : 1, until: tries.until > now ? tries.until : now + 3600000 });
         return send(chat, "Kod noto'g'ri yoki muddati o'tgan (10 daqiqa). Saytda yangi kod oling va /ulash KOD yozing.");
       }
       linkTries.delete(chat);
@@ -344,15 +394,19 @@ export function createBot({ call, today = todayISO, clock = () => new Date() }) 
     const day = today();
     const hhmm = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     for (const { chat_id: chat, user_id: userId } of allChats()) {
-      const d = loadAll(userId);
-      const r = d.profile.reminder;
-      if (!r.enabled || hhmm < r.time || r.last === day) continue;
-      mutate(userId, (x) => {
-        x.profile.reminder.last = day;
-      });
-      const done = d.transactions.some((t) => t.type === 'expense' && t.date === day) || d.profile.noSpend.includes(day);
-      if (done) continue;
-      await send(chat, "Bugun xarajat bo'ldimi? Shunchaki yozing, masalan: «non 5000». Bo'lmagan bo'lsa, tugmani bosing.", [[{ text: "Bugun xarajat bo'lmadi", callback_data: 'ns' }]]);
+      try {
+        const d = loadAll(userId);
+        const r = d.profile.reminder;
+        if (!r.enabled || hhmm < r.time || r.last === day) continue;
+        mutate(userId, (x) => {
+          x.profile.reminder.last = day;
+        });
+        const done = d.transactions.some((t) => t.type === 'expense' && t.date === day) || d.profile.noSpend.includes(day);
+        if (done) continue;
+        await send(chat, "Bugun xarajat bo'ldimi? Shunchaki yozing, masalan: «non 5000». Bo'lmagan bo'lsa, tugmani bosing.", [[{ text: "Bugun xarajat bo'lmadi", callback_data: 'ns' }]]);
+      } catch (e) {
+        console.error(`Telegram eslatma xatosi (chat=${chat}):`, e?.message || e);
+      }
     }
   }
 
@@ -362,11 +416,17 @@ export function createBot({ call, today = todayISO, clock = () => new Date() }) 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export function startBot(token) {
+  const ac = new AbortController();
+  let stopped = false;
+
   const call = async (method, params = {}) => {
+    const timeoutMs = method === 'getUpdates' ? 40000 : 12000;
+    const signal = AbortSignal.any([ac.signal, AbortSignal.timeout(timeoutMs)]);
     const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params),
+      signal,
     });
     const j = await res.json();
     if (!j.ok) throw new Error(`${method}: ${j.description}`);
@@ -374,7 +434,6 @@ export function startBot(token) {
   };
   const bot = createBot({ call });
   let offset = 0;
-  let stopped = false;
 
   call('getMe')
     .then((me) => console.log(`Telegram bot ishga tushdi: @${me.username}`))
@@ -394,14 +453,18 @@ export function startBot(token) {
           }
         }
       } catch (e) {
+        if (stopped || e?.name === 'AbortError') break;
         console.error('Telegram bilan aloqa xatosi:', e.message);
         await sleep(5000);
       }
     }
   })();
 
-  setInterval(() => bot.tick().catch((e) => console.error('Eslatma xatosi:', e.message)), 60000).unref();
+  const tickTimer = setInterval(() => bot.tick().catch((e) => console.error('Eslatma xatosi:', e.message)), 60000);
+  tickTimer.unref();
   return () => {
     stopped = true;
+    clearInterval(tickTimer);
+    ac.abort();
   };
 }

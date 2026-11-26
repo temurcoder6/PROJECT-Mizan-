@@ -24,28 +24,28 @@ export default function GoalGame({ goal, progress }) {
   const done = progress >= 1;
 
   return (
-    <div className={`mt-3 flex items-center gap-4 rounded-2xl p-3 ${done ? 'bg-amber-50 ring-1 ring-amber-200' : 'bg-emerald-50/60'}`}>
+    <div className={`mt-3 flex items-center gap-4 rounded-2xl border p-3 ${done ? 'border-ochre/40 bg-ochre/12' : 'border-turq/25 bg-[#071633]/85'}`}>
       <div className="relative size-20 shrink-0">
         <svg viewBox="0 0 80 80" className="size-20 -rotate-90" aria-hidden>
-          <circle cx="40" cy="40" r={r} fill="none" stroke="#d1fae5" strokeWidth="9" />
+          <circle cx="40" cy="40" r={r} fill="none" stroke="rgba(244,241,234,0.12)" strokeWidth="9" />
           <circle
             cx="40"
             cy="40"
             r={r}
             fill="none"
-            stroke={done ? '#f59e0b' : '#10b981'}
+            stroke={done ? '#C9962B' : '#1FA6A0'}
             strokeWidth="9"
             strokeLinecap="round"
             strokeDasharray={`${Math.min(progress, 1) * c} ${c}`}
             className={settings.animations ? 'transition-[stroke-dasharray] duration-700' : ''}
           />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-sm font-extrabold text-slate-800 tabular-nums">
-          {done ? <Trophy className="size-6 text-amber-500" /> : percent(progress)}
+        <span className="absolute inset-0 flex items-center justify-center text-sm font-extrabold text-plaster tabular-nums">
+          {done ? <Trophy className="size-6 text-ochre" /> : percent(progress)}
         </span>
       </div>
       <div className="min-w-0 flex-1">
-        <p className="font-bold text-slate-900">{level}</p>
+        <p className="font-bold text-plaster">{level}</p>
         <div className="mt-1.5 flex items-center gap-1.5" role="list" aria-label="Bosqichlar">
           {MILESTONES.map((m) => {
             const reached = progress >= m;
@@ -54,18 +54,18 @@ export default function GoalGame({ goal, progress }) {
                 key={m}
                 role="listitem"
                 title={`${Math.round(m * 100)}%`}
-                className={`flex size-6 items-center justify-center rounded-full text-[10px] font-bold ${reached ? 'bg-emerald-500 text-white' : 'bg-white text-slate-400 ring-1 ring-slate-200'}`}
+                className={`flex size-6 items-center justify-center rounded-full text-[10px] font-bold ${reached ? 'bg-turq text-cobalt-night' : 'bg-[#060E1F] text-plaster/50 ring-1 ring-plaster/15'}`}
               >
                 {reached ? <Check className="size-3.5" /> : Math.round(m * 100)}
               </span>
             );
           })}
         </div>
-        <p className="mt-1.5 text-xs text-slate-600">
+        <p className="mt-1.5 text-xs text-plaster/65">
           {next ? `${Math.round(next * 100)}% gacha yana ${money(toNext)}.` : 'Hamma bosqich ochildi.'}
         </p>
         {streak > 0 && (
-          <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-orange-700">
+          <p className="mt-1 flex items-center gap-1 text-xs font-semibold text-[#F2C46B]">
             <Flame className="size-3.5" /> {streak} hafta ketma-ket haftalik reja bajarildi
           </p>
         )}

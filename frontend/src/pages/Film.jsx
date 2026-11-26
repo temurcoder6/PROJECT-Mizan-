@@ -226,16 +226,16 @@ export default function Film({ onExit }) {
   const ctrl = `transition-opacity duration-500 ${idle && run > 0 && !done ? 'opacity-0' : 'opacity-100'}`;
 
   return (
-    <div className={`relative min-h-dvh overflow-hidden bg-[#0B1B16] text-white ${idle && run > 0 && !done ? 'cursor-none' : ''}`}>
-      <div className="pointer-events-none absolute -top-40 left-1/2 size-[44rem] -translate-x-1/2 rounded-full bg-[#C8F169]/10 blur-3xl" aria-hidden />
+    <div className={`relative min-h-dvh overflow-hidden bg-[#060E1F] text-plaster ${idle && run > 0 && !done ? 'cursor-none' : ''}`}>
+      <div className="pointer-events-none absolute -top-40 left-1/2 size-[44rem] -translate-x-1/2 rounded-full bg-cobalt/40 blur-3xl" aria-hidden />
 
       <div className={`absolute inset-x-0 top-0 z-30 flex items-center justify-between gap-3 p-4 ${ctrl}`}>
-        <button type="button" onClick={onExit} className="flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/20">
+        <button type="button" onClick={onExit} className="flex items-center gap-2 rounded-full border border-plaster/15 bg-plaster/10 px-4 py-2 text-sm font-semibold hover:bg-plaster/20">
           <ArrowLeft className="size-4" /> Saytga
         </button>
         <div className="hidden flex-wrap justify-center gap-1.5 md:flex" aria-label="Bo'limlar">
           {CHAPTERS.map((t, i) => (
-            <span key={t} className={`rounded-full px-3 py-1 text-xs font-bold transition ${chapter === i ? 'bg-[#C8F169] text-[#0B1B16]' : i < chapter ? 'bg-white/20 text-white' : 'bg-white/5 text-white/40'}`}>
+            <span key={t} className={`rounded-full px-3 py-1 text-xs font-bold transition ${chapter === i ? 'bg-turq text-cobalt-night' : i < chapter ? 'bg-plaster/20 text-plaster' : 'bg-plaster/5 text-plaster/40'}`}>
               {t}
             </span>
           ))}
@@ -243,15 +243,15 @@ export default function Film({ onExit }) {
         <div className="flex gap-2">
           {run > 0 && (
             <>
-              <button type="button" aria-label={paused ? 'Davom ettirish' : "To'xtatish"} onClick={() => setPaused((p) => !p)} className="rounded-full bg-white/10 p-2.5 hover:bg-white/20">
+              <button type="button" aria-label={paused ? 'Davom ettirish' : "To'xtatish"} onClick={() => setPaused((p) => !p)} className="rounded-full border border-plaster/15 bg-plaster/10 p-2.5 hover:bg-plaster/20">
                 {paused ? <Play className="size-4" /> : <Pause className="size-4" />}
               </button>
-              <button type="button" aria-label="Boshidan" onClick={start} className="rounded-full bg-white/10 p-2.5 hover:bg-white/20">
+              <button type="button" aria-label="Boshidan" onClick={start} className="rounded-full border border-plaster/15 bg-plaster/10 p-2.5 hover:bg-plaster/20">
                 <RotateCcw className="size-4" />
               </button>
             </>
           )}
-          <button type="button" aria-label="To'liq ekran" onClick={toggleFull} className="rounded-full bg-white/10 p-2.5 hover:bg-white/20">
+          <button type="button" aria-label="To'liq ekran" onClick={toggleFull} className="rounded-full border border-plaster/15 bg-plaster/10 p-2.5 hover:bg-plaster/20">
             {full ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
           </button>
         </div>
@@ -264,13 +264,13 @@ export default function Film({ onExit }) {
       </div>
 
       {run === 0 && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0B1B16]/92 px-6 text-center backdrop-blur-sm">
-          <h1 className="font-serif text-5xl font-bold tracking-tight sm:text-7xl">Mizan</h1>
-          <p className="mt-3 max-w-xl text-lg text-white/70">Bugun qancha sarflasam bo'ladi? Haqiqiy ilova o'zi ishlab ko'rsatadi. Davomiyligi 2 daqiqa 40 soniya.</p>
-          <button type="button" onClick={start} className="mt-8 inline-flex items-center gap-2 rounded-full bg-[#C8F169] px-8 py-4 text-lg font-bold text-[#0B1B16] hover:brightness-95">
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#060E1F]/92 px-6 text-center backdrop-blur-sm">
+          <h1 className="font-display text-5xl font-semibold tracking-tight sm:text-7xl">Mizan</h1>
+          <p className="mt-3 max-w-xl text-lg text-plaster/70">Bugun qancha sarflasam bo'ladi? Haqiqiy ilova o'zi ishlab ko'rsatadi. Davomiyligi 2 daqiqa 40 soniya.</p>
+          <button type="button" onClick={start} className="mt-8 inline-flex items-center gap-2 rounded-full bg-turq px-8 py-4 text-lg font-bold text-cobalt-night hover:bg-[#32BDB6]">
             <Play className="size-5" /> Boshlash
           </button>
-          <ul className="mt-8 max-w-md space-y-1.5 text-left text-sm text-white/55">
+          <ul className="mt-8 max-w-md space-y-1.5 text-left text-sm text-plaster/55">
             <li>• Yozib olish uchun: «To'liq ekran» ni bosing va OBS bilan oynani yozing.</li>
             <li>• Pastdagi matnni o'z ovozingiz bilan o'qing.</li>
             <li>• Bo'sh joy: to'xtatish va davom ettirish.</li>
@@ -279,15 +279,15 @@ export default function Film({ onExit }) {
       )}
 
       {done && (
-        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#0B1B16]/94 px-6 text-center backdrop-blur-sm">
-          <h2 className="font-serif text-5xl font-bold tracking-tight sm:text-6xl">Mizan</h2>
-          <p className="mt-3 text-xl text-[#C8F169]">Sinab ko'ring</p>
-          <p className="mt-2 max-w-md text-sm text-white/60">Ma'lumotingiz sizniki: yuklab olish va o'chirish istalgan vaqtda mumkin.</p>
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#060E1F]/94 px-6 text-center backdrop-blur-sm">
+          <h2 className="font-display text-5xl font-semibold tracking-tight sm:text-6xl">Mizan</h2>
+          <p className="mt-3 text-xl text-turq-soft">Sinab ko'ring</p>
+          <p className="mt-2 max-w-md text-sm text-plaster/60">Ma'lumotingiz sizniki: yuklab olish va o'chirish istalgan vaqtda mumkin.</p>
           <div className="mt-8 flex gap-3">
-            <button type="button" onClick={start} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-6 py-3 font-bold hover:bg-white/20">
+            <button type="button" onClick={start} className="inline-flex items-center gap-2 rounded-full border border-plaster/15 bg-plaster/10 px-6 py-3 font-bold hover:bg-plaster/20">
               <RotateCcw className="size-4" /> Qayta
             </button>
-            <button type="button" onClick={onExit} className="inline-flex items-center gap-2 rounded-full bg-[#C8F169] px-6 py-3 font-bold text-[#0B1B16]">
+            <button type="button" onClick={onExit} className="inline-flex items-center gap-2 rounded-full bg-turq px-6 py-3 font-bold text-cobalt-night">
               Saytga
             </button>
           </div>
@@ -296,19 +296,19 @@ export default function Film({ onExit }) {
 
       {tap && (
         <span className="pointer-events-none fixed z-40 -translate-x-1/2 -translate-y-1/2" style={{ left: tap.x, top: tap.y }} aria-hidden>
-          <span className="absolute size-12 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-[#C8F169]/60" />
-          <span className="block size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#C8F169]/80 shadow-lg" />
+          <span className="absolute size-12 -translate-x-1/2 -translate-y-1/2 animate-ping rounded-full bg-turq/60" />
+          <span className="block size-6 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-plaster bg-turq/80 shadow-lg" />
         </span>
       )}
 
       {caption && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-30 flex justify-center px-4 pb-8">
-          <p key={caption} className="animate-sheet max-w-3xl rounded-2xl bg-black/70 px-6 py-4 text-center text-lg leading-snug font-semibold text-white shadow-2xl ring-1 ring-white/10 backdrop-blur sm:text-2xl">
+          <p key={caption} className="animate-sheet max-w-3xl rounded-2xl border border-plaster/12 bg-[#050C1B]/85 px-6 py-4 text-center text-lg leading-snug font-semibold text-plaster shadow-2xl backdrop-blur sm:text-2xl">
             {caption}
           </p>
         </div>
       )}
-      {paused && run > 0 && !done && <p className="absolute top-20 left-1/2 z-30 -translate-x-1/2 rounded-full bg-amber-300 px-4 py-1 text-xs font-bold text-black">To'xtatildi, Bo'sh joy bilan davom eting</p>}
+      {paused && run > 0 && !done && <p className="absolute top-20 left-1/2 z-30 -translate-x-1/2 rounded-full bg-ochre px-4 py-1 text-xs font-bold text-cobalt-night">To'xtatildi, Bo'sh joy bilan davom eting</p>}
     </div>
   );
 }

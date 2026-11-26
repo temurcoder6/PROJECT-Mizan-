@@ -41,7 +41,7 @@ export default function Laptop3D({ route, className = '' }) {
             }}
           >
             <div className="rounded-t-[1.1rem] bg-[#040b1a] px-[10px] pt-[10px] pb-[8px]" style={{ boxShadow: '0 0 0 1px rgba(201,150,43,.28)' }}>
-              <div className="relative overflow-hidden rounded-[6px] bg-white" ref={box} style={{ aspectRatio: `${SCREEN_W} / ${SCREEN_H}` }}>
+              <div className="relative overflow-hidden rounded-[6px] bg-[#060E1F]" ref={box} style={{ aspectRatio: `${SCREEN_W} / ${SCREEN_H}` }}>
                 <span className="pointer-events-none absolute top-0 left-1/2 z-10 h-[14px] w-24 -translate-x-1/2 rounded-b-xl bg-[#040b1a]" aria-hidden>
                   {/* jonli ko'rsatkich: firuza faqat shu yerda */}
                   <span className="absolute top-[4px] left-1/2 size-[4px] -translate-x-1/2 rounded-full bg-[#1FA6A0]" />
@@ -50,7 +50,7 @@ export default function Laptop3D({ route, className = '' }) {
                   title="Mizan ilovasi, kompyuter ko'rinishi (namuna ma'lumot bilan)"
                   src={src}
                   loading="lazy"
-                  className="absolute top-0 left-0 border-0 bg-white"
+                  className="absolute top-0 left-0 border-0 bg-[#060E1F]"
                   style={{ width: SCREEN_W, height: SCREEN_H, transform: `scale(${scale})`, transformOrigin: 'top left' }}
                 />
                 <span
