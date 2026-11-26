@@ -1,0 +1,15 @@
+{
+  "name": "backend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Mizan: hisoblar va SQLite bazasi",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server.mjs",
+    "test": "node test.mjs && node test-bot.mjs && node test-security.mjs && node test-proxy.mjs && node test-tools.mjs",
+    "tickets": "node --env-file-if-exists=.env tickets.mjs",
+    "stats": "node --env-file-if-exists=.env stats.mjs",
+    "restore": "node --env-file-if-exists=.env restore.mjs"
+  }
+}

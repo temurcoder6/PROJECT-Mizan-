@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Pulim qayerga ketyapti?</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #f4f6f8; margin: 0; padding: 16px; color: #222; }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 4px 0; }
+  .sub { color: #666; font-size: 14px; margin-bottom: 14px; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  h3 { margin: 0 0 10px; font-size: 17px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  input, select, button { padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 15px; }
+  input[type=text], input[type=number] { flex: 1; min-width: 120px; }
+  button { background: #2563eb; color: #fff; border: none; cursor: pointer; }
+  button:hover { background: #1d4ed8; }
+  button.ghost { background: #e5e7eb; color: #222; }
+  button.red { background: #ef4444; }
+  button.red:hover { background: #dc2626; }
+  .big { font-size: 26px; font-weight: bold; }
+  .bar-row { margin: 8px 0; }
+  .bar-label { display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 3px; }
+  .bar { height: 12px; background: #e5e7eb; border-radius: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; background: #2563eb; }
+  .goal-bar .bar-fill { background: #16a34a; }
+  .tip { background: #fef9c3; border-left: 4px solid #eab308; padding: 12px; border-radius: 8px; font-size: 15px; }
+  .trap-item { background: #fff7ed; border-left: 4px solid #f97316; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; font-size: 14px; }
+  .trap-item .trap-name { font-weight: bold; font-size: 15px; }
+  .trap-item .trap-cost { color: #c2410c; font-size: 16px; font-weight: bold; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  td { padding: 8px 4px; border-bottom: 1px solid #eee; }
+  .del { background: #ef4444; color: #fff; border: none; padding: 4px 8px; font-size: 12px; border-radius: 6px; cursor: pointer; }
+  .del:hover { background: #dc2626; }
+  .empty { color: #888; font-size: 14px; }
+  .note { font-size: 12px; color: #777; margin-top: 8px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: bold; }
+  .badge-green { background: #dcfce7; color: #16a34a; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+  .security-note { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #15803d; margin-top: 10px; }
+  .debt-summary { display: flex; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .debt-box { flex: 1; min-width: 120px; border-radius: 8px; padding: 10px; text-align: center; }
+  .debt-box.give { background: #fee2e2; }
+  .debt-box.take { background: #dcfce7; }
+  .debt-box .damt { font-size: 18px; font-weight: bold; }
+  .debt-box .dlbl { font-size: 12px; color: #555; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pulim qayerga ketyapti?</h1>
+  <div class="sub">Chiroqchi uchun xarajat hisobi. Ma'lumot shu telefon yoki brauzerda saqlanadi.</div>
+
+  <!-- Xarajat qo'shish -->
+  <div class="card">
+    <h3>Xarajat qo'shish</h3>
+    <div class="row">
+      <input type="text" id="name" placeholder="Nima uchun? (masalan: non)">
+      <input type="number" id="amount" placeholder="Summa (so'm)" inputmode="numeric">
+    </div>
+    <div class="row" style="margin-top:8px">
+      <select id="category" style="flex:1"></select>
+      <button onclick="addExpense()">Qo'shish</button>
+    </div>
+  </div>
+
+  <!-- Jami -->
+  <div class="card">
+    <div class="sub" style="margin:0">Shu oy jami xarajat</div>
+    <div class="big" id="total">0 so'm</div>
+  </div>
+
+  <!-- Kategoriyalar -->
+  <div class="card">
+    <h3>Kategoriyalar</h3>
+    <div id="bars"><div class="empty">Hozircha xarajat yo'q.</div></div>
+  </div>
+
+  <!-- Tejash tavsiyasi -->
+  <div class="card">
+    <h3>Tejash tavsiyasi</h3>
+    <div class="tip" id="tip">Xarajat kiriting, tavsiya shu yerda chiqadi.</div>
+  </div>
+
+  <!-- Odat tuzog'i -->
+  <div class="card">
+    <h3>🪤 Odat tuzog'i</h3>
+    <div class="sub" style="margin:0 0 10px">Bir xil xarajat qayta-qayta takrorlansa, oylik narxi ko'rsatiladi.</div>
+    <div id="traps"><div class="empty">Hali takrorlanuvchi xarajat aniqlanmadi.</div></div>
+  </div>
+
+  <!-- Maqsad -->
+  <div class="card">
+    <h3>Maqsad</h3>
+    <div id="goalView" class="empty">Maqsad yo'q. Quyida kiriting.</div>
+    <div class="row" style="margin-top:10px">
+      <input type="text" id="gName" placeholder="Maqsad (masalan: telefon)">
+      <input type="number" id="gTarget" placeholder="Summa (so'm)" inputmode="numeric">
+      <input type="number" id="gDays" placeholder="Necha kun" inputmode="numeric">
+      <button onclick="setGoal()">Saqlash</button>
+    </div>
+  </div>
+
+  <!-- Qarz daftari -->
+  <div class="card">
+    <h3>📒 Qarz daftari</h3>
+    <div id="debtSummary"></div>
+    <div class="row" style="margin-bottom:8px">
+      <input type="text" id="dName" placeholder="Ism (Alisher, do'stim...)">
+      <input type="number" id="dAmount" placeholder="Summa (so'm)" inputmode="numeric">
+      <select id="dType" style="flex:1">
+        <option value="give">Men berdim (u qaytaradi)</option>
+        <option value="take">U berdi (men qaytaraman)</option>
+      </select>
+      <button onclick="addDebt()">Qo'shish</button>
+    </div>
+    <div id="debtList"><div class="empty">Qarz yo'q.</div></div>
+  </div>
+
+  <!-- Oxirgi xarajatlar -->
+  <div class="card">
+    <h3>Oxirgi xarajatlar</h3>
+    <table><tbody id="list"></tbody></table>
+  </div>
+
+  <div class="security-note">
+    🔒 Biz hech qachon PIN-kod, SMS-kod yoki karta raqamingizni so'ramaymiz. Faqat xarajat nomi va summasi saqlanadi.
+  </div>
+  <div class="note" style="margin-top:8px">Telefonda: brauzer menyusidan "Bosh ekranga qo'shish" ni tanlang.</div>
+</div>
+
+<script>
+  const CATS = {
+    "Oziq-ovqat": "Oziq-ovqat",
+    "Bozor": "Bozor",
+    "Transport": "Transport (taksi, benzin)",
+    "Kommunal": "Kommunal (gaz, svet, suv)",
+    "Ijtimoiy": "Ijtimoiy (to'y, mehmon)",
+    "Kiyim": "Kiyim",
+    "Dori-darmon": "Dori-darmon",
+    "Boshqa": "Boshqa"
+  };
+  const KEYWORDS = {
+    "Oziq-ovqat": ["non", "go'sht", "gosht", "sut", "tuxum", "un", "shakar", "choy", "meva", "sabzavot", "kofe", "limon", "guruch"],
+    "Bozor": ["bozor"],
+    "Transport": ["taksi", "benzin", "yo'l", "yol", "avtobus", "marshrutka"],
+    "Kommunal": ["gaz", "svet", "elektr", "suv", "internet"],
+    "Ijtimoiy": ["to'y", "toy", "mehmon", "xayr", "sovg'a", "sovga"],
+    "Kiyim": ["kiyim", "poyabzal", "ko'ylak", "koylak"],
+    "Dori-darmon": ["dori", "dorixona", "shifokor", "analiz"]
+  };
+
+  let expenses = JSON.parse(localStorage.getItem("pulim_expenses") || "[]");
+  let goal = JSON.parse(localStorage.getItem("pulim_goal") || "null");
+  let debts = JSON.parse(localStorage.getItem("pulim_debts") || "[]");
+
+  const sel = document.getElementById("category");
+  sel.innerHTML = Object.entries(CATS).map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+
+  document.getElementById("name").addEventListener("input", e => {
+    const low = e.target.value.toLowerCase();
+    for (const [cat, words] of Object.entries(KEYWORDS)) {
+      if (words.some(w => low.includes(w))) { sel.value = cat; return; }
+    }
+  });
+
+  function fmt(n) {
+    return Math.round(n).toLocaleString("en-US").replace(/,/g, " ") + " so'm";
+  }
+  function save() {
+    localStorage.setItem("pulim_expenses", JSON.stringify(expenses));
+    localStorage.setItem("pulim_goal", JSON.stringify(goal));
+    localStorage.setItem("pulim_debts", JSON.stringify(debts));
+  }
+  function monthKey(d) { return d.slice(0, 7); }
+
+  function addExpense() {
+    const name = document.getElementById("name").value.trim();
+    const amount = Number(document.getElementById("amount").value);
+    if (!name || !amount || amount <= 0) { alert("Nomi va summani to'g'ri kiriting."); return; }
+    expenses.push({ id: Date.now(), name, amount, category: sel.value, date: new Date().toISOString().slice(0, 10) });
+    save();
+    document.getElementById("name").value = "";
+    document.getElementById("amount").value = "";
+    render();
+  }
+
+  function removeExpense(id) {
+    expenses = expenses.filter(e => e.id !== id);
+    save();
+    render();
+  }
+
+  function addDebt() {
+    const name = document.getElementById("dName").value.trim();
+    const amount = Number(document.getElementById("dAmount").value);
+    const type = document.getElementById("dType").value;
+    if (!name || !amount || amount <= 0) { alert("Ism va summani kiriting."); return; }
+    debts.push({ id: Date.now(), name, amount, type, date: new Date().toISOString().slice(0, 10) });
+    save();
+    document.getElementById("dName").value = "";
+    document.getElementById("dAmount").value = "";
+    renderDebts();
+  }
+
+  function removeDebt(id) {
+    debts = debts.filter(d => d.id !== id);
+    save();
+    renderDebts();
+  }
+
+  function setGoal() {
+    const name = document.getElementById("gName").value.trim();
+    const target = Number(document.getElementById("gTarget").value);
+    const days = Number(document.getElementById("gDays").value);
+    if (!name || !target || !days) { alert("Maqsad, summa va kunni kiriting."); return; }
+    const deadline = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+    goal = { name, target, deadline };
+    save();
+    document.getElementById("gName").value = "";
+    document.getElementById("gTarget").value = "";
+    document.getElementById("gDays").value = "";
+    render();
+  }
+
+  function renderGoal(monthTotal) {
+    const view = document.getElementById("goalView");
+    if (!goal) { view.className = "empty"; view.textContent = "Maqsad yo'q. Quyida kiriting."; return; }
+    const days = Math.max(Math.ceil((new Date(goal.deadline) - new Date()) / 86400000), 0);
+    const perDay = days > 0 ? goal.target / days : goal.target;
+    const perMonth = perDay * 30;
+    view.className = "";
+    view.innerHTML = `
+      <b>${goal.name}</b>: ${fmt(goal.target)}<br>
+      Muddat: ${goal.deadline} (${days} kun qoldi)<br>
+      Kunlik tejash kerak: <b>${fmt(perDay)}</b><br>
+      Oylik tejash kerak: <b>${fmt(perMonth)}</b>`;
+  }
+
+  function renderTraps() {
+    const container = document.getElementById("traps");
+    if (expenses.length < 3) {
+      container.innerHTML = '<div class="empty">Hali takrorlanuvchi xarajat aniqlanmadi.</div>';
+      return;
+    }
+
+    // Nomi bo'yicha guruhla (kichik harfda)
+    const groups = {};
+    expenses.forEach(e => {
+      const key = e.name.toLowerCase().trim();
+      if (!groups[key]) groups[key] = { name: e.name, entries: [] };
+      groups[key].entries.push(e);
+    });
+
+    // 3 va undan ko'p marta takrorlanganlari
+    const habits = Object.values(groups)
+      .filter(g => g.entries.length >= 3)
+      .map(g => {
+        const totalSpent = g.entries.reduce((s, e) => s + e.amount, 0);
+        const dates = g.entries.map(e => new Date(e.date)).sort((a, b) => a - b);
+        const spanDays = Math.max(1, (dates[dates.length - 1] - dates[0]) / 86400000 + 1);
+        const perDay = totalSpent / spanDays;
+        const perMonth = perDay * 30;
+        return { name: g.name, count: g.entries.length, perMonth, totalSpent };
+      })
+      .filter(h => h.perMonth > 0)
+      .sort((a, b) => b.perMonth - a.perMonth)
+      .slice(0, 3);
+
+    if (habits.length === 0) {
+      container.innerHTML = '<div class="empty">Hali takrorlanuvchi xarajat aniqlanmadi.</div>';
+      return;
+    }
+
+    container.innerHTML = habits.map(h => {
+      const save10 = Math.round(h.perMonth * 0.1);
+      return `<div class="trap-item">
+        <div class="trap-name">${h.name}</div>
+        <div>Jami ${h.count} marta kiritilgan</div>
+        <div>Oyiga: <span class="trap-cost">${fmt(h.perMonth)}</span></div>
+        <div style="font-size:13px;color:#78350f;margin-top:4px">10% tejasangiz: oyiga <b>${fmt(save10)}</b> qoladi</div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderDebts() {
+    const summary = document.getElementById("debtSummary");
+    const list = document.getElementById("debtList");
+
+    const toReceive = debts.filter(d => d.type === "give").reduce((s, d) => s + d.amount, 0);
+    const toPay = debts.filter(d => d.type === "take").reduce((s, d) => s + d.amount, 0);
+
+    if (debts.length > 0) {
+      summary.innerHTML = `<div class="debt-summary">
+        <div class="debt-box take">
+          <div class="damt">${fmt(toReceive)}</div>
+          <div class="dlbl">Menga qaytaradi</div>
+        </div>
+        <div class="debt-box give">
+          <div class="damt">${fmt(toPay)}</div>
+          <div class="dlbl">Men qaytaraman</div>
+        </div>
+      </div>`;
+    } else {
+      summary.innerHTML = "";
+    }
+
+    if (debts.length === 0) {
+      list.innerHTML = '<div class="empty">Qarz yo\'q.</div>';
+      return;
+    }
+
+    list.innerHTML = `<table><tbody>${[...debts].reverse().map(d => `
+      <tr>
+        <td>${d.date}</td>
+        <td><b>${d.name}</b></td>
+        <td>${fmt(d.amount)}</td>
+        <td><span class="badge ${d.type === 'give' ? 'badge-green' : 'badge-red'}">${d.type === 'give' ? 'U qaytaradi' : 'Men qaytaraman'}</span></td>
+        <td><button class="del" onclick="removeDebt(${d.id})">O'chirish</button></td>
+      </tr>`).join("")}</tbody></table>`;
+  }
+
+  function render() {
+    const thisMonth = monthKey(new Date().toISOString().slice(0, 10));
+    const monthItems = expenses.filter(e => monthKey(e.date) === thisMonth);
+    const total = monthItems.reduce((s, e) => s + e.amount, 0);
+    document.getElementById("total").textContent = fmt(total);
+
+    const byCat = {};
+    monthItems.forEach(e => byCat[e.category] = (byCat[e.category] || 0) + e.amount);
+    const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+
+    const bars = document.getElementById("bars");
+    bars.innerHTML = cats.length === 0
+      ? '<div class="empty">Bu oy hali xarajat yo\'q.</div>'
+      : cats.map(([cat, sum]) => {
+          const pct = Math.round(sum / total * 100);
+          return `<div class="bar-row">
+            <div class="bar-label"><span>${cat}</span><span>${fmt(sum)} (${pct}%)</span></div>
+            <div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+          </div>`;
+        }).join("");
+
+    const tip = document.getElementById("tip");
+    if (cats.length === 0) {
+      tip.textContent = "Xarajat kiriting, tavsiya shu yerda chiqadi.";
+    } else {
+      const [topCat, topSum] = cats[0];
+      const pct = Math.round(topSum / total * 100);
+      tip.textContent = `Eng ko'p pul "${topCat}" ga ketyapti (${pct}%). Shu toifada 10% tejasangiz, oyiga ${fmt(topSum * 0.1)} qoladi.`;
+    }
+
+    renderGoal(total);
+    renderTraps();
+    renderDebts();
+
+    const last = [...expenses].reverse().slice(0, 10);
+    document.getElementById("list").innerHTML = last.length === 0
+      ? '<tr><td class="empty">Ro\'yxat bo\'sh.</td></tr>'
+      : last.map(e => `<tr>
+          <td>${e.date}</td><td>${e.name}</td><td>${e.category}</td>
+          <td>${fmt(e.amount)}</td>
+          <td><button class="del" onclick="removeExpense(${e.id})">O'chirish</button></td>
+        </tr>`).join("");
+  }
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+  render();
+</script>
+</body>
+</html>

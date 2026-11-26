@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-26T16:00:00Z",
+  "title": "Design System: Mizan",
+  "extensions": {
+    "colorMeta": {
+      "cobalt": { "role": "primary", "displayName": "Registan Cobalt", "canonical": "oklch(29.7% 0.096 260.9)", "tonalRamp": ["oklch(15% 0.036 260.9)", "oklch(25% 0.060 260.9)", "oklch(35% 0.084 260.9)", "oklch(48% 0.096 260.9)", "oklch(60% 0.096 260.9)", "oklch(72% 0.067 260.9)", "oklch(84% 0.038 260.9)", "oklch(95% 0.034 260.9)"] },
+      "cobalt-deep": { "role": "primary", "displayName": "Deep Glaze", "canonical": "oklch(24.8% 0.077 261.1)", "tonalRamp": ["oklch(15% 0.029 261.1)", "oklch(25% 0.048 261.1)", "oklch(35% 0.067 261.1)", "oklch(48% 0.077 261.1)", "oklch(60% 0.077 261.1)", "oklch(72% 0.054 261.1)", "oklch(84% 0.031 261.1)", "oklch(95% 0.027 261.1)"] },
+      "cobalt-night": { "role": "primary", "displayName": "Night Cobalt", "canonical": "oklch(20.7% 0.061 261.7)", "tonalRamp": ["oklch(15% 0.023 261.7)", "oklch(25% 0.038 261.7)", "oklch(35% 0.053 261.7)", "oklch(48% 0.061 261.7)", "oklch(60% 0.061 261.7)", "oklch(72% 0.043 261.7)", "oklch(84% 0.024 261.7)", "oklch(95% 0.021 261.7)"] },
+      "turq": { "role": "secondary", "displayName": "Live Turquoise", "canonical": "oklch(65.7% 0.108 190.1)", "tonalRamp": ["oklch(15% 0.040 190.1)", "oklch(25% 0.067 190.1)", "oklch(35% 0.094 190.1)", "oklch(48% 0.108 190.1)", "oklch(60% 0.108 190.1)", "oklch(72% 0.075 190.1)", "oklch(84% 0.043 190.1)", "oklch(95% 0.038 190.1)"] },
+      "turq-soft": { "role": "secondary", "displayName": "Soft Turquoise", "canonical": "oklch(81.2% 0.082 190.8)", "tonalRamp": ["oklch(15% 0.031 190.8)", "oklch(25% 0.051 190.8)", "oklch(35% 0.072 190.8)", "oklch(48% 0.082 190.8)", "oklch(60% 0.082 190.8)", "oklch(72% 0.058 190.8)", "oklch(84% 0.033 190.8)", "oklch(95% 0.029 190.8)"] },
+      "ochre": { "role": "tertiary", "displayName": "Girih Ochre", "canonical": "oklch(70.4% 0.132 81.2)", "tonalRamp": ["oklch(15% 0.049 81.2)", "oklch(25% 0.082 81.2)", "oklch(35% 0.115 81.2)", "oklch(48% 0.132 81.2)", "oklch(60% 0.132 81.2)", "oklch(72% 0.092 81.2)", "oklch(84% 0.053 81.2)", "oklch(95% 0.046 81.2)"] },
+      "ochre-bright": { "role": "tertiary", "displayName": "Lamp Ochre", "canonical": "oklch(84.3% 0.120 82.4)", "tonalRamp": ["oklch(15% 0.045 82.4)", "oklch(25% 0.075 82.4)", "oklch(35% 0.105 82.4)", "oklch(48% 0.120 82.4)", "oklch(60% 0.120 82.4)", "oklch(72% 0.084 82.4)", "oklch(84% 0.048 82.4)", "oklch(95% 0.042 82.4)"] },
+      "plaster": { "role": "neutral", "displayName": "Chalk Plaster", "canonical": "oklch(95.9% 0.010 87.5)", "tonalRamp": ["oklch(15% 0.004 87.5)", "oklch(25% 0.006 87.5)", "oklch(35% 0.009 87.5)", "oklch(48% 0.010 87.5)", "oklch(60% 0.010 87.5)", "oklch(72% 0.007 87.5)", "oklch(84% 0.004 87.5)", "oklch(95% 0.003 87.5)"] },
+      "plaster-dim": { "role": "neutral", "displayName": "Dim Plaster", "canonical": "oklch(91.3% 0.017 88.0)", "tonalRamp": ["oklch(15% 0.006 88.0)", "oklch(25% 0.011 88.0)", "oklch(35% 0.015 88.0)", "oklch(48% 0.017 88.0)", "oklch(60% 0.017 88.0)", "oklch(72% 0.012 88.0)", "oklch(84% 0.007 88.0)", "oklch(95% 0.006 88.0)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Page hooks in heroes; 2.1rem, 2.9rem at sm, 3.35rem at xl; balanced." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles; 1.85rem, 2.6rem at sm." },
+      "title": { "displayName": "Title", "purpose": "Reason rows, steps, mosaic tiles, feature steps." },
+      "numeral": { "displayName": "Numeral", "purpose": "Calculator result and step numbers in star badges; tabular." },
+      "body": { "displayName": "Body", "purpose": "Reading copy, max about 38rem, cobalt at 75 to 85%." },
+      "lead": { "displayName": "Lead", "purpose": "Hero subcopy, max 34rem, plaster at 78%." },
+      "label": { "displayName": "Label", "purpose": "Tabs, small panel headings, footer heads; sentence case, no tracking." }
+    },
+    "shadows": [
+      { "name": "button-lift-on-cobalt", "value": "0 10px 24px -12px rgb(0 0 0 / 0.6)", "purpose": "Under the plaster button on cobalt grounds." },
+      { "name": "button-lift-on-plaster", "value": "0 12px 24px -14px rgb(14 42 92 / 0.8)", "purpose": "Under the cobalt button on plaster grounds." },
+      { "name": "glaze-dark", "value": "inset 0 1px 0 rgb(255 255 255 / 0.22), 0 18px 40px -24px rgb(0 0 0 / 0.6)", "purpose": "Glazed tile panels on cobalt." },
+      { "name": "glaze-light", "value": "inset 0 1px 0 rgb(255 255 255 / 0.9), 0 20px 40px -30px rgb(14 42 92 / 0.45)", "purpose": "The plaster glaze nav strip." },
+      { "name": "device-contact", "value": "radial-gradient(closest-side, rgba(3,10,26,.55), rgba(3,10,26,.22) 55%, rgba(3,10,26,0))", "purpose": "Elliptical contact shadow under phone and laptop; a gradient, never a blur filter." }
+    ],
+    "motion": [
+      { "name": "ease-tile", "value": "cubic-bezier(.16,1,.3,1)", "purpose": "Entrances: formula terms, result tile-in, intro pieces." },
+      { "name": "ease-fly", "value": "cubic-bezier(.65,0,.35,1)", "purpose": "Intro FLIP flight of the mark to the nav logo (340ms)." },
+      { "name": "girih-spin", "value": "40s linear infinite rotateY", "purpose": "Medallion rotation; paused off-screen, in hidden tabs and in lite mode." },
+      { "name": "girih-tilt", "value": "lerp 0.08 per frame, max 10deg, base rotateX 14deg", "purpose": "Pointer tilt of the medallion." },
+      { "name": "intro", "value": "1600ms total: assemble 0-700ms, core 700-1100ms, lift 1100-1600ms", "purpose": "Once per session logo intro; skippable; skipped in lite." },
+      { "name": "formula-term", "value": "320ms, 80ms stagger, 1px ochre rule draws from left in 300ms", "purpose": "Calculator formula reveal." },
+      { "name": "tile-in", "value": "450ms ease-tile, 480ms delay", "purpose": "Calculator result numeral settles after the formula." },
+      { "name": "float", "value": "6s ease-in-out infinite, 12px", "purpose": "Idle float of the phone; off in lite." },
+      { "name": "lite", "value": "html.lite: no backdrop blur, solid glaze (#173a73 dark, #fbfaf6 light), no rotation, tilt, float or intro", "purpose": "Low-end and reduced-motion floor." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Light Button",
+      "kind": "button",
+      "refersTo": "button-light",
+      "description": "Primary action on cobalt grounds.",
+      "html": "<div class=\"ds-on-cobalt\"><button class=\"ds-btn-light\">Ilovani ochish <svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button></div>",
+      "css": ".ds-on-cobalt { background: #0E2A5C; padding: 32px; } .ds-btn-light { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 6px; background: #F4F1EA; color: #0E2A5C; padding: 14px 24px; font: 600 16px 'Onest Variable', system-ui, sans-serif; box-shadow: 0 10px 24px -12px rgb(0 0 0 / 0.6); transition: transform .15s, background .15s; cursor: pointer; } .ds-btn-light:hover { background: #fff; transform: translateY(-2px); } .ds-btn-light:focus-visible { outline: 2px solid #1FA6A0; outline-offset: 2px; }"
+    },
+    {
+      "name": "Dark Button",
+      "kind": "button",
+      "refersTo": "button-dark",
+      "description": "Primary action on plaster grounds.",
+      "html": "<button class=\"ds-btn-dark\">Ilovani ochish</button>",
+      "css": ".ds-btn-dark { display: inline-flex; align-items: center; gap: 8px; border: 0; border-radius: 6px; background: #0E2A5C; color: #F4F1EA; padding: 14px 24px; font: 600 16px 'Onest Variable', system-ui, sans-serif; box-shadow: 0 12px 24px -14px rgb(14 42 92 / 0.8); transition: transform .15s, background .15s; cursor: pointer; } .ds-btn-dark:hover { background: #0A1F45; transform: translateY(-2px); } .ds-btn-dark:focus-visible { outline: 2px solid #1FA6A0; outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary link-button on cobalt.",
+      "html": "<div class=\"ds-on-cobalt-g\"><a class=\"ds-btn-ghost\" href=\"#\">Qanday ishlaydi <svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 17 17 7\"/><path d=\"M7 7h10v10\"/></svg></a></div>",
+      "css": ".ds-on-cobalt-g { background: #0E2A5C; padding: 32px; } .ds-btn-ghost { display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; color: #F4F1EA; padding: 14px 20px; font: 600 16px 'Onest Variable', system-ui, sans-serif; text-decoration: none; box-shadow: inset 0 0 0 1px rgb(244 241 234 / 0.3); transition: background .15s; } .ds-btn-ghost:hover { background: rgb(244 241 234 / 0.1); } .ds-btn-ghost:focus-visible { outline: 2px solid #1FA6A0; outline-offset: 2px; }"
+    },
+    {
+      "name": "Nav Strip",
+      "kind": "nav",
+      "description": "Sticky light-glaze strip; current page underlined in ochre.",
+      "html": "<header class=\"ds-nav\"><a class=\"ds-nav-logo\" href=\"#\"><svg viewBox=\"0 0 32 32\" width=\"32\" height=\"32\"><polygon points=\"16.00,1.00 20.39,5.40 26.61,5.39 26.60,11.61 31.00,16.00 26.60,20.39 26.61,26.61 20.39,26.60 16.00,31.00 11.61,26.60 5.39,26.61 5.40,20.39 1.00,16.00 5.40,11.61 5.39,5.39 11.61,5.40\" fill=\"#0E2A5C\" stroke=\"#C9962B\"/><polygon points=\"16.00,7.80 18.40,10.20 21.80,10.20 21.80,13.60 24.20,16.00 21.80,18.40 21.80,21.80 18.40,21.80 16.00,24.20 13.60,21.80 10.20,21.80 10.20,18.40 7.80,16.00 10.20,13.60 10.20,10.20 13.60,10.20\" fill=\"#F4F1EA\"/></svg>Mizan</a><nav class=\"ds-nav-links\"><a href=\"#\" aria-current=\"page\">Bosh sahifa</a><a href=\"#\">Xarajatlar</a><a href=\"#\">Qarzlar</a></nav><button class=\"ds-nav-cta\">Ilovani ochish</button></header>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; padding: 0 24px; background: linear-gradient(155deg, rgb(255 255 255 / 0.8), rgb(255 255 255 / 0.55)), #F4F1EA; border-bottom: 1px solid rgb(14 42 92 / 0.1); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), 0 20px 40px -30px rgb(14 42 92 / 0.45); font-family: 'Onest Variable', system-ui, sans-serif; } .ds-nav-logo { display: flex; align-items: center; gap: 10px; font: 600 18px 'Unbounded Variable', sans-serif; letter-spacing: -0.02em; color: #0E2A5C; text-decoration: none; } .ds-nav-links { display: flex; gap: 24px; } .ds-nav-links a { padding: 4px 0; font-size: 14px; font-weight: 500; color: rgb(14 42 92 / 0.65); text-decoration: none; border-bottom: 1px solid transparent; transition: color .15s; } .ds-nav-links a:hover { color: #0E2A5C; } .ds-nav-links a[aria-current] { color: #0E2A5C; border-color: #C9962B; } .ds-nav-links a:focus-visible, .ds-nav-cta:focus-visible { outline: 2px solid #1FA6A0; outline-offset: 3px; } .ds-nav-cta { border: 0; border-radius: 6px; background: #0E2A5C; color: #F4F1EA; padding: 8px 16px; font: 600 14px 'Onest Variable', sans-serif; cursor: pointer; transition: background .15s; } .ds-nav-cta:hover { background: #0A1F45; }"
+    },
+    {
+      "name": "Live Tabs",
+      "kind": "custom",
+      "description": "Tabs above the live phone and laptop; turquoise marks the active one.",
+      "html": "<div class=\"ds-tabs-wrap\"><div class=\"ds-tabs\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\">Kunlik reja</button><button role=\"tab\" aria-selected=\"false\">Maqsad</button><button role=\"tab\" aria-selected=\"false\">Yordamchi</button></div></div>",
+      "css": ".ds-tabs-wrap { background: #0E2A5C; padding: 32px; } .ds-tabs { display: flex; gap: 20px; width: fit-content; margin: 0 auto; border-bottom: 1px solid rgb(244 241 234 / 0.15); } .ds-tabs button { margin-bottom: -1px; padding: 0 0 10px; border: 0; border-bottom: 2px solid transparent; background: none; color: rgb(244 241 234 / 0.6); font: 600 13px 'Onest Variable', sans-serif; cursor: pointer; transition: color .15s; } .ds-tabs button:hover { color: #F4F1EA; } .ds-tabs button[aria-selected=true] { color: #F4F1EA; border-color: #1FA6A0; } .ds-tabs button:focus-visible { outline: 2px solid #1FA6A0; outline-offset: 3px; }"
+    },
+    {
+      "name": "Stepped Field",
+      "kind": "input",
+      "description": "Underline-only numeric field with a numbered step chip; turquoise on focus.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\"><b>1</b>Hozir qo'lingizda (so'm)</span><input inputmode=\"numeric\" value=\"850000\"></label>",
+      "css": ".ds-field { display: block; background: rgb(255 255 255 / 0.7); padding: 28px; font-family: 'Onest Variable', sans-serif; } .ds-field-label { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; color: rgb(14 42 92 / 0.7); } .ds-field-label b { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 3px; background: #0E2A5C; color: #F4F1EA; font-size: 11px; font-weight: 600; } .ds-field input { width: 100%; border: 0; border-bottom: 2px solid rgb(14 42 92 / 0.2); background: transparent; padding: 10px 0; font: 600 24px 'Onest Variable', sans-serif; font-variant-numeric: tabular-nums; color: #0E2A5C; outline: none; transition: border-color .15s; } .ds-field input:focus { border-color: #1FA6A0; }"
+    },
+    {
+      "name": "Glazed Step Panel",
+      "kind": "card",
+      "refersTo": "panel-cobalt",
+      "description": "Glazed tile on cobalt with an ochre star badge holding the step numeral.",
+      "html": "<div class=\"ds-glaze-wrap\"><div class=\"ds-glaze\"><span class=\"ds-badge\"><svg viewBox=\"0 0 56 56\"><polygon points=\"28.00,1.00 35.90,8.91 47.09,8.91 47.09,20.10 55.00,28.00 47.09,35.90 47.09,47.09 35.90,47.09 28.00,55.00 20.10,47.09 8.91,47.09 8.91,35.90 1.00,28.00 8.91,20.10 8.91,8.91 20.10,8.91\" fill=\"none\" stroke=\"#C9962B\" stroke-width=\"1.2\"/></svg><span>1</span></span><div><h3>Pulingizni bildiring</h3><p>Hozirgi pul va keyingi daromad sanasini bir marta kiriting.</p></div></div></div>",
+      "css": ".ds-glaze-wrap { background: #0E2A5C; padding: 32px; } .ds-glaze { display: flex; gap: 24px; padding: 32px; border-radius: 12px; color: #F4F1EA; background: linear-gradient(155deg, rgb(255 255 255 / 0.14), rgb(255 255 255 / 0.04) 45%, rgb(255 255 255 / 0.08)); border: 1px solid rgb(255 255 255 / 0.16); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.22), 0 18px 40px -24px rgb(0 0 0 / 0.6); backdrop-filter: blur(10px) saturate(1.2); font-family: 'Onest Variable', sans-serif; transition: transform .2s; } .ds-glaze:hover { transform: translateY(-2px); } .ds-badge { position: relative; display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 56px; height: 56px; font: 600 20px 'Unbounded Variable', sans-serif; } .ds-badge svg { position: absolute; inset: 0; } .ds-glaze h3 { margin: 0; font: 600 24px 'Unbounded Variable', sans-serif; letter-spacing: -0.02em; } .ds-glaze p { margin: 8px 0 0; line-height: 1.625; color: rgb(244 241 234 / 0.75); }"
+    },
+    {
+      "name": "Mosaic",
+      "kind": "custom",
+      "refersTo": "mosaic-tile-feature",
+      "description": "Section tiles set on an ochre ground so 1px gaps read as tile seams.",
+      "html": "<div class=\"ds-mosaic\"><a class=\"ds-tile ds-tile-big\" href=\"#\"><h3>Xarajatlar</h3><p>Summa yozing, toifani bosing.</p></a><a class=\"ds-tile ds-tile-plaster\" href=\"#\"><h3>Qarzlar</h3><p>Kim kimga qancha.</p></a><a class=\"ds-tile ds-tile-mid\" href=\"#\"><h3>Maqsadlar</h3><p>Haftasiga qancha kerak.</p></a></div>",
+      "css": ".ds-mosaic { display: grid; grid-template-columns: 2fr 1fr; grid-auto-rows: minmax(10rem, auto); gap: 1px; padding: 1px; border-radius: 2px; overflow: hidden; background: #C9962B; font-family: 'Onest Variable', sans-serif; } .ds-tile { display: flex; flex-direction: column; justify-content: flex-end; padding: 28px; text-decoration: none; transition: filter .2s; } .ds-tile:hover { filter: brightness(1.06); } .ds-tile:focus-visible { outline: 2px solid #1FA6A0; outline-offset: -4px; } .ds-tile h3 { margin: 0; font: 600 24px 'Unbounded Variable', sans-serif; letter-spacing: -0.02em; } .ds-tile p { margin: 8px 0 0; font-size: 14px; line-height: 1.625; opacity: .75; } .ds-tile-big { grid-row: span 2; background: #0E2A5C; color: #F4F1EA; } .ds-tile-big h3 { font-size: 40px; } .ds-tile-plaster { background: #F4F1EA; color: #0E2A5C; } .ds-tile-mid { background: #123569; color: #F4F1EA; }"
+    },
+    {
+      "name": "Live Label",
+      "kind": "chip",
+      "description": "Turquoise dot plus soft-turquoise label for a live or working state on cobalt.",
+      "html": "<div class=\"ds-live-wrap\"><p class=\"ds-live\"><span></span>Hozir ishlaydi</p></div>",
+      "css": ".ds-live-wrap { background: #071633; padding: 24px; } .ds-live { display: flex; align-items: center; gap: 8px; margin: 0; font: 600 14px 'Onest Variable', sans-serif; color: #7FD3CE; } .ds-live span { width: 8px; height: 8px; border-radius: 9999px; background: #1FA6A0; box-shadow: 0 0 0 2px rgb(31 166 160 / 0.22); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Registan Ledger",
+    "overview": "A money plan set like Samarkand tilework: every piece lands exactly in its place, and Mizan means balance. The landing world is built from two grounds that own whole regions, deep cobalt glaze and chalk-white plaster, with gold-ochre drawn over them only as thin girih linework. One colour, turquoise, is held back for whatever is live or moving, so the eye always finds the working product first. The eight-point girih star is the single ornament: it is the logo, the list bullet, the step badge, the background field and the 3D medallion that holds the live phone.\n\nDensity is calm and architectural. Sections are tall bands with generous vertical air; content runs in wide rows separated by hairlines rather than stacked cards. Depth comes from glazed-tile sheen and real CSS 3D (the rotating star, the tilted phone and laptop), never from heavy drop shadows. Everything has a lite floor: on weak hardware or with reduced motion, blur, continuous rotation and the intro disappear and the page stays complete.\n\nConfirmed rejections: the fintech split hero with three cards under it, and the cream-serif-lime look of the previous site. No serif type anywhere in this world.\n\nScope: this system governs the public landing site (`Site.jsx`, intro, device frames). The app shown inside the phone and laptop iframes keeps its own emerald app styling and is not described here.",
+    "keyCharacteristics": [
+      "Two grounds (cobalt, plaster) alternate by section; no mid-tone grey ground.",
+      "Ochre is line, never fill: 1px seams, hairline rules, star outlines, bullets, small icons.",
+      "Turquoise marks only the live or active element.",
+      "Wide geometric display face at weight 600 with tight tracking; quiet humanist body.",
+      "Glazed-tile panels are the only glass; moving layers carry sheen without blur.",
+      "Lite mode is a first-class rendering, not a degraded one."
+    ],
+    "rules": [
+      { "name": "The Live Turquoise Rule", "body": "Turquoise appears only on what is live, moving or currently active. If an element would look the same in a screenshot of a dead page, it does not get turquoise. Headlines never use it.", "section": "colors" },
+      { "name": "The Ochre Hairline Rule", "body": "Ochre is drawn, not poured: lines of 1px (or a small solid star bullet or icon), never a filled surface or a run of text on plaster, where it reaches only 2.4:1.", "section": "colors" },
+      { "name": "The Two Grounds Rule", "body": "Every section commits to cobalt (any of the three depths) or plaster. Text on cobalt is plaster; text on plaster is cobalt at 75 to 100%.", "section": "colors" },
+      { "name": "The Inscription Rule", "body": "Unbounded is for headings, numerals and the wordmark only, always at 600 with -0.02em tracking. Running text, buttons and labels are Onest.", "section": "typography" },
+      { "name": "The Plain Label Rule", "body": "No uppercase tracked micro-labels above headings. A heading stands on its own; a small label exists only when it carries information (a live state, a step count).", "section": "typography" },
+      { "name": "The One Glass Rule", "body": "The glazed tile (a 155deg white sheen gradient, 1px light border, inset top highlight, blur 8 to 10px) is the only glass. Anything that moves (the star, the phone, the laptop) keeps the sheen and drops the backdrop blur.", "section": "elevation" },
+      { "name": "The Lite Floor Rule", "body": "Under `html.lite` (reduced motion, 2 or fewer cores, 2GB or less memory, or `?lite=1`) glass becomes solid (dark `#173a73`, light `#fbfaf6`), the star stops rotating and holds a still angle, devices stop tilting and floating, and the intro is skipped. Every effect must have this solid, still fallback.", "section": "elevation" }
+    ],
+    "dos": [
+      "**Do** give each section one ground, cobalt (any depth) or plaster, and keep text plaster on cobalt and cobalt on plaster.",
+      "**Do** draw ochre as 1px lines, seams, outlines, star bullets and small icons.",
+      "**Do** reserve turquoise for the live element: active tab, live dot, focus ring, selection, input focus, \"works now\" state.",
+      "**Do** use the eight-point star (ratio 0.765) as the only ornament: logo, bullets, badges, girih field at 6 to 14% opacity.",
+      "**Do** set headings in Unbounded 600 at -0.02em and everything else in Onest.",
+      "**Do** separate content with hairline rows before reaching for cards.",
+      "**Do** give every blur, rotation and entrance a still, solid lite fallback, and animate only transform and opacity.",
+      "**Do** strip backdrop blur from any layer that moves."
+    ],
+    "donts": [
+      "**Don't** use turquoise in headlines, body copy or static decoration.",
+      "**Don't** fill surfaces with ochre or set running text in ochre on plaster.",
+      "**Don't** introduce a serif face or the cream, serif and lime palette of the previous site.",
+      "**Don't** add glass beyond the glazed tile, or blur filters for shadows.",
+      "**Don't** add uppercase tracked eyebrow labels above headings.",
+      "**Don't** apply this landing system to the in-app UI inside the device iframes; the app keeps its own styling."
+    ]
+  }
+}
