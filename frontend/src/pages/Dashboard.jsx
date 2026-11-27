@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Bell, ChartColumn, CreditCard, Minus, PiggyBank, Plus, Repeat, Sparkles, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { Bell, ChartColumn, CreditCard, Crown, Minus, PiggyBank, Plus, Repeat, Sparkles, TrendingDown, TrendingUp, Wallet, Zap } from 'lucide-react';
 import AdviceCard from '../components/AdviceCard';
 import DailyPlanCard from '../components/DailyPlan';
 import { MissingDaysCard } from '../components/DayFill';
 import { GoalStepLine, ReminderCard, WeeklyCard } from '../components/Insights';
+import ProModal from '../components/ProModal';
 import QuickEntry from '../components/QuickEntry';
 import TransactionForm from '../components/TransactionForm';
 import TxRow from '../components/TxRow';
@@ -16,7 +17,7 @@ import {
 import { useStore } from '../store';
 
 export default function Dashboard({ go }) {
-  const { auth, transactions, debts, goals, cards = [], settings, actions } = useStore();
+  const { auth, transactions, debts, goals, cards = [], profile, settings, actions } = useStore();
   const isAdmin = auth.status === 'in' && Boolean(auth.user?.isAdmin);
   const [form, setForm] = useState(null);
   const today = todayISO();
@@ -28,15 +29,27 @@ export default function Dashboard({ go }) {
   const reminders = dueReminders(debts, today, settings.remindDays);
   const recent = [...transactions].sort(byDateDesc).slice(0, 5);
   const empty = !transactions.length && !debts.length && !goals.length;
+  const [showPro, setShowPro] = useState(false);
+  const isPro = !!profile?.isPro;
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-sm text-ochre">{monthLabel(today)}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-ochre">{monthLabel(today)}</p>
+            {isPro && (
+              <span className="flex items-center gap-1 rounded-full bg-ochre/20 border border-ochre/45 px-2 py-0.5 text-[10px] font-bold text-ochre uppercase">
+                <Crown className="size-3" /> Pro Max
+              </span>
+            )}
+          </div>
           <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Pulingiz holati</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={() => setShowPro(true)} className="border-ochre/40 text-ochre hover:bg-ochre/15">
+            <Crown className="size-4" /> {isPro ? 'Mizan Pro' : 'Pro Daraja'}
+          </Button>
           <Button variant="outline" onClick={() => go('kartalar')}>
             <CreditCard className="size-4 text-ochre" /> Kartalar{cards.length > 0 ? ` (${cards.length})` : ''}
           </Button>
@@ -73,6 +86,36 @@ export default function Dashboard({ go }) {
         <DailyPlanCard onOpenCards={() => go('kartalar')} />
         <QuickEntry />
       </div>
+
+      {/* Mizan Jarvis AI — Tezkor Moliyaviy Maslahatchi Vidjeti */}
+      <Card className="border-ochre/35 bg-gradient-to-br from-[#0c234f]/90 via-[#071633] to-[#040e22] text-plaster p-5 shadow-xl">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className="rounded-2xl bg-gradient-to-br from-ochre to-amber-600 p-2.5 text-cobalt-night shadow-md">
+              <Sparkles className="size-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-display text-base font-bold text-plaster">Mizan Jarvis AI Maslahatchisi</h3>
+                <span className="rounded-full bg-turq/15 border border-turq/35 px-2 py-0.5 text-[10px] font-bold text-turq uppercase">
+                  Jonli AI
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-plaster/75 leading-relaxed max-w-xl">
+                iPhone 17, mashina yoki yirik xarid rejangiz bormi? Jarvis bilan bir zumda hisoblang: 
+                <strong> Malika / Abu Saxiy</strong> (naqd) arzonmi yoki <strong>Uzum / Alif Nasiya</strong>? Aniq kunlik jamg'arma rejasini oling.
+              </p>
+            </div>
+          </div>
+          <Button
+            onClick={() => go('yordamchi')}
+            className="w-full sm:w-auto shrink-0 gap-1.5 bg-gradient-to-r from-ochre to-amber-600 text-cobalt-night font-bold shadow-md hover:opacity-95"
+          >
+            <Sparkles className="size-4" /> Jarvis bilan hisoblash →
+          </Button>
+        </div>
+      </Card>
+
       <ReminderCard />
       <MissingDaysCard />
 
@@ -212,6 +255,7 @@ export default function Dashboard({ go }) {
       </div>
 
       {form && <TransactionForm initial={form} onSave={actions.addTx} onClose={() => setForm(null)} />}
+      <ProModal open={showPro} onClose={() => setShowPro(false)} />
     </div>
   );
 }

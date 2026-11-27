@@ -1,22 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Mic, MicOff, Send, ShieldCheck, Sparkles, Trash2, Volume2, X } from 'lucide-react';
+import { Check, Crown, Loader2, Mic, MicOff, Send, ShieldCheck, Sparkles, Trash2, Volume2, X, Zap } from 'lucide-react';
 import { Badge, Button, Card, Modal, MoneyInput, inputCls } from '../components/ui';
+import ProModal from '../components/ProModal';
+import { api } from '../lib/api';
 import { respond } from '../lib/assistant/assistant';
 import { categoryLabel, methodLabel } from '../lib/categories';
-import { dateLabel, formatDigitsInput, money, parseDigits, todayISO, uid } from '../lib/format';
+import { addDays, dateLabel, formatDigitsInput, money, parseDigits, todayISO, uid } from '../lib/format';
 import { findVoice, listen, speak, stopSpeaking, voiceInputSupported, voiceOutputSupported, VOICE_LANGS } from '../lib/voice';
 import { useStore } from '../store';
 
 const SUGGESTIONS = [
+  "iPhone 17 olmoqchiman: qancha yig'sam bo'ladi va Malika yaxshimi yoki Uzum Nasiyami?",
+  "Qayerdan pul tejashim mumkin? Tahlil qilib ber",
+  "Nasiyaga (muddatli to'lov) olgan ma'qulmi yoki naqd yig'ganmi?",
   "Bugun yo'lga 12 ming sarfladim",
-  'Pulim nimaga ko\'p ketdi?',
-  'Qarzimdan qancha qoldi?',
-  "Telefon olishga qancha yig'ishim kerak?",
-  'Daromadim kamaydi',
-  'Qayerda kamaytirsam bo\'ladi? Maslahat bering',
-  "50 ming sarflasam, maqsadim rejasi nima bo'ladi?",
-  'Сегодня потратил 20 тысяч на такси',
-  'Spent 15k on lunch yesterday',
+  "Pulim nimaga ko'p ketdi?",
+  "50 ming sarflasam, maqsadim nima bo'ladi?",
 ];
 
 function DraftCard({ draft, msgId }) {
@@ -114,15 +113,105 @@ function DraftCard({ draft, msgId }) {
   );
 }
 
+function JarvisActionCard({ action, msgId }) {
+  const { actions } = useStore();
+  const [added, setAdded] = useState(false);
+
+  if (action?.action !== 'create_goal') return null;
+
+  const handleAdd = () => {
+    const today = todayISO();
+    const months = Number(action.months) || 6;
+    const deadline = addDays(today, months * 30);
+    actions.addGoal({
+      name: action.name || 'Yangi maqsad',
+      target: Number(action.target) || 10000000,
+      deadline,
+      saved: 0,
+    });
+    setAdded(true);
+  };
+
+  if (added) {
+    return (
+      <div className="mt-3 flex items-center gap-2 rounded-2xl border border-turq/40 bg-turq/20 px-4 py-3 text-sm text-turq font-medium">
+        <Check className="size-4.5" /> «{action.name}» muvaffaqiyatli Maqsadlar daftaringizga qo'shildi!
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 rounded-2xl border border-ochre/45 bg-gradient-to-br from-[#0c234f] to-[#071530] p-4 text-plaster shadow-xl">
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 text-xs font-bold text-ochre uppercase tracking-wider">
+          <Sparkles className="size-4" /> Mizan Jarvis Taklifi
+        </span>
+        <span className="rounded-full bg-ochre/15 border border-ochre/30 px-2 py-0.5 text-[10px] text-ochre font-bold">
+          1 bosishda bajarish
+        </span>
+      </div>
+      <div className="mt-2 text-base font-bold text-plaster">{action.name}</div>
+      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-plaster/75">
+        <div>Kerakli summa: <strong className="text-ochre">{money(action.target)}</strong></div>
+        {action.daily && <div>Kunlik jamg'arma: <strong className="text-turq">{money(action.daily)}</strong></div>}
+        {action.months && <div>Muddat: <strong className="text-plaster">{action.months} oy</strong></div>}
+      </div>
+      <div className="mt-3.5 flex gap-2">
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-ochre to-amber-600 px-4 py-2 text-xs font-bold text-cobalt-night shadow-md transition hover:opacity-95"
+        >
+          <Sparkles className="size-3.5" /> Maqsadlarimga qo'shish
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function FormattedText({ text }) {
+  if (!text) return null;
+  const lines = text.split('\n');
+  return (
+    <div className="space-y-1.5 leading-relaxed">
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+        if (!trimmed) return <div key={idx} className="h-1" />;
+        if (trimmed.startsWith('### ')) {
+          return <h4 key={idx} className="font-bold text-ochre text-sm mt-2">{trimmed.slice(4)}</h4>;
+        }
+        if (trimmed.startsWith('## ')) {
+          return <h3 key={idx} className="font-bold text-ochre text-base mt-2.5">{trimmed.slice(3)}</h3>;
+        }
+        if (trimmed.startsWith('---')) {
+          return <hr key={idx} className="border-plaster/15 my-2" />;
+        }
+        const parts = line.split(/(\*\*.*?\*\*)/g);
+        return (
+          <p key={idx} className={trimmed.startsWith('* ') || trimmed.startsWith('- ') ? 'pl-2 text-plaster/90' : ''}>
+            {parts.map((p, i) => {
+              if (p.startsWith('**') && p.endsWith('**')) {
+                return <strong key={i} className="font-bold text-plaster">{p.slice(2, -2)}</strong>;
+              }
+              return p;
+            })}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 function Bubble({ msg, onChoice, onSpeak, lastId }) {
   const mine = msg.role === 'user';
   return (
     <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${mine ? 'rounded-br-md border border-ochre/35 bg-cobalt text-plaster' : 'rounded-bl-md border border-plaster/12 bg-[#0A1F45]/90 text-plaster/90'}`}>
-        <p className="whitespace-pre-line">{msg.text}</p>
+        <FormattedText text={msg.text} />
         {msg.drafts?.map((d) => (
           <DraftCard key={d.id} draft={d} msgId={msg.id} />
         ))}
+        {msg.action && <JarvisActionCard action={msg.action} msgId={msg.id} />}
         {msg.choices && msg.id === lastId && (
           <div className="mt-2 flex flex-wrap gap-2">
             {msg.choices.map((c) => (
@@ -147,6 +236,8 @@ export default function Assistant() {
   const { chat, pending, settings, actions } = store;
   const [text, setText] = useState('');
   const [listening, setListening] = useState(false);
+  const [thinking, setThinking] = useState(false);
+  const [showPro, setShowPro] = useState(false);
   const [notice, setNotice] = useState('');
   const [consent, setConsent] = useState(false);
   const stopRef = useRef(null);
@@ -155,26 +246,96 @@ export default function Assistant() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: settings.animations ? 'smooth' : 'auto', block: 'end' });
-  }, [chat.length, settings.animations]);
+  }, [chat.length, thinking, settings.animations]);
 
   useEffect(() => () => {
     stopRef.current?.();
     stopSpeaking();
   }, []);
 
-  const send = (raw) => {
+  const isAdviceOrComplex = (str) => {
+    const s = str.toLowerCase();
+    return (
+      s.includes('iphone') ||
+      s.includes('olmoqchiman') ||
+      s.includes('nasiya') ||
+      s.includes('malika') ||
+      s.includes('abu saxiy') ||
+      s.includes('qayerdan') ||
+      s.includes('tavsiya') ||
+      s.includes('maslahat') ||
+      s.includes('jarvis') ||
+      s.includes('qancha yig') ||
+      s.includes('solishtir') ||
+      s.includes('qachon olaman') ||
+      s.includes('tejash') ||
+      s.includes('qimmat') ||
+      s.includes('arzon') ||
+      s.includes('uzum') ||
+      s.includes('alif') ||
+      s.includes('iman') ||
+      s.includes('mashina') ||
+      s.includes('telefon')
+    );
+  };
+
+  const send = async (raw) => {
     const input = (raw ?? text).trim();
-    if (!input) return;
-    const data = { transactions: store.transactions, debts: store.debts, goals: store.goals, profile: store.profile };
+    if (!input || thinking) return;
+
     actions.pushMessage({ id: uid(), role: 'user', text: input });
+    setText('');
+    setNotice('');
+
+    // Agar savol maslahat, bozor yoki katta xarid (iPhone, nasiya, tejash) bo'lsa — Gemini Jarvis AI ga yuboramiz
+    if (isAdviceOrComplex(input)) {
+      setThinking(true);
+      try {
+        const totalCards = (store.cards || []).reduce((s, c) => s + (Number(c.balance) || 0), 0);
+        const monthExp = (store.transactions || [])
+          .filter((t) => t.type === 'expense')
+          .reduce((s, t) => s + (Number(t.amount) || 0), 0);
+
+        const context = {
+          balance: totalCards,
+          dailyLimit: 85000,
+          todaySpent: 0,
+          monthExpense: monthExp,
+          goals: (store.goals || []).map((g) => ({ name: g.name, target: g.target, saved: g.saved })),
+          debts: (store.debts || []).map((d) => ({ person: d.person, amount: d.amount, direction: d.direction })),
+          profile: store.profile,
+        };
+
+        const res = await api.askJarvis(input, context);
+        if (res?.ok && res.text) {
+          const jarvisReply = {
+            id: uid(),
+            role: 'assistant',
+            lang: 'uz',
+            text: res.text,
+            action: res.action,
+          };
+          actions.pushMessage(jarvisReply);
+          if (settings.autoSpeak && voiceOutputSupported) {
+            speak(res.text, 'uz');
+          }
+          setThinking(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('Jarvis AI ulanmadi, lokal tizimga o\'tildi:', err.message);
+      }
+      setThinking(false);
+    }
+
+    // Lokal qoidalar asosidagi tezkor yordamchi (xarajat/daromad kiritish va sodda hisobotlar)
+    const data = { transactions: store.transactions, debts: store.debts, goals: store.goals, profile: store.profile };
     const { reply, pending: next } = respond(input, { data, today: todayISO(), pending });
     actions.pushMessage(reply);
     if (settings.autoSpeak && voiceOutputSupported) {
       if (!speak(reply.text, reply.lang)) setNotice("Qurilmangizda bu til uchun ovoz o'rnatilmagan, shuning uchun o'qib bera olmayman.");
     }
     actions.setPending(next);
-    setText('');
-    setNotice('');
   };
 
   const sendRef = useRef(null);
@@ -187,7 +348,6 @@ export default function Assistant() {
       lang: settings.voiceLang,
       onResult: (t, final) => {
         setText(t);
-        // Gap tugagach o'zi yuboradi. Yozuv baribir tasdiq kartasi bilan chiqadi, tasdiqsiz hech narsa saqlanmaydi.
         if (final && t.trim()) sendRef.current?.(t);
       },
       onEnd: () => setListening(false),
@@ -196,8 +356,7 @@ export default function Assistant() {
         if (code === 'not-allowed' || code === 'service-not-allowed') setNotice("Mikrofonga ruxsat berilmadi. Matn yozib kiritishingiz mumkin.");
         else if (code === 'no-speech') setNotice("Ovoz eshitilmadi. Qayta urinib ko'ring yoki yozib kiriting.");
         else if (code === 'audio-capture') setNotice("Mikrofon topilmadi yoki band. Ulanganini tekshiring yoki yozib kiriting.");
-        else if (code === 'network') setNotice("Brauzer ovozni tanish xizmatiga ulana olmadi (internet yoki brauzer cheklovi). Chrome yoki Edge'da urinib ko'ring, yoki yozib kiriting.");
-        else if (code === 'language-not-supported') setNotice("Bu brauzer tanlangan tilda ovozni tanimaydi. Boshqa tilni tanlang yoki yozib kiriting.");
+        else if (code === 'network') setNotice("Brauzer ovozni tanish xizmatiga ulana olmadi. Yozib kiriting.");
         else setNotice("Ovozni tanib bo'lmadi. Yozib kiriting.");
       },
     });
@@ -222,41 +381,71 @@ export default function Assistant() {
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h1 className="font-display flex items-center gap-2 text-2xl font-semibold tracking-[-0.02em] text-plaster">
-            <Sparkles className="size-6 text-ochre" aria-hidden /> Yordamchi
+            <Sparkles className="size-6 text-ochre" aria-hidden /> Mizan Jarvis AI
           </h1>
-          <p className="text-xs text-plaster/55">Yozuvni tayyorlaydi, siz tasdiqlamaguncha saqlamaydi. Hisob-kitobni dastur qiladi.</p>
+          <p className="text-xs text-plaster/65">
+            O'zbekiston bozorlari (Malika, Abu Saxiy), muddatli to'lovlar (Uzum, Alif) va xarid strategiyasi bo'yicha shaxsiy maslahatchingiz.
+          </p>
         </div>
-        {chat.length > 0 && (
-          <Button variant="subtle" size="sm" onClick={actions.clearChat}>
-            <Trash2 className="size-4" /> Tozalash
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setShowPro(true)} className="gap-1.5 border-ochre/40 text-ochre hover:bg-ochre/15">
+            <Crown className="size-4" /> Pro Rejim
           </Button>
-        )}
+          {chat.length > 0 && (
+            <Button variant="subtle" size="sm" onClick={actions.clearChat}>
+              <Trash2 className="size-4" /> Tozalash
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card className="flex min-h-0 flex-1 flex-col !p-0">
         <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite">
           {chat.length === 0 && (
             <div className="space-y-4 py-2">
-              <p className="text-plaster/75">
-                Salom! O'zbek (lotin va kirill), rus yoki ingliz tilida yozing yoki gapiring. Masalan:
-              </p>
+              <div className="rounded-2xl border border-ochre/30 bg-gradient-to-br from-[#0c234f] to-[#071633] p-4 text-plaster">
+                <div className="flex items-center gap-2 text-sm font-bold text-ochre">
+                  <Sparkles className="size-4" /> Salom! Men Mizan Jarvis — sizning shaxsiy moliyaviy agentingizman.
+                </div>
+                <p className="mt-1.5 text-xs text-plaster/80 leading-relaxed">
+                  Menga har qanday moliyaviy maqsadingizni ayting: masalan, <strong>iPhone 17</strong> yoki mashina olmoqchi bo'lsangiz, kunlik qancha yig'ishingizni, 
+                  <strong> Malika bozoridan naqd</strong> olish arzonmi yoki <strong>Uzum Nasiya / Alif</strong> orqali olish ma'qulmi — hammasini aniq hisoblab beraman!
+                </p>
+              </div>
+
               <div className="flex flex-wrap gap-2">
                 {SUGGESTIONS.map((s) => (
-                  <button key={s} type="button" onClick={() => send(s)} className="rounded-full border border-plaster/12 bg-[#071633] px-3 py-1.5 text-sm text-plaster/85 transition hover:border-ochre/45 hover:bg-cobalt/60 hover:text-plaster">
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => send(s)}
+                    className="rounded-full border border-plaster/14 bg-[#071633] px-3.5 py-1.5 text-xs font-medium text-plaster/85 transition hover:border-ochre/45 hover:bg-cobalt/60 hover:text-plaster text-left"
+                  >
                     {s}
                   </button>
                 ))}
               </div>
-              <p className="flex items-start gap-2 rounded-xl border border-plaster/10 bg-[#071633]/80 px-3 py-2.5 text-xs text-plaster/60">
+
+              <p className="flex items-start gap-2 rounded-xl border border-plaster/10 bg-[#071633]/80 px-3 py-2.5 text-[11px] text-plaster/60">
                 <ShieldCheck className="mt-0.5 size-4 shrink-0 text-turq-soft" aria-hidden />
-                Yordamchi shu qurilmada ishlaydi va yozuvlaringizni hech qayerga yubormaydi. Tushunmagan summani o'ylab topmaydi — so'raydi. Bu hali oddiy qoidalarga asoslangan yordamchi, katta
-                til modeli emas, shuning uchun murakkab jumlalarni tushunmasligi mumkin.
+                Xavfsizlik: Xarajatlar siz tasdiqlamaguningizcha bazaga yozilmaydi. Bank parollari yoki SMS kodlar hech qachon so'ralmaydi.
               </p>
             </div>
           )}
+
           {chat.map((m) => (
             <Bubble key={m.id} msg={m} lastId={lastId} onChoice={send} onSpeak={speakMsg} />
           ))}
+
+          {thinking && (
+            <div className="flex justify-start">
+              <div className="flex items-center gap-2.5 rounded-2xl rounded-bl-md border border-ochre/30 bg-[#0A1F45]/90 px-4 py-3 text-xs text-ochre font-medium shadow-md">
+                <Loader2 className="size-4 animate-spin text-ochre" />
+                <span>Mizan Jarvis moliyaviy ma'lumotlaringizni tahlil qilmoqda...</span>
+              </div>
+            </div>
+          )}
+
           <div ref={bottomRef} />
         </div>
 
@@ -349,6 +538,8 @@ export default function Assistant() {
           </div>
         </Modal>
       )}
+
+      <ProModal open={showPro} onClose={() => setShowPro(false)} />
     </div>
   );
 }

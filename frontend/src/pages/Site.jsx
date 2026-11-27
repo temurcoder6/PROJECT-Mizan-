@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowRight, ArrowUpRight, ChevronDown, Lock, Menu, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Check, ChevronDown, Crown, Lock, Menu, Sparkles, X } from 'lucide-react';
 import AuthPanel from '../components/AuthPanel';
 import Girih3D from '../components/Girih3D';
 import ExplainerVideo from '../components/ExplainerVideo';
@@ -364,6 +364,54 @@ function Home({ onOpen, isAdmin }) {
               ))}
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      {/* Mizan Pro & Jarvis AI — Katta Kuch */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#0c234f] via-[#071633] to-[#040e22] text-plaster py-24 sm:py-32">
+        <GirihField id="g-pro" opacity={0.08} size={130} />
+        <div className={`${wrap} relative`}>
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-ochre/20 border border-ochre/45 px-3 py-1 text-xs font-bold text-ochre uppercase tracking-wider">
+                <Crown className="size-3.5" /> Mizan Pro & Jarvis AI
+              </span>
+              <h2 className={`${display} mt-4 text-[1.85rem] leading-[1.15] font-semibold text-balance sm:text-[2.6rem]`}>
+                Oddiy xarajat daftaridan — shaxsiy moliyaviy imperiyaga.
+              </h2>
+              <p className="mt-4 text-base text-plaster/75 leading-relaxed">
+                iPhone 17, yangi avtomobil yoki uy olishni rejalashtiryapsizmi? <strong>Mizan Jarvis AI</strong> O'zbekistondagi bozorlar (Malika, Abu Saxiy) va muddatli to'lov tashkilotlari (Uzum Nasiya, Alif, Iman Pay) bo'yicha to'liq hisob-kitob qilib, eng arzon va tejamkor yo'lni ko'rsatadi.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-4">
+                <a href="#/yordamchi" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-ochre to-amber-600 px-6 py-3.5 font-bold text-cobalt-night shadow-lg transition hover:opacity-95">
+                  <Sparkles className="size-4" /> Jarvis bilan sinab ko'rish
+                </a>
+              </div>
+            </div>
+            <div className="w-full lg:max-w-md rounded-3xl border border-ochre/35 bg-[#091b3a]/90 p-6 shadow-2xl backdrop-blur-md">
+              <div className="flex items-center justify-between border-b border-plaster/10 pb-4">
+                <span className="font-bold text-sm text-ochre">Mizan Pro imkoniyatlari</span>
+                <span className="text-xs text-turq font-semibold">Max Daraja</span>
+              </div>
+              <ul className="mt-4 space-y-3 text-xs text-plaster/80">
+                <li className="flex items-center gap-2.5">
+                  <Check className="size-4 text-turq shrink-0" /> <span><b>Cheksiz Gemini 3.5 Flash AI</b> moliyaviy tahlillari</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Check className="size-4 text-turq shrink-0" /> <span><b>Malika / Abu Saxiy vs Nasiya</b> solishtirish grafigi</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Check className="size-4 text-turq shrink-0" /> <span><b>Katta xarid simulyatori</b> (kunlik/oylik reja)</span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Check className="size-4 text-turq shrink-0" /> <span><b>Chek va kvitansiyalarni AI skanerlash</b></span>
+                </li>
+                <li className="flex items-center gap-2.5">
+                  <Check className="size-4 text-turq shrink-0" /> <span><b>Oilaviy umumiy byudjet</b> (5 tagacha qurilma)</span>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 
