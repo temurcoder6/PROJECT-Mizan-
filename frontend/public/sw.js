@@ -1,4 +1,4 @@
-const CACHE = 'mizan-v21';
+const CACHE = 'mizan-v22';
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['/', '/icon.svg', '/manifest.webmanifest'])));

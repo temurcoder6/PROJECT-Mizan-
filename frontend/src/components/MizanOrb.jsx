@@ -262,7 +262,7 @@ export default function MizanOrb({ go, currentRoute }) {
         data-testid="mizan-orb-btn"
         onClick={() => setOpen((v) => !v)}
         aria-label="Mizan AI tezkor yordamchi"
-        className={`group relative flex size-13 items-center justify-center rounded-full border border-turq/60 bg-gradient-to-br from-[#0E2A5C] via-[#071633] to-cobalt-night text-ochre shadow-[0_8px_28px_rgba(31,166,160,0.38)] transition hover:scale-105 ${wakeMode ? 'ring-2 ring-turq ring-offset-2 ring-offset-[#060E1F]' : ''}`}
+        className="group relative flex size-13 items-center justify-center rounded-full border border-turq/60 bg-gradient-to-br from-[#0E2A5C] via-[#071633] to-cobalt-night text-ochre shadow-[0_8px_28px_rgba(31,166,160,0.38)] transition hover:scale-105"
       >
         {settings.animations && (
           <span className="pointer-events-none absolute inset-0 animate-ping rounded-full bg-turq/20 [animation-duration:3s]" />
