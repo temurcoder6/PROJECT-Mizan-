@@ -438,8 +438,19 @@ export default function Assistant({ go }) {
   const sendRef = useRef(null);
   useEffect(() => { sendRef.current = send; });
 
-  const startListening = () => {
+  const startListening = async () => {
     setNotice('');
+    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+      } catch (err) {
+        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+          setNotice("Mikrofonga brauzerda ruxsat berilmagan. Sozlamalardan mikrofonga ruxsat bering yoki yozib kiriting.");
+          return;
+        }
+      }
+    }
     setListening(true);
     stopRef.current = listen({
       lang: settings.voiceLang || 'uz-UZ',
@@ -451,6 +462,8 @@ export default function Assistant({ go }) {
         setListening(false);
         if (code === 'not-allowed' || code === 'service-not-allowed') {
           setNotice("Mikrofonga ruxsat berilmadi. Matn yozib kiritishingiz mumkin.");
+        } else if (code === 'audio-capture') {
+          setNotice("Mikrofon topilmadi. Qurilma mikrofonini tekshiring yoki yozib kiriting.");
         }
       },
     });
@@ -580,7 +593,7 @@ export default function Assistant({ go }) {
             ref={textRef}
             rows={1}
             className={`${inputCls} max-h-32 min-h-11 flex-1 resize-none overflow-hidden py-2.5 leading-snug`}
-            placeholder={listening ? 'Eshityapman...' : 'Savol yoki xarajat yozing...'}
+            placeholder={listening ? 'Eshityapman...' : 'Savol yoki xarajat...'}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
