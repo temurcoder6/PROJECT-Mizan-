@@ -451,9 +451,9 @@ export default function Admin({ go }) {
                       <div className="flex items-center gap-2">
                         <Check className="size-3.5 text-turq-soft" />
                         <span className="font-mono text-plaster">{b.name}</span>
-                        <span className="text-plaster/50">({(b.size / 1024).toFixed(1)} KB)</span>
+                        <span className="text-plaster/50">({(((b.sizeBytes || b.size || 0)) / 1024).toFixed(1)} KB)</span>
                       </div>
-                      <span className="text-plaster/40">{fmtTime(b.mtime)}</span>
+                      <span className="text-plaster/40">{fmtTime(b.createdAt || b.mtime)}</span>
                     </div>
                   ))}
                 </div>

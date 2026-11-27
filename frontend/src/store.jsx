@@ -454,9 +454,14 @@ export function StoreProvider({ children }) {
     };
   }, [setTransactions, setDebts, setGoals, setCards, setRawProfile, setSettings]);
 
+  const combinedActions = useMemo(
+    () => ({ ...actions, ...authActions }),
+    [actions, authActions],
+  );
+
   const value = useMemo(
-    () => ({ transactions, debts, goals, cards, profile, settings, chat, pending, actions, auth, sync, conflict, authActions }),
-    [transactions, debts, goals, cards, profile, settings, chat, pending, actions, auth, sync, conflict, authActions],
+    () => ({ transactions, debts, goals, cards, profile, settings, chat, pending, actions: combinedActions, auth, sync, conflict, authActions: combinedActions }),
+    [transactions, debts, goals, cards, profile, settings, chat, pending, combinedActions, auth, sync, conflict],
   );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
