@@ -368,7 +368,7 @@ function Shell() {
         </div>
 
         {/* Mobile compact floating dock */}
-        <div className="app-dock flex w-[calc(100vw-1rem)] max-w-[420px] items-center justify-between gap-0.5 rounded-2xl px-1.5 py-1.5 shadow-2xl md:hidden">
+        <div className="app-dock flex w-[calc(100vw-1rem)] max-w-[420px] items-center justify-between gap-0.5 rounded-2xl px-1 sm:px-1.5 py-1.5 shadow-2xl md:hidden">
           {MOBILE_TABS.map((id) => {
             const t = TABS.find((x) => x.id === id);
             const active = tab.id === id;
@@ -378,12 +378,12 @@ function Shell() {
                 type="button"
                 onClick={() => go(id)}
                 aria-current={active ? 'page' : undefined}
-                className={`flex flex-1 min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-semibold tracking-tight transition ${
+                className={`flex flex-1 min-w-0 flex-col items-center gap-0.5 rounded-xl px-0.5 sm:px-1 py-1 text-[9.5px] sm:text-[10px] font-semibold tracking-tight transition ${
                   active ? 'bg-cobalt text-plaster ring-1 ring-ochre/50' : 'text-plaster/65 hover:text-plaster'
                 }`}
               >
                 <t.icon className={`size-4.5 shrink-0 ${active ? 'text-ochre' : ''}`} aria-hidden />
-                <span className="whitespace-nowrap">
+                <span className="whitespace-nowrap text-[9.5px] sm:text-[10px] leading-tight">
                   {id === 'bosh' ? 'Bosh' : id === 'yozuvlar' ? 'Yozuv' : id === 'kartalar' ? 'Karta' : id === 'yordamchi' ? 'AI' : id === 'maqsadlar' ? 'Maqsad' : t.label}
                 </span>
               </button>
@@ -394,10 +394,10 @@ function Shell() {
             type="button"
             onClick={openDrawer}
             aria-label="Barcha bo'limlar"
-            className="flex flex-1 min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-semibold tracking-tight text-plaster/65 hover:text-plaster"
+            className="flex flex-1 min-w-0 flex-col items-center gap-0.5 rounded-xl px-0.5 sm:px-1 py-1 text-[9.5px] sm:text-[10px] font-semibold tracking-tight text-plaster/65 hover:text-plaster"
           >
             <Menu className="size-4.5 shrink-0" aria-hidden />
-            <span className="whitespace-nowrap">Menyu</span>
+            <span className="whitespace-nowrap text-[9.5px] sm:text-[10px] leading-tight">Menyu</span>
           </button>
         </div>
       </nav>

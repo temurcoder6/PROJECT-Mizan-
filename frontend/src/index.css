@@ -42,7 +42,13 @@
   }
 }
 
-html { -webkit-tap-highlight-color: transparent; color-scheme: dark; }
+html {
+  -webkit-tap-highlight-color: transparent;
+  color-scheme: dark;
+  touch-action: manipulation;
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
 body {
   margin: 0;
   font-family: var(--font-body);
@@ -50,10 +56,22 @@ body {
   color: #f4f1ea;
   user-select: none;
   -webkit-user-select: none;
+  overscroll-behavior-y: contain;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 button, a, nav, header, footer, svg, img {
   user-select: none;
   -webkit-user-select: none;
+  touch-action: manipulation;
+}
+input, textarea, select {
+  font-size: 16px; /* Mobil Safari kiritishda ekranni yaqinlashtirib (auto-zoom) buzmasligi uchun */
+}
+@media (min-width: 640px) {
+  input, textarea, select {
+    font-size: inherit;
+  }
 }
 input, textarea, select, [contenteditable="true"], pre, code, .select-text, .select-all {
   user-select: text;
