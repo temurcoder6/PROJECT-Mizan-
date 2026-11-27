@@ -8,6 +8,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { HttpError, checkOrigin, readJSON, send, serveStatic } from './lib/http.mjs';
 import { askJarvisAI, analyzeScamWithAI, computeFinancialHealth, scanReceiptWithAI, synthesizeSpeechWithGemini } from './lib/jarvis.mjs';
 import { PARTNERS } from './lib/partners.mjs';
+import { isSupabaseConfigured, syncSnapshotToSupabase } from './lib/supabase.mjs';
 import {
   CONTROL, LIMITS, USERNAME_RE, cleanState, findForbiddenCardKey, int, isValidLoginId, oneOf, passwordIssue, sanitizeCard, str,
 } from './lib/validate.mjs';
@@ -899,7 +900,7 @@ async function api(req, res, pathname, url) {
   if (pathname === '/api/health' && method === 'GET') {
     try {
       db.prepare('SELECT 1').get();
-      return send(res, 200, { ok: true, db: 'ok', schemaVersion: SCHEMA_VERSION, uptimeSec: Math.round(process.uptime()) });
+      return send(res, 200, { ok: true, db: 'ok', supabase: isSupabaseConfigured(), schemaVersion: SCHEMA_VERSION, uptimeSec: Math.round(process.uptime()) });
     } catch {
       throw new HttpError(503, 'Baza javob bermayapti.');
     }
@@ -1319,6 +1320,9 @@ async function api(req, res, pathname, url) {
     }
     try {
       const revision = saveAll(user.id, baseRev, body, force);
+      if (isSupabaseConfigured()) {
+        syncSnapshotToSupabase(user.id, { revision, transactions: body.transactions, debts: body.debts, goals: body.goals, profile: body.profile }).catch(() => {});
+      }
       return send(res, 200, { revision });
     } catch (e) {
       if (e instanceof Conflict) throw new HttpError(409, "Boshqa qurilmada ma'lumot o'zgargan.", { server: loadAll(user.id) });

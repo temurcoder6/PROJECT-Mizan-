@@ -102,43 +102,20 @@ export default function QuickEntry() {
 
   return (
     <Card>
-      <CardTitle
-        icon={Plus}
-        action={
-          <select
-            aria-label="Xarajat toifasi"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="rounded-xl border border-plaster/15 bg-[#071633] px-2.5 py-1.5 text-xs font-semibold text-plaster/90 outline-none focus:border-turq"
-          >
-            {SELECTABLE_CATEGORIES.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.uz}
-              </option>
-            ))}
-          </select>
-        }
-      >
-        Tez kiritish
-      </CardTitle>
+      <CardTitle icon={Plus}>Tez kiritish</CardTitle>
 
-      <form onSubmit={submitQuick} className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <MoneyInput
-            ref={inputRef}
-            className={`${inputCls} min-w-[140px] flex-1 text-lg font-semibold`}
-            placeholder="Summa, masalan 12 000"
-            aria-label="Xarajat summasi"
-            value={amount}
-            onChange={(v) => {
-              setAmount(v);
-              setHint('');
-            }}
-          />
-          <Button type="submit" className="shrink-0">
-            <Plus className="size-4" /> Saqlash
-          </Button>
-        </div>
+      <form onSubmit={submitQuick} className="space-y-2.5">
+        <MoneyInput
+          ref={inputRef}
+          className={`${inputCls} text-lg font-semibold`}
+          placeholder="Summa, masalan 12 000"
+          aria-label="Xarajat summasi"
+          value={amount}
+          onChange={(v) => {
+            setAmount(v);
+            setHint('');
+          }}
+        />
 
         {showTitle ? (
           <input className={inputCls} placeholder="Nomi (ixtiyoriy, masalan: kofe)" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -158,6 +135,24 @@ export default function QuickEntry() {
             </button>
           </div>
         )}
+
+        <div className="flex flex-wrap items-center gap-2 pt-0.5">
+          <select
+            aria-label="Xarajat toifasi"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            className={`${inputCls} flex-1 min-w-[160px]`}
+          >
+            {SELECTABLE_CATEGORIES.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.uz}
+              </option>
+            ))}
+          </select>
+          <Button type="submit" className="shrink-0">
+            <Plus className="size-4" /> Saqlash
+          </Button>
+        </div>
       </form>
 
       {repeats.length > 0 && (
