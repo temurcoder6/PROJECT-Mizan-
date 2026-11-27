@@ -83,13 +83,6 @@ export default function Settings({ go }) {
           </Field>
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="font-semibold text-plaster">Javoblarni ovoz chiqarib o'qish</p>
-              <p className="text-xs text-plaster/55">Yordamchi javobi avtomatik o'qiladi. Qurilmada shu til uchun ovoz bo'lishi kerak{voiceOutputSupported ? '' : "; bu brauzerda ovoz chiqarish yo'q"}.</p>
-            </div>
-            <Toggle label="Javoblarni o'qish" checked={settings.autoSpeak} onChange={(v) => actions.setSetting('autoSpeak', v)} />
-          </div>
-          <div className="flex items-center justify-between gap-4">
-            <div>
               <p className="font-semibold text-plaster">Mikrofon roziligi</p>
               <p className="text-xs text-plaster/55">Yoqilgan bo'lsa, mikrofon tugmasi darhol eshitishni boshlaydi. Ovoz saqlanmaydi.</p>
             </div>

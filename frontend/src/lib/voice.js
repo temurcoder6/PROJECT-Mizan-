@@ -3,36 +3,105 @@ const Recognition = typeof window !== 'undefined' ? window.SpeechRecognition || 
 export const voiceInputSupported = Boolean(Recognition);
 export const voiceOutputSupported = typeof window !== 'undefined' && (typeof Audio !== 'undefined' || 'speechSynthesis' in window);
 
+export function unlockAudio() {
+  if (typeof window === 'undefined') return;
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (AudioCtx) {
+      const ctx = new AudioCtx();
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    }
+    const silent = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA');
+    silent.volume = 0.01;
+    silent.play().catch(() => {});
+  } catch {}
+}
+
 export const VOICE_LANGS = [
   { value: 'uz-UZ', label: "O'zbek" },
   { value: 'ru-RU', label: 'Русский' },
   { value: 'en-US', label: 'English' },
 ];
 
-export function listen({ lang, onResult, onEnd, onError }) {
+export function listen({ lang, onResult, onEnd, onError, onSpeechEnd }) {
+  if (!Recognition) return () => {};
   const rec = new Recognition();
-  rec.lang = lang;
+  rec.lang = lang || 'uz-UZ';
   rec.interimResults = true;
-  rec.continuous = false;
+  rec.continuous = true;
   rec.maxAlternatives = 1;
-  rec.onresult = (e) => {
-    let text = '';
-    let final = false;
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      text += e.results[i][0].transcript;
-      if (e.results[i].isFinal) final = true;
+
+  let stopped = false;
+  let accumulated = '';
+  let silenceTimer = null;
+
+  const clearSilence = () => {
+    if (silenceTimer) {
+      clearTimeout(silenceTimer);
+      silenceTimer = null;
     }
-    onResult(text, final);
   };
-  rec.onerror = (e) => onError?.(e.error);
-  rec.onend = () => onEnd?.();
-  rec.start();
+
+  const scheduleSilenceCheck = () => {
+    clearSilence();
+    silenceTimer = setTimeout(() => {
+      if (!stopped && accumulated.trim()) {
+        stopped = true;
+        try { rec.stop(); } catch {}
+        onSpeechEnd?.(accumulated.trim());
+      }
+    }, 2500);
+  };
+
+  rec.onresult = (e) => {
+    let full = '';
+    for (let i = 0; i < e.results.length; i++) {
+      full += e.results[i][0].transcript;
+    }
+    accumulated = full;
+    onResult?.(full);
+    scheduleSilenceCheck();
+  };
+
+  rec.onspeechend = () => {
+    scheduleSilenceCheck();
+  };
+
+  rec.onerror = (e) => {
+    if (e.error === 'no-speech' && !stopped) {
+      return;
+    }
+    if (e.error === 'aborted') {
+      onEnd?.();
+      return;
+    }
+    clearSilence();
+    onError?.(e.error);
+  };
+
+  rec.onend = () => {
+    clearSilence();
+    if (!stopped) {
+      try {
+        rec.start();
+        return;
+      } catch {}
+    }
+    onEnd?.();
+  };
+
+  try {
+    rec.start();
+  } catch {
+    onError?.('start-failed');
+  }
+
   return () => {
+    clearSilence();
+    stopped = true;
     try {
       rec.stop();
-    } catch {
-      // already stopped
-    }
+    } catch {}
   };
 }
 
@@ -81,14 +150,14 @@ function speakLocalFallback(text, lang, hooks = {}) {
     return false;
   }
   const voice = findVoice(lang);
-  if (!voice) {
-    hooks.onError?.();
-    return false;
-  }
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text.replace(/[•«»*#_`]/g, ''));
-  u.voice = voice;
-  u.lang = voice.lang;
+  if (voice) {
+    u.voice = voice;
+    u.lang = voice.lang;
+  } else {
+    u.lang = 'uz-UZ';
+  }
   u.onstart = () => hooks.onStart?.();
   u.onend = () => hooks.onEnd?.();
   u.onerror = () => hooks.onError?.();

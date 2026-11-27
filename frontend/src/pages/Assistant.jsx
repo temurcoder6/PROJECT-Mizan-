@@ -10,7 +10,7 @@ import { categoryLabel, methodLabel } from '../lib/categories';
 import { debtRemaining, inRange, periodRange, summarize } from '../lib/finance';
 import { addDays, dateLabel, formatDigitsInput, money, parseDigits, todayISO, uid } from '../lib/format';
 import { dailyPlan } from '../lib/plan';
-import { findVoice, listen, speak, stopSpeaking, voiceInputSupported, voiceOutputSupported, VOICE_LANGS } from '../lib/voice';
+import { listen, voiceInputSupported, VOICE_LANGS } from '../lib/voice';
 import { useStore } from '../store';
 
 function DraftCard({ draft, msgId }) {
@@ -212,9 +212,8 @@ function FormattedText({ text }) {
   );
 }
 
-function Bubble({ msg, onChoice, onSpeak, onStopSpeak, speakingId, lastId, go, animations, onOpenComplaint }) {
+function Bubble({ msg, onChoice, lastId, go, animations, onOpenComplaint }) {
   const mine = msg.role === 'user';
-  const isSpeaking = speakingId === msg.id;
   return (
     <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${mine ? 'rounded-br-md border border-turq/35 bg-cobalt/90 text-plaster' : 'rounded-bl-md border border-plaster/12 bg-[#0A1F45]/85 text-plaster/90'}`}>
@@ -248,15 +247,6 @@ function Bubble({ msg, onChoice, onSpeak, onStopSpeak, speakingId, lastId, go, a
               </button>
             ))}
           </div>
-        )}
-        {!mine && voiceOutputSupported && (
-          <button
-            type="button"
-            onClick={() => (isSpeaking ? onStopSpeak() : onSpeak(msg))}
-            className={`mt-1.5 inline-flex items-center gap-1 text-xs font-semibold transition ${isSpeaking ? 'text-ochre' : 'text-plaster/55 hover:text-plaster'}`}
-          >
-            {isSpeaking ? <><Square className="size-3 fill-current" /> To'xtatish</> : <><Volume2 className="size-3.5" /> O'qib berish</>}
-          </button>
         )}
       </div>
     </div>
@@ -298,7 +288,6 @@ export default function Assistant({ go }) {
 
   useEffect(() => () => {
     stopRef.current?.();
-    stopSpeaking();
   }, []);
 
   const isQuickLocalEntry = (str, hasPending) => {
@@ -309,25 +298,6 @@ export default function Assistant({ go }) {
       return false;
     }
     return /\d/.test(s) && /(sarfla|xarajat|tushdi|oldim|berdim|qarz|bozor|taksi|non|kofe|ovqat|kommunal|ijara|internet|maosh|oylik|\d+\s*(ming|mln|k|m)?$)/i.test(s);
-  };
-
-  const speakMsg = (msg) => {
-    setSpeakingId(msg.id);
-    speak(msg.text, msg.lang || 'uz', {
-      onStart: () => setSpeakingId(msg.id),
-      onEnd: () => setSpeakingId((cur) => (cur === msg.id ? null : cur)),
-      onError: () => {
-        setSpeakingId((cur) => (cur === msg.id ? null : cur));
-        if (!findVoice(msg.lang || 'uz')) {
-          setNotice("Ovozni o'qishda muammo bo'ldi. Internetni tekshiring.");
-        }
-      },
-    });
-  };
-
-  const stopSpeak = () => {
-    stopSpeaking();
-    setSpeakingId(null);
   };
 
   const send = async (raw) => {
@@ -450,9 +420,6 @@ export default function Assistant({ go }) {
             setComplaint({ open: true, reason: '' });
           }
 
-          if (settings.autoSpeak && voiceOutputSupported) {
-            speakMsg(jarvisReply);
-          }
           setThinking(false);
           return;
         }
@@ -466,9 +433,6 @@ export default function Assistant({ go }) {
     const data = { transactions: store.transactions, debts: store.debts, goals: store.goals, profile: store.profile };
     const { reply, pending: next } = respond(input, { data, today: todayISO(), pending });
     actions.pushMessage(reply);
-    if (settings.autoSpeak && voiceOutputSupported) {
-      speakMsg(reply);
-    }
     actions.setPending(next);
   };
 
@@ -479,25 +443,26 @@ export default function Assistant({ go }) {
     setNotice('');
     setListening(true);
     stopRef.current = listen({
-      lang: settings.voiceLang,
-      onResult: (t, final) => {
+      lang: settings.voiceLang || 'uz-UZ',
+      onResult: (t) => {
         setText(t);
-        if (final && t.trim()) sendRef.current?.(t);
       },
       onEnd: () => setListening(false),
       onError: (code) => {
         setListening(false);
-        if (code === 'not-allowed' || code === 'service-not-allowed') setNotice("Mikrofonga ruxsat berilmadi. Matn yozib kiritishingiz mumkin.");
-        else if (code === 'no-speech') setNotice("Ovoz eshitilmadi. Qayta urinib ko'ring yoki yozib kiriting.");
-        else if (code === 'audio-capture') setNotice("Mikrofon topilmadi yoki band. Ulanganini tekshiring yoki yozib kiriting.");
-        else if (code === 'network') setNotice("Brauzer ovozni tanish xizmatiga ulana olmadi. Yozib kiriting.");
-        else setNotice("Ovozni tanib bo'lmadi. Yozib kiriting.");
+        if (code === 'not-allowed' || code === 'service-not-allowed') {
+          setNotice("Mikrofonga ruxsat berilmadi. Matn yozib kiritishingiz mumkin.");
+        }
       },
     });
   };
 
   const onMic = () => {
-    if (listening) return stopRef.current?.();
+    if (listening) {
+      stopRef.current?.();
+      setListening(false);
+      return;
+    }
     if (!settings.voiceConsent) return setConsent(true);
     startListening();
   };
@@ -557,9 +522,6 @@ export default function Assistant({ go }) {
               msg={m}
               lastId={lastId}
               onChoice={send}
-              onSpeak={speakMsg}
-              onStopSpeak={stopSpeak}
-              speakingId={speakingId}
               go={go}
               animations={settings.animations}
               onOpenComplaint={(reason) => setComplaint({ open: true, reason })}

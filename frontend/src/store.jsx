@@ -36,7 +36,7 @@ export const DEFAULT_SETTINGS = {
   remindDays: 3,
   voiceConsent: false,
   voiceLang: 'uz-UZ',
-  autoSpeak: false,
+  autoSpeak: true,
 };
 
 const StoreContext = createContext(null);
@@ -144,7 +144,11 @@ export function StoreProvider({ children }) {
   const [sync, setSync] = useState({ state: 'idle', at: null, error: '' });
   const [conflict, setConflict] = useState(null);
 
-  const settings = useMemo(() => ({ ...DEFAULT_SETTINGS, ...rawSettings }), [rawSettings]);
+  const settings = useMemo(() => {
+    const s = { ...DEFAULT_SETTINGS, ...rawSettings };
+    if (rawSettings.autoSpeak === undefined) s.autoSpeak = true;
+    return s;
+  }, [rawSettings]);
   const profile = useMemo(() => normProfile(rawProfile), [rawProfile]);
 
   // ---------- server sync ----------

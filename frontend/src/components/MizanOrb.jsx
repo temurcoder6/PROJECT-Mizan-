@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { Compass, Loader2, Mic, MicOff, Send, Sparkles, Volume2, X } from 'lucide-react';
+import { Compass, Loader2, Mic, MicOff, Send, Sparkles, X } from 'lucide-react';
 import { api } from '../lib/api';
 import { debtRemaining, inRange, periodRange, summarize } from '../lib/finance';
 import { todayISO } from '../lib/format';
 import { dailyPlan } from '../lib/plan';
-import { speak, stopSpeaking, voiceInputSupported } from '../lib/voice';
+import { voiceInputSupported } from '../lib/voice';
 import { useStore } from '../store';
 
 const TOUR_STEPS = [
@@ -37,76 +37,18 @@ const NAV_MAP = [
   { rx: /\b(katta\s*ai|to'liq\s*ai|yordamchi)\b/i, page: 'yordamchi', label: 'Mizan AI' },
 ];
 
-const WAKE_RE = /\b(mizan\s*ai|mizan|ey\s*mizan|salom\s*mizan|мизан)\b/i;
-
 export default function MizanOrb({ go, currentRoute }) {
   const store = useStore();
   const { settings } = store;
   const [open, setOpen] = useState(false);
-  const [wakeMode, setWakeMode] = useState(false);
   const [listeningCmd, setListeningCmd] = useState(false);
   const [thinking, setThinking] = useState(false);
   const [input, setInput] = useState('');
   const [tourIdx, setTourIdx] = useState(null);
-  const [reply, setReply] = useState("Salom! Men Mizan AI. Menga «Mizan AI» deb murojaat qiling yoki yozing — saytning istalgan joyini ko'rsatib, ishlaringizni bajarib beraman.");
+  const [reply, setReply] = useState("Salom! Men Mizan AI. Menga savol bering yoki yozing — saytning istalgan joyini ko'rsatib, hisob-kitoblarni qilib beraman.");
 
-  const wakeRecRef = useRef(null);
   const cmdRecRef = useRef(null);
   const sendCmdRef = useRef(null);
-
-  // "Mizan AI" ovozli chaqirish (Wake-word) rejimi
-  useEffect(() => {
-    if (!wakeMode || !voiceInputSupported) {
-      try { wakeRecRef.current?.stop(); } catch {}
-      wakeRecRef.current = null;
-      return undefined;
-    }
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!Recognition) return undefined;
-
-    let stopped = false;
-    const startWake = () => {
-      if (stopped || listeningCmd) return;
-      try {
-        const rec = new Recognition();
-        rec.lang = settings.voiceLang || 'uz-UZ';
-        rec.continuous = true;
-        rec.interimResults = true;
-        rec.onresult = (e) => {
-          for (let i = e.resultIndex; i < e.results.length; i++) {
-            const transcript = e.results[i][0]?.transcript || '';
-            if (WAKE_RE.test(transcript)) {
-              const afterWake = transcript.replace(WAKE_RE, '').trim();
-              setOpen(true);
-              if (afterWake.length > 3 && e.results[i].isFinal) {
-                sendCmdRef.current?.(afterWake);
-              } else {
-                setReply("Labbay! Eshitaman — nima qilib beray?");
-                if (settings.autoSpeak) speak("Labbay, eshitaman!", 'uz');
-              }
-              break;
-            }
-          }
-        };
-        rec.onend = () => {
-          if (!stopped && wakeMode && !listeningCmd) {
-            setTimeout(startWake, 400);
-          }
-        };
-        rec.onerror = () => {};
-        rec.start();
-        wakeRecRef.current = rec;
-      } catch {
-        // ignore mic start errors
-      }
-    };
-    startWake();
-    return () => {
-      stopped = true;
-      try { wakeRecRef.current?.stop(); } catch {}
-      wakeRecRef.current = null;
-    };
-  }, [wakeMode, listeningCmd, settings.voiceLang, settings.autoSpeak]);
 
   const startTour = () => {
     setTourIdx(0);
@@ -174,7 +116,6 @@ export default function MizanOrb({ go, currentRoute }) {
         if (res.action?.action === 'navigate' && res.action.page) {
           go(res.action.page);
         }
-        if (settings.autoSpeak) speak(res.text, 'uz');
       }
     } catch {
       setReply("Hozir serverga ulanib bo'lmadi, lekin yuqoridagi tugmalar orqali sahifalarga o'tishingiz mumkin.");
@@ -199,7 +140,10 @@ export default function MizanOrb({ go, currentRoute }) {
     rec.interimResults = false;
     rec.onresult = (e) => {
       const t = e.results?.[0]?.[0]?.transcript || '';
-      if (t.trim()) handleCommand(t);
+      if (t.trim()) {
+        setInput(t);
+        setListeningCmd(false);
+      }
     };
     rec.onerror = () => setListeningCmd(false);
     rec.onend = () => setListeningCmd(false);
@@ -224,24 +168,14 @@ export default function MizanOrb({ go, currentRoute }) {
               </span>
               <div>
                 <p className="text-xs font-bold text-plaster">Mizan AI · Tezkor yordamchi</p>
-                <p className="text-[10px] text-turq-soft">{wakeMode ? '«Mizan AI» chaqiruvini tinglamoqda' : 'Buyruq bering yoki savol so‘rang'}</p>
+                <p className="text-[10px] text-turq-soft">Buyruq bering yoki savol so‘rang</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
-              {voiceInputSupported && (
-                <button
-                  type="button"
-                  onClick={() => setWakeMode((v) => !v)}
-                  title="«Mizan AI» ovozli chaqirishni yoqish/o'chirish"
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold transition ${wakeMode ? 'bg-turq text-cobalt-night' : 'border border-plaster/15 text-plaster/65 hover:text-plaster'}`}
-                >
-                  {wakeMode ? 'Tinglash: ON' : 'Hey Mizan'}
-                </button>
-              )}
               <button
                 type="button"
                 aria-label="Mini oynani yopish"
-                onClick={() => { stopSpeaking(); setOpen(false); }}
+                onClick={() => setOpen(false)}
                 className="rounded-full p-1 text-plaster/55 hover:bg-plaster/10 hover:text-plaster"
               >
                 <X className="size-4" />
@@ -285,13 +219,6 @@ export default function MizanOrb({ go, currentRoute }) {
                 <Compass className="size-3 text-ochre" /> {c.label}
               </button>
             ))}
-            <button
-              type="button"
-              onClick={() => speak(reply, 'uz')}
-              className="inline-flex items-center gap-1 rounded-full border border-plaster/15 bg-[#0A1F45] px-2.5 py-1 text-[11px] font-semibold text-plaster/75 hover:text-plaster"
-            >
-              <Volume2 className="size-3 text-turq-soft" /> O'qib ber
-            </button>
           </div>
 
           <form
