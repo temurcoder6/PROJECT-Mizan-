@@ -79,10 +79,22 @@ export default function Girih3D({ className = '', children, size = 520 }) {
   // kursorga egilish: rAF bilan, yumshoq (lerp), React qayta render qilmaydi
   useEffect(() => {
     if (still || !running) return undefined;
+    const isTouchOnly = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse) and (hover: none)').matches;
+    if (isTouchOnly) return undefined;
+
     const el = tiltEl.current;
     let raf = 0;
     const target = { x: 0, y: 0 };
     const cur = { x: 0, y: 0 };
+    let rect = null;
+
+    const updateRect = () => {
+      if (root.current) rect = root.current.getBoundingClientRect();
+    };
+    updateRect();
+    window.addEventListener('resize', updateRect, { passive: true });
+    window.addEventListener('scroll', updateRect, { passive: true });
+
     const tick = () => {
       cur.x += (target.x - cur.x) * 0.08;
       cur.y += (target.y - cur.y) * 0.08;
@@ -93,10 +105,10 @@ export default function Girih3D({ className = '', children, size = 520 }) {
       if (!raf) raf = requestAnimationFrame(tick);
     };
     const onMove = (e) => {
-      const b = root.current?.getBoundingClientRect();
-      if (!b) return;
-      const dx = Math.max(-1, Math.min(1, (e.clientX - (b.left + b.width / 2)) / (window.innerWidth / 2)));
-      const dy = Math.max(-1, Math.min(1, (e.clientY - (b.top + b.height / 2)) / (window.innerHeight / 2)));
+      if (!rect) updateRect();
+      if (!rect) return;
+      const dx = Math.max(-1, Math.min(1, (e.clientX - (rect.left + rect.width / 2)) / (window.innerWidth / 2)));
+      const dy = Math.max(-1, Math.min(1, (e.clientY - (rect.top + rect.height / 2)) / (window.innerHeight / 2)));
       target.x = -dy * MAX_TILT;
       target.y = dx * MAX_TILT;
       kick();
@@ -110,6 +122,8 @@ export default function Girih3D({ className = '', children, size = 520 }) {
     document.documentElement.addEventListener('pointerleave', onLeave);
     return () => {
       window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('resize', updateRect);
+      window.removeEventListener('scroll', updateRect);
       document.documentElement.removeEventListener('pointerleave', onLeave);
       cancelAnimationFrame(raf);
     };
@@ -123,16 +137,16 @@ export default function Girih3D({ className = '', children, size = 520 }) {
     <div
       ref={root}
       className={`relative mx-auto flex w-full items-center justify-center ${children == null ? 'min-h-[var(--g-size)]' : ''} ${className}`}
-      style={{ '--g-size': `min(${size}px, 180vw)` }}
+      style={{ '--g-size': `min(${size}px, 100vw)` }}
     >
       <div
         className="pointer-events-none absolute top-1/2 left-1/2 aspect-square w-[var(--g-size)] max-w-none -translate-x-1/2 -translate-y-1/2"
-        style={{ containerType: 'inline-size', perspective: '1600px' }}
+        style={{ containerType: 'inline-size', perspective: '1600px', contain: 'layout' }}
         aria-hidden
       >
       <style>{`@keyframes girih-spin{from{transform:rotateY(0deg)}to{transform:rotateY(360deg)}}`}</style>
 
-      <div ref={tiltEl} className="pointer-events-none absolute inset-0" style={{ transformStyle: 'preserve-3d', ...tiltStyle }} aria-hidden>
+      <div ref={tiltEl} className="pointer-events-none absolute inset-0" style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden', willChange: 'transform', ...tiltStyle }} aria-hidden>
         <div
           className="absolute inset-0"
           style={{
@@ -140,6 +154,7 @@ export default function Girih3D({ className = '', children, size = 520 }) {
             willChange: still ? undefined : 'transform',
             animation: still ? 'none' : 'girih-spin 40s linear infinite',
             animationPlayState: running ? 'running' : 'paused',
+            backfaceVisibility: 'hidden',
           }}
         >
           {/* qalinlik: orqaga ketuvchi to'q kobalt bo'laklar */}

@@ -23,7 +23,12 @@ export function StarMark({ className = 'size-8', live = false }) {
 export function GirihField({ id, className = '', opacity = 0.16, size = 96 }) {
   const h = size / 2;
   return (
-    <svg className={`pointer-events-none absolute inset-0 size-full ${className}`} aria-hidden>
+    <svg
+      className={`pointer-events-none absolute inset-0 size-full ${className}`}
+      style={{ contain: 'strict', transform: 'translateZ(0)' }}
+      shapeRendering="optimizeSpeed"
+      aria-hidden
+    >
       <defs>
         <pattern id={id} width={size} height={size} patternUnits="userSpaceOnUse">
           <polygon points={starPoints(h, h, h * 0.62)} fill="none" stroke="#C9962B" strokeWidth="1" />

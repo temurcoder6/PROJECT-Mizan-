@@ -33,43 +33,83 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
   const glare = useRef(null);
   const inside = useRef(false);
   const [reload, setReload] = useState(0);
+  const [inView, setInView] = useState(true);
   const start = still ? STILL : REST;
 
-  const apply = (t) => {
-    if (rotor.current) rotor.current.style.transform = rotation(t);
-    if (shadow.current) shadow.current.style.transform = shadowShift(t);
-    if (glare.current) glare.current.style.transform = glareShift(t);
+  const apply = (t, smooth = false) => {
+    const tr = smooth ? 'transform .25s ease-out' : 'none';
+    if (rotor.current) {
+      rotor.current.style.transition = tr;
+      rotor.current.style.transform = rotation(t);
+    }
+    if (shadow.current) {
+      shadow.current.style.transition = tr;
+      shadow.current.style.transform = shadowShift(t);
+    }
+    if (glare.current) {
+      glare.current.style.transition = tr;
+      glare.current.style.transform = glareShift(t);
+    }
   };
 
+  // Faqat ko'rinib turganda ishlash (viewportdan chiqsa resurs sarflamaslik)
   useEffect(() => {
-    apply(start);
-    if (!motion) return undefined;
+    const el = wrap.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined;
+    const io = new IntersectionObserver(([entry]) => {
+      setInView(entry.isIntersecting);
+    }, { rootMargin: '60px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    apply(start, true);
+    if (!motion || !inView) return undefined;
+
+    // Sensorli (telefon/planshet) qurilmalarda kursor og'ishi shart emas (qotishni oldini oladi)
+    const isTouchOnly = typeof window !== 'undefined' && window.matchMedia?.('(pointer: coarse) and (hover: none)').matches;
+    if (isTouchOnly) return undefined;
+
     let raf = 0;
+    let rect = null;
+
+    const updateRect = () => {
+      if (wrap.current) rect = wrap.current.getBoundingClientRect();
+    };
+    updateRect();
+    window.addEventListener('resize', updateRect, { passive: true });
+    window.addEventListener('scroll', updateRect, { passive: true });
+
     const onMove = (e) => {
       if (inside.current) return;
+      if (!rect) updateRect();
+      if (!rect) return;
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        const r = wrap.current?.getBoundingClientRect();
-        if (!r) return;
-        const dx = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / 600));
-        const dy = Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / 500));
-        apply({ x: 5 - dy * 8, y: -10 + dx * 14, gx: 50 + dx * 45, gy: 35 + dy * 45 });
+        const dx = Math.max(-1, Math.min(1, (e.clientX - (rect.left + rect.width / 2)) / 600));
+        const dy = Math.max(-1, Math.min(1, (e.clientY - (rect.top + rect.height / 2)) / 500));
+        apply({ x: 5 - dy * 8, y: -10 + dx * 14, gx: 50 + dx * 45, gy: 35 + dy * 45 }, false);
       });
     };
+
     window.addEventListener('pointermove', onMove, { passive: true });
     return () => {
       window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('resize', updateRect);
+      window.removeEventListener('scroll', updateRect);
       cancelAnimationFrame(raf);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [motion, still]);
+  }, [motion, still, inView]);
 
   const enter = () => {
     inside.current = true;
-    if (motion) apply(FLAT);
+    if (motion) apply(FLAT, true);
   };
   const leave = () => {
     inside.current = false;
+    if (motion) apply(start, true);
   };
 
   // Yon qirra: kobalt qatlamlar, o'rtasida oltin choki — burilganda medalyon qirrasi ko'rinadi.
@@ -82,7 +122,7 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
         onMouseEnter={enter}
         onMouseLeave={leave}
         className="relative"
-        style={{ perspective: '1500px' }}
+        style={{ perspective: '1500px', contain: 'layout' }}
       >
         {/* bitta yumshoq kontakt soyasi: blur filtri emas, radial gradient */}
         <div
@@ -90,16 +130,21 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
           className="pointer-events-none absolute -bottom-10 left-1/2 h-10 w-60"
           style={{
             transform: shadowShift(start),
-            transition: motion ? 'transform .2s ease-out' : undefined,
             background: 'radial-gradient(closest-side, rgba(3,10,26,.55), rgba(3,10,26,.22) 55%, rgba(3,10,26,0))',
+            willChange: 'transform',
           }}
           aria-hidden
         />
         <div
           ref={rotor}
-          style={{ transformStyle: 'preserve-3d', transform: rotation(start), transition: motion ? 'transform .2s ease-out' : undefined }}
+          style={{
+            transformStyle: 'preserve-3d',
+            transform: rotation(start),
+            willChange: motion ? 'transform' : undefined,
+            backfaceVisibility: 'hidden',
+          }}
         >
-          <div className={motion ? 'animate-float lite-static' : ''} style={{ transformStyle: 'preserve-3d' }}>
+          <div className={motion && inView ? 'animate-float lite-static' : ''} style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}>
             {Array.from({ length: DEPTH }).map((_, i) => (
               <span
                 key={i}
@@ -171,8 +216,9 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
                       ref={iframeRef}
                       title="Mizan ilovasi (namuna ma'lumot bilan)"
                       src={src}
+                      loading="lazy"
                       className="block h-[556px] w-full border-0 bg-[#060E1F]"
-                      style={{ transform: 'translateZ(0)' }}
+                      style={{ transform: 'translateZ(0)', contain: 'paint' }}
                     />
                   )}
                   <div className="flex h-[16px] items-center justify-center bg-[#060E1F]" aria-hidden>
@@ -189,8 +235,8 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
                     className="pointer-events-none absolute -inset-1/2 z-20"
                     style={{
                       transform: glareShift(start),
-                      transition: motion ? 'transform .2s ease-out' : undefined,
                       background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,.18), rgba(255,255,255,0) 26%)',
+                      willChange: 'transform',
                     }}
                     aria-hidden
                   />
@@ -201,7 +247,7 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
         </div>
       </div>
       {showCaption && (
-        <div className="mt-12 text-center text-xs text-[#F4F1EA]/65">
+        <div className="relative z-20 mt-12 text-center text-xs text-[#F4F1EA]/65">
           <p>Bu haqiqiy ilova, namuna ma'lumot bilan. Telefon ichida bosib ko'ring.</p>
           <button
             type="button"

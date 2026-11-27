@@ -320,7 +320,7 @@ function Shell() {
                 }`}
               >
                 <t.icon className={`size-4.5 ${active ? 'text-ochre' : ''}`} aria-hidden />
-                <span className="truncate">{t.label}</span>
+                <span className="truncate">{id === 'maqsadlar' ? 'Maqsad' : t.label}</span>
               </button>
             );
           })}
