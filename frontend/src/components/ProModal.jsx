@@ -20,7 +20,7 @@ export default function ProModal({ open, onClose }) {
 
   const features = [
     {
-      title: "Mizan Jarvis — Aqlli AI Moliyaviy Maslahatchi",
+      title: "Mizan AI — Aqlli Moliyaviy Maslahatchi",
       desc: "O'zbekistondagi barcha bozorlar (Malika, Abu Saxiy) va muddatli to'lovlar (Uzum Nasiya, Alif Nasiya, Iman Pay) bo'yicha cheksiz hisob-kitob va solishtirish.",
       free: "3 ta sinov",
       pro: "Cheksiz, 24/7",
@@ -56,10 +56,17 @@ export default function ProModal({ open, onClose }) {
     },
     {
       title: "Hamkor do'konlardan chegirma va vaucherlar",
-      desc: "Texnomart, Mediapark, Idea va boshqa do'konlarda Mizan foydalanuvchilari uchun maxsus keshbek.",
+      desc: "Texnomart, Mediapark, Olcha, Asaxiy va bank hamkorlarda Mizan foydalanuvchilari uchun maxsus keshbek va 0% aksiyalar.",
       free: "Yo'q",
       pro: "10% gacha keshbek",
       icon: Store,
+    },
+    {
+      title: "Mizan Biznes & B2B Moliyaviy Tahlil",
+      desc: "Kichik biznes, do'kon va frilanserlar uchun kassa oqimi, soliq eslatmalari va xodimlar byudjeti.",
+      free: "Shaxsiy",
+      pro: "Biznes moduli",
+      icon: Crown,
     },
   ];
 

@@ -43,7 +43,22 @@
 }
 
 html { -webkit-tap-highlight-color: transparent; color-scheme: dark; }
-body { margin: 0; font-family: var(--font-body); background: #060e1f; color: #f4f1ea; }
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: #060e1f;
+  color: #f4f1ea;
+  user-select: none;
+  -webkit-user-select: none;
+}
+button, a, nav, header, footer, svg, img {
+  user-select: none;
+  -webkit-user-select: none;
+}
+input, textarea, select, [contenteditable="true"], pre, code, .select-text, .select-all {
+  user-select: text;
+  -webkit-user-select: text;
+}
 button { cursor: pointer; }
 textarea, input, select { font-family: inherit; }
 

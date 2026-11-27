@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { HttpError, checkOrigin, readJSON, send, serveStatic } from './lib/http.mjs';
-import { askJarvisAI, computeFinancialHealth } from './lib/jarvis.mjs';
+import { askJarvisAI, analyzeScamWithAI, computeFinancialHealth, scanReceiptWithAI, synthesizeSpeechWithGemini } from './lib/jarvis.mjs';
 import { PARTNERS } from './lib/partners.mjs';
 import {
   CONTROL, LIMITS, USERNAME_RE, cleanState, findForbiddenCardKey, int, oneOf, passwordIssue, sanitizeCard, str,
@@ -1377,6 +1377,47 @@ async function api(req, res, pathname, url) {
     return send(res, 200, result);
   }
 
+  if (pathname === '/api/ai/tts') {
+    if (req.method !== 'POST') throw new HttpError(405, 'Faqat POST ruxsat etilgan.');
+    const body = await readJSON(req, SMALL_BODY);
+    const text = str(body?.text || '', 1500);
+    const voiceName = str(body?.voiceName || 'Kore', 32) || 'Kore';
+    if (!text.trim()) throw new HttpError(400, "Matn bo'sh.");
+    const wavBuffer = await synthesizeSpeechWithGemini({ text, voiceName, apiKey: process.env.GEMINI_API_KEY });
+    res.writeHead(200, {
+      'Content-Type': 'audio/wav',
+      'Content-Length': wavBuffer.length,
+      'Cache-Control': 'private, max-age=300',
+    });
+    res.end(wavBuffer);
+    return;
+  }
+
+  if (pathname === '/api/ai/check-scam') {
+    if (req.method !== 'POST') throw new HttpError(405, 'Faqat POST ruxsat etilgan.');
+    const body = await readJSON(req, MAX_BODY);
+    const text = str(body?.text || '', 4500);
+    const imageBase64 = typeof body?.imageBase64 === 'string' ? body.imageBase64 : '';
+    const mimeType = str(body?.mimeType || 'image/png', 64) || 'image/png';
+    if (!text.trim() && !imageBase64) throw new HttpError(400, 'Xabar matni yoki rasm yuboring.');
+    const result = await analyzeScamWithAI({ text, imageBase64, mimeType, apiKey: process.env.GEMINI_API_KEY });
+    return send(res, 200, result);
+  }
+
+  if (pathname === '/api/ai/scan-receipt') {
+    if (req.method !== 'POST') throw new HttpError(405, 'Faqat POST ruxsat etilgan.');
+    const body = await readJSON(req, MAX_BODY);
+    const imageBase64 = typeof body?.imageBase64 === 'string' ? body.imageBase64 : '';
+    const mimeType = str(body?.mimeType || 'image/jpeg', 64) || 'image/jpeg';
+    if (!imageBase64) throw new HttpError(400, 'Chek rasmini yuklang.');
+    const result = await scanReceiptWithAI({ imageBase64, mimeType, apiKey: process.env.GEMINI_API_KEY });
+    return send(res, 200, result);
+  }
+
+  if (pathname === '/api/partners' && method === 'GET') {
+    return send(res, 200, { partners: Object.values(PARTNERS) });
+  }
+
   throw new HttpError(404, 'Topilmadi.');
 }
 
@@ -1384,7 +1425,7 @@ const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'SAMEORIGIN',
   'Referrer-Policy': 'same-origin',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; media-src 'self'; connect-src 'self'; frame-ancestors 'self'",
+  'Content-Security-Policy': "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-ancestors 'self'",
   'Permissions-Policy': 'microphone=(self), camera=(), geolocation=()',
 };
 

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, Check, Crown, Loader2, Mic, MicOff, Send, ShieldCheck, Sparkles, Trash2, Volume2, X } from 'lucide-react';
+import { Check, Compass, Crown, Loader2, MessageSquareWarning, Mic, MicOff, Send, ShieldAlert, ShieldCheck, Sparkles, Square, Trash2, Volume2, X } from 'lucide-react';
 import { Badge, Button, Card, Modal, MoneyInput, inputCls } from '../components/ui';
+import ComplaintModal from '../components/ComplaintModal';
+import PartnerSticker from '../components/PartnerSticker';
 import ProModal from '../components/ProModal';
 import { api } from '../lib/api';
 import { respond } from '../lib/assistant/assistant';
@@ -106,9 +108,24 @@ function DraftCard({ draft, msgId }) {
   );
 }
 
-function JarvisActionCard({ action }) {
+function JarvisActionCard({ action, go }) {
   const { actions } = useStore();
   const [added, setAdded] = useState(false);
+
+  if (action?.action === 'navigate' && action?.page) {
+    return (
+      <div className="mt-3 flex items-center justify-between gap-2 rounded-2xl border border-turq/35 bg-[#071633] px-3.5 py-2.5 text-xs text-plaster">
+        <span className="flex items-center gap-2 font-semibold text-turq-soft">
+          <Compass className="size-4" /> Bo'limga yo'naltirildi: {action.label || action.page}
+        </span>
+        {go && (
+          <Button size="sm" variant="outline" onClick={() => go(action.page)}>
+            Ochish
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   if (action?.action !== 'create_goal') return null;
 
@@ -137,7 +154,7 @@ function JarvisActionCard({ action }) {
     <div className="mt-3 rounded-2xl border border-ochre/45 bg-gradient-to-br from-[#0c234f] to-[#071530] p-4 text-plaster shadow-xl">
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-1.5 text-xs font-bold text-ochre uppercase tracking-wider">
-          <Sparkles className="size-4" /> Mizan Jarvis Taklifi
+          <Sparkles className="size-4" /> Mizan AI Taklifi
         </span>
         <span className="rounded-full bg-ochre/15 border border-ochre/30 px-2 py-0.5 text-[10px] text-ochre font-bold">
           1 bosishda bajarish
@@ -166,15 +183,15 @@ function FormattedText({ text }) {
   if (!text) return null;
   const lines = text.split('\n');
   return (
-    <div className="space-y-1.5 leading-relaxed">
+    <div className="select-text space-y-1.5 leading-relaxed">
       {lines.map((line, idx) => {
         const trimmed = line.trim();
         if (!trimmed) return <div key={idx} className="h-1" />;
         if (trimmed.startsWith('### ')) {
-          return <h4 key={idx} className="font-bold text-ochre text-sm mt-2">{trimmed.slice(4)}</h4>;
+          return <h4 key={idx} className="font-bold text-turq-soft text-sm mt-2">{trimmed.slice(4)}</h4>;
         }
         if (trimmed.startsWith('## ')) {
-          return <h3 key={idx} className="font-bold text-ochre text-base mt-2.5">{trimmed.slice(3)}</h3>;
+          return <h3 key={idx} className="font-bold text-turq-soft text-base mt-2.5">{trimmed.slice(3)}</h3>;
         }
         if (trimmed.startsWith('---')) {
           return <hr key={idx} className="border-plaster/15 my-2" />;
@@ -195,63 +212,34 @@ function FormattedText({ text }) {
   );
 }
 
-function PartnerCards({ partners }) {
-  const [clickedId, setClickedId] = useState('');
-  if (!Array.isArray(partners) || !partners.length) return null;
-
-  const onPartnerOpen = (p) => {
-    setClickedId(p.id);
-    api.trackPartnerClick(p.id, 'assistant').catch(() => {});
-  };
-
-  return (
-    <div className="mt-3 space-y-2">
-      <div className="flex items-center justify-between text-[11px] font-semibold text-turq-soft">
-        <span className="uppercase tracking-wider">Mizan Hamkor Takliflari</span>
-        <span className="text-plaster/45">Siz uchun qo'shimcha to'lovsiz</span>
-      </div>
-      <div className="grid gap-2">
-        {partners.map((p) => (
-          <div key={p.id} className="rounded-2xl border border-turq/30 bg-[#061530]/95 p-3 text-plaster">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-xs font-bold text-plaster">{p.name}</span>
-                  <span className="rounded-full bg-turq/15 px-2 py-0.5 text-[10px] font-semibold text-turq-soft ring-1 ring-turq/30">
-                    {p.badge}
-                  </span>
-                </div>
-                <p className="mt-1 text-[11px] text-plaster/70">{p.tagline}</p>
-                {p.benefit && <p className="mt-1 text-[11px] text-ochre/90">{p.benefit}</p>}
-              </div>
-              <a
-                href={p.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => onPartnerOpen(p)}
-                className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-turq px-3 py-1.5 text-xs font-bold text-cobalt-night transition hover:bg-[#32BDB6]"
-              >
-                {clickedId === p.id ? 'Ochildi' : "Ko'rish"} <ArrowUpRight className="size-3.5" />
-              </a>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function Bubble({ msg, onChoice, onSpeak, lastId }) {
+function Bubble({ msg, onChoice, onSpeak, onStopSpeak, speakingId, lastId, go, animations, onOpenComplaint }) {
   const mine = msg.role === 'user';
+  const isSpeaking = speakingId === msg.id;
   return (
     <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${mine ? 'rounded-br-md border border-ochre/35 bg-cobalt text-plaster' : 'rounded-bl-md border border-plaster/12 bg-[#0A1F45]/90 text-plaster/90'}`}>
+      <div className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${mine ? 'rounded-br-md border border-turq/35 bg-cobalt/90 text-plaster' : 'rounded-bl-md border border-plaster/12 bg-[#0A1F45]/85 text-plaster/90'}`}>
         <FormattedText text={msg.text} />
         {msg.drafts?.map((d) => (
           <DraftCard key={d.id} draft={d} msgId={msg.id} />
         ))}
-        {msg.action && <JarvisActionCard action={msg.action} />}
-        {msg.partners?.length > 0 && <PartnerCards partners={msg.partners} />}
+        {msg.action && <JarvisActionCard action={msg.action} go={go} />}
+        {msg.partners?.length > 0 && <PartnerSticker partners={msg.partners} animated={animations} />}
+        {msg.moderation?.status && msg.moderation.status !== 'ok' && (
+          <div className="mt-2.5 rounded-xl border border-rose-400/35 bg-rose-500/15 p-2.5 text-xs text-rose-200">
+            <div className="flex items-center gap-1.5 font-bold">
+              <ShieldAlert className="size-4 shrink-0" />
+              {msg.moderation.status === 'ban' ? 'Kirish cheklandi (Ban)' : 'Ogohlantirish'}
+            </div>
+            {msg.moderation.reason && <p className="mt-1 opacity-90">{msg.moderation.reason}</p>}
+            <button
+              type="button"
+              onClick={() => onOpenComplaint(msg.moderation.reason || '')}
+              className="mt-2 inline-flex items-center gap-1 rounded-lg bg-rose-500/25 px-2.5 py-1 font-semibold text-white hover:bg-rose-500/40"
+            >
+              <MessageSquareWarning className="size-3.5" /> Shikoyat / Murojaat oynasi
+            </button>
+          </div>
+        )}
         {msg.choices && msg.id === lastId && (
           <div className="mt-2 flex flex-wrap gap-2">
             {msg.choices.map((c) => (
@@ -262,8 +250,12 @@ function Bubble({ msg, onChoice, onSpeak, lastId }) {
           </div>
         )}
         {!mine && voiceOutputSupported && (
-          <button type="button" onClick={() => onSpeak(msg)} className="mt-1.5 inline-flex items-center gap-1 text-xs font-semibold text-plaster/55 hover:text-plaster">
-            <Volume2 className="size-3.5" /> O'qib berish
+          <button
+            type="button"
+            onClick={() => (isSpeaking ? onStopSpeak() : onSpeak(msg))}
+            className={`mt-1.5 inline-flex items-center gap-1 text-xs font-semibold transition ${isSpeaking ? 'text-ochre' : 'text-plaster/55 hover:text-plaster'}`}
+          >
+            {isSpeaking ? <><Square className="size-3 fill-current" /> To'xtatish</> : <><Volume2 className="size-3.5" /> O'qib berish</>}
           </button>
         )}
       </div>
@@ -271,13 +263,29 @@ function Bubble({ msg, onChoice, onSpeak, lastId }) {
   );
 }
 
-export default function Assistant() {
+const LOCAL_NAV_ROUTES = [
+  { rx: /\b(bosh\s*sahifa|asosiy|home|pulingiz\s*holati)\b/i, page: 'bosh', label: 'Bosh sahifa' },
+  { rx: /\b(xarajat|yozuvlar|daromad|kirim|chiqim)\b.*\b(och|kir|o't|ot|ko'rsat|korsat)\b|\b(och|kir|o't|ot|ko'rsat|korsat)\b.*\b(xarajat|yozuvlar|daromad)\b/i, page: 'yozuvlar', label: 'Yozuvlar' },
+  { rx: /\b(karta|kartalar)\b.*\b(och|kir|o't|ot|ko'rsat|korsat)\b|\b(och|kir|o't|ot|ko'rsat|korsat)\b.*\b(karta|kartalar)\b/i, page: 'kartalar', label: 'Kartalar' },
+  { rx: /\b(qarz|qarzlar)\b.*\b(och|kir|o't|ot|ko'rsat|korsat)\b|\b(och|kir|o't|ot|ko'rsat|korsat)\b.*\b(qarz|qarzlar)\b/i, page: 'qarzlar', label: 'Qarzlar' },
+  { rx: /\b(maqsad|maqsadlar)\b.*\b(och|kir|o't|ot|ko'rsat|korsat)\b|\b(och|kir|o't|ot|ko'rsat|korsat)\b.*\b(maqsad|maqsadlar)\b/i, page: 'maqsadlar', label: 'Maqsadlar' },
+  { rx: /\b(hisobot|statistika|grafik)\b.*\b(och|kir|o't|ot|ko'rsat|korsat)\b|\b(och|kir|o't|ot|ko'rsat|korsat)\b.*\b(hisobot|statistika)\b/i, page: 'hisobot', label: 'Hisobot' },
+  { rx: /\b(xavfsizlik|firibgar|shubhali)\b.*\b(och|kir|o't|ot|ko'rsat|korsat|tekshir)\b|\b(och|kir|o't|ot|ko'rsat|korsat)\b.*\b(xavfsizlik)\b/i, page: 'xavfsizlik', label: 'Xavfsizlik' },
+  { rx: /\b(sozlama|sozlamalar|nastroyka)\b.*\b(och|kir|o't|ot|ko'rsat|korsat)\b|\b(och|kir|o't|ot|ko'rsat|korsat)\b.*\b(sozlama|sozlamalar)\b/i, page: 'sozlamalar', label: 'Sozlamalar' },
+  { rx: /\b(yordam|shikoyat|murojaat)\b.*\b(och|kir|o't|ot)\b/i, page: 'yordam', label: 'Yordam va shikoyat' },
+];
+
+export default function Assistant({ go }) {
   const store = useStore();
   const { chat, pending, settings, actions } = store;
   const [text, setText] = useState('');
   const [listening, setListening] = useState(false);
   const [thinking, setThinking] = useState(false);
+  const [speakingId, setSpeakingId] = useState(null);
   const [showPro, setShowPro] = useState(false);
+  const [complaint, setComplaint] = useState({ open: false, reason: '' });
+  const [strikes, setStrikes] = useState(() => Number(localStorage.getItem('mizan_mod_strikes') || 0));
+  const [banned, setBanned] = useState(() => Number(localStorage.getItem('mizan_mod_ban_until') || 0) > Date.now());
   const [notice, setNotice] = useState('');
   const [consent, setConsent] = useState(false);
   const stopRef = useRef(null);
@@ -296,23 +304,64 @@ export default function Assistant() {
   const isQuickLocalEntry = (str, hasPending) => {
     if (hasPending) return true;
     const s = str.toLowerCase().trim();
-    if (s.includes('?')) return false;
-    if (/(qanday|qaysi|necha|nima|qancha|nega|kim|qayer|qachon|bo'ladimi|buladimi|yaxshi|arzon|qimmat|bank|karta|foiz|omonat|kredit|mikroqarz|nasiya|rassrochka|uzum|tbc|anor|avo|kapital|ipak|hamkor|agro|xalq|sqb|nbu|infin|alif|iman|payme|click|olcha|asaxiy|texnomart|mediapark|malika|abu saxiy|iphone|samsung|macbook|noutbuk|mashina|telefon|uy|kurs|dollar|yevro|tejash|teja|maslahat|tavsiya|solishtir|tahlil|reja|olmoqchiman|yig'moqchiman|yigmoqchiman|yig'sam|yigsam|salom|assalom|rahmat|jarvis|mizan)/i.test(s)) {
+    if (s.includes('?') || s.split(/\s+/).length > 7) return false;
+    if (/(qanday|qaysi|necha|nima|qancha|nega|kim|qayer|qachon|bo'ladimi|buladimi|yaxshi|arzon|qimmat|bank|karta|foiz|omonat|kredit|mikroqarz|nasiya|rassrochka|uzum|tbc|anor|avo|kapital|ipak|hamkor|agro|xalq|sqb|nbu|infin|alif|iman|payme|click|olcha|asaxiy|texnomart|mediapark|malika|abu saxiy|iphone|samsung|macbook|noutbuk|mashina|telefon|uy|kurs|dollar|yevro|tejash|teja|maslahat|tavsiya|solishtir|tahlil|reja|olmoqchiman|yig'moqchiman|yigmoqchiman|yig'sam|yigsam|salom|assalom|rahmat|jarvis|mizan|kasal|og'ri|dori|yo'qot|yuqot|o'qish|uqish|imtihon|och|kir|o't)/i.test(s)) {
       return false;
     }
-    return /\d/.test(s) && s.split(/\s+/).length <= 8 && /(sarfla|xarajat|tushdi|oldim|berdim|qarz|bozor|taksi|non|kofe|ovqat|kommunal|ijara|internet|maosh|oylik|\d+\s*(ming|mln|k|m)?$)/i.test(s);
+    return /\d/.test(s) && /(sarfla|xarajat|tushdi|oldim|berdim|qarz|bozor|taksi|non|kofe|ovqat|kommunal|ijara|internet|maosh|oylik|\d+\s*(ming|mln|k|m)?$)/i.test(s);
+  };
+
+  const speakMsg = (msg) => {
+    setSpeakingId(msg.id);
+    speak(msg.text, msg.lang || 'uz', {
+      onStart: () => setSpeakingId(msg.id),
+      onEnd: () => setSpeakingId((cur) => (cur === msg.id ? null : cur)),
+      onError: () => {
+        setSpeakingId((cur) => (cur === msg.id ? null : cur));
+        if (!findVoice(msg.lang || 'uz')) {
+          setNotice("Ovozni o'qishda muammo bo'ldi. Internetni tekshiring.");
+        }
+      },
+    });
+  };
+
+  const stopSpeak = () => {
+    stopSpeaking();
+    setSpeakingId(null);
   };
 
   const send = async (raw) => {
     const input = (raw ?? text).trim();
     if (!input || thinking) return;
 
+    if (banned) {
+      setComplaint({ open: true, reason: 'Qoidalarni buzganlik uchun AI chat cheklangan.' });
+      return;
+    }
+
     const priorHistory = chat.slice(-10).map((m) => ({ role: m.role, text: m.text }));
     actions.pushMessage({ id: uid(), role: 'user', text: input });
     setText('');
     setNotice('');
 
-    // Sodda xarajat/daromad kiritishdan tashqari BARCHA savol va suhbatlar Mizan AI (Gemini + jonli internet) ga yuboriladi
+    // Tezkor sayt navigatsiyasi buyruqlari
+    if (go) {
+      const nav = LOCAL_NAV_ROUTES.find((r) => r.rx.test(input));
+      if (nav) {
+        const navReply = {
+          id: uid(),
+          role: 'assistant',
+          lang: 'uz',
+          text: `Xo'p, hozir **${nav.label}** bo'limiga o'tamiz!`,
+          action: { action: 'navigate', page: nav.page, label: nav.label },
+        };
+        actions.pushMessage(navReply);
+        setTimeout(() => go(nav.page), 650);
+        return;
+      }
+    }
+
+    // Sodda xarajat/daromad kiritishdan tashqari BARCHA savol va suhbatlar Mizan AI ga yuboriladi
     if (!isQuickLocalEntry(input, pending)) {
       setThinking(true);
       try {
@@ -339,6 +388,27 @@ export default function Assistant() {
 
         const res = await api.askJarvis(input, context, priorHistory);
         if (res?.ok && res.text) {
+          // Moderatsiya natijasini tekshirish
+          let modInfo = res.moderation;
+          if (modInfo?.status === 'warn') {
+            const nextStrikes = strikes + 1;
+            setStrikes(nextStrikes);
+            localStorage.setItem('mizan_mod_strikes', String(nextStrikes));
+            if (nextStrikes >= 3) {
+              modInfo = { status: 'ban', reason: "3 marta ogohlantirishdan so'ng AI suhbati 5 daqiqaga cheklandi." };
+              setBanned(true);
+              localStorage.setItem('mizan_mod_ban_until', String(Date.now() + 5 * 60 * 1000));
+            }
+          } else if (modInfo?.status === 'ban') {
+            setBanned(true);
+            localStorage.setItem('mizan_mod_ban_until', String(Date.now() + 5 * 60 * 1000));
+          }
+
+          // Reklamani ketma-ket har javobda chiqarmaslik (qulay fursat nazorati)
+          const lastAssistant = [...chat].reverse().find((m) => m.role === 'assistant');
+          const hadRecentAd = Boolean(lastAssistant?.partners?.length);
+          const safePartners = hadRecentAd ? [] : (res.partners || []);
+
           const drafts =
             res.draft && Number(res.draft.amount) > 0
               ? [
@@ -359,24 +429,35 @@ export default function Assistant() {
                   },
                 ]
               : undefined;
+          const jarvisMsgId = uid();
           const jarvisReply = {
-            id: uid(),
+            id: jarvisMsgId,
             role: 'assistant',
             lang: 'uz',
             text: res.text,
             action: res.action,
-            partners: res.partners,
+            partners: safePartners,
+            moderation: modInfo,
             drafts,
           };
           actions.pushMessage(jarvisReply);
+
+          if (res.action?.action === 'navigate' && res.action.page && go) {
+            setTimeout(() => go(res.action.page), 700);
+          } else if (res.action?.action === 'open_pro') {
+            setShowPro(true);
+          } else if (res.action?.action === 'open_complaint') {
+            setComplaint({ open: true, reason: '' });
+          }
+
           if (settings.autoSpeak && voiceOutputSupported) {
-            speak(res.text, 'uz');
+            speakMsg(jarvisReply);
           }
           setThinking(false);
           return;
         }
       } catch (err) {
-        console.warn('Mizan AI ulanmadi, lokal tizimga o\'tildi:', err.message);
+        console.warn("Mizan AI ulanmadi, lokal tizimga o'tildi:", err.message);
       }
       setThinking(false);
     }
@@ -386,7 +467,7 @@ export default function Assistant() {
     const { reply, pending: next } = respond(input, { data, today: todayISO(), pending });
     actions.pushMessage(reply);
     if (settings.autoSpeak && voiceOutputSupported) {
-      if (!speak(reply.text, reply.lang)) setNotice("Qurilmangizda bu til uchun ovoz o'rnatilmagan, shuning uchun o'qib bera olmayman.");
+      speakMsg(reply);
     }
     actions.setPending(next);
   };
@@ -421,11 +502,6 @@ export default function Assistant() {
     startListening();
   };
 
-  const speakMsg = (msg) => {
-    const ok = speak(msg.text, msg.lang);
-    if (!ok) setNotice(findVoice(msg.lang) ? '' : "Qurilmangizda bu til uchun ovoz o'rnatilmagan, shuning uchun o'qib bera olmayman.");
-  };
-
   const lastId = chat[chat.length - 1]?.id;
   const pendingCount = chat.reduce((n, m) => n + (m.drafts?.filter((d) => d.status === 'pending').length || 0), 0);
 
@@ -441,6 +517,9 @@ export default function Assistant() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setComplaint({ open: true, reason: '' })} title="Shikoyat yoki murojaat yuborish" className="text-plaster/70 hover:text-plaster">
+            <MessageSquareWarning className="size-4" />
+          </Button>
           <Button variant="outline" size="sm" onClick={() => setShowPro(true)} className="gap-1.5 border-ochre/40 text-ochre hover:bg-ochre/15">
             <Crown className="size-4" /> Pro Rejim
           </Button>
@@ -473,14 +552,35 @@ export default function Assistant() {
           )}
 
           {chat.map((m) => (
-            <Bubble key={m.id} msg={m} lastId={lastId} onChoice={send} onSpeak={speakMsg} />
+            <Bubble
+              key={m.id}
+              msg={m}
+              lastId={lastId}
+              onChoice={send}
+              onSpeak={speakMsg}
+              onStopSpeak={stopSpeak}
+              speakingId={speakingId}
+              go={go}
+              animations={settings.animations}
+              onOpenComplaint={(reason) => setComplaint({ open: true, reason })}
+            />
           ))}
+
+          {banned && (
+            <div className="rounded-2xl border border-rose-400/40 bg-rose-500/15 p-3.5 text-xs text-rose-200">
+              <div className="font-bold">AI suhbati qoidalarni buzganlik sababli vaqtincha cheklandi.</div>
+              <p className="mt-1 opacity-85">Agar bu xatolik deb hisoblasangiz, shikoyat oynasi orqali murojaat yuboring.</p>
+              <Button size="sm" variant="outline" className="mt-2 border-rose-400/40 text-rose-100" onClick={() => setComplaint({ open: true, reason: 'AI cheklovi yuzasidan apellyatsiya' })}>
+                <MessageSquareWarning className="size-3.5" /> Shikoyat oynasini ochish
+              </Button>
+            </div>
+          )}
 
           {thinking && (
             <div className="flex justify-start">
               <div className="flex items-center gap-2.5 rounded-2xl rounded-bl-md border border-ochre/30 bg-[#0A1F45]/90 px-4 py-3 text-xs text-ochre font-medium shadow-md">
                 <Loader2 className="size-4 animate-spin text-ochre" />
-                <span>Mizan Jarvis moliyaviy ma'lumotlaringizni tahlil qilmoqda...</span>
+                <span>Mizan AI ma'lumotlaringizni tahlil qilmoqda...</span>
               </div>
             </div>
           )}
@@ -579,6 +679,7 @@ export default function Assistant() {
       )}
 
       <ProModal open={showPro} onClose={() => setShowPro(false)} />
+      <ComplaintModal open={complaint.open} initialReason={complaint.reason} onClose={() => setComplaint({ open: false, reason: '' })} />
     </div>
   );
 }

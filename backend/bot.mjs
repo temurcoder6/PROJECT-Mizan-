@@ -1,4 +1,5 @@
 import { Conflict, allChats, consumeLinkCode, loadAll, saveAll, unlinkChat, userForChat } from './server.mjs';
+import { askJarvisAI } from './lib/jarvis.mjs';
 import { respond } from '../frontend/src/lib/assistant/assistant.js';
 import { adviceText } from '../frontend/src/lib/assistant/advice.js';
 import { isAmbiguous, scanNumbers } from '../frontend/src/lib/assistant/nlp.js';
@@ -13,6 +14,7 @@ import { normalize } from '../frontend/src/lib/text.js';
 // the same daily-plan formula. Nothing is saved until the user presses "Saqlash".
 
 const COMMANDS = [
+  ['ai', 'Mizan AI bilan suhbat: /ai iPhone 17 narxi qancha?'],
   ['reja', "Bugun qancha sarflash mumkin"],
   ['bugun', 'Bugun yozilganlar'],
   ['hafta', 'Oxirgi 7 kun hisoboti'],
@@ -216,6 +218,13 @@ export function createBot({ call, today = todayISO, clock = () => new Date() }) 
 
   async function handleText(chat, userId, text) {
     const s = S(chat);
+    if (
+      !s.pending &&
+      process.env.GEMINI_API_KEY &&
+      (/\?/.test(text) || /\b(qanday|qaysi|qancha|nima|bank|omonat|kredit|nasiya|iphone|maslahat|tavsiya)\b/i.test(text))
+    ) {
+      return askAIForTelegram(chat, userId, text);
+    }
     const d = loadAll(userId);
     const { reply, pending } = respond(text, { data: d, today: today(), pending: s.pending });
     s.pending = pending;
@@ -234,8 +243,35 @@ export function createBot({ call, today = todayISO, clock = () => new Date() }) 
     await send(chat, reply.text, kb);
   }
 
+  async function askAIForTelegram(chat, userId, promptText) {
+    const d = loadAll(userId);
+    const day = today();
+    const plan = dailyPlan({ profile: d.profile, transactions: d.transactions, debts: d.debts, goals: d.goals, today: day });
+    const month = periodRange('month', day);
+    const ms = summarize(inRange(d.transactions, month.from, month.to));
+    const context = {
+      balance: plan.status === 'ok' || plan.status === 'deficit' ? plan.cash : 0,
+      dailyLimit: plan.status === 'ok' ? Math.round(plan.leftToday) : 0,
+      monthIncome: ms.income,
+      monthExpense: ms.expense,
+      cards: (d.cards || []).map((c) => ({ label: c.label, network: c.network, balance: c.balance })),
+      goals: (d.goals || []).map((g) => ({ name: g.name, target: g.target, saved: g.saved })),
+      debts: (d.debts || []).map((x) => ({ person: x.person, amount: x.amount, direction: x.direction })),
+    };
+    const res = await askJarvisAI({ prompt: promptText, context, history: [], apiKey: process.env.GEMINI_API_KEY });
+    if (res?.ok && res.text) {
+      const clean = res.text.replace(/\*\*/g, '').slice(0, 3800);
+      return send(chat, clean);
+    }
+    return send(chat, "Mizan AI hozir javob bera olmadi. Keyinroq urinib ko'ring.");
+  }
+
   async function command(chat, userId, cmd, arg) {
     const day = today();
+    if (cmd === 'ai') {
+      if (!arg) return send(chat, "Savolingizni yozing, masalan: /ai iPhone 17 olish uchun kuniga qancha yig'ay?");
+      return askAIForTelegram(chat, userId, arg);
+    }
     if (cmd === 'reja') return send(chat, planText(loadAll(userId), day));
     if (cmd === 'hisobot') return send(chat, reportText(loadAll(userId), day));
     if (cmd === 'bugun') return send(chat, todayText(loadAll(userId), day));

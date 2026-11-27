@@ -2,10 +2,12 @@
 // Jonli internet ma'lumotlari (MB kurslari, Bank.uz foizlari, Olcha.uz narxlari, veb-qidiruv) va Gemini 3 Flash bilan ishlaydi.
 
 import { getLiveMarketContext, searchLiveInternet } from './liveMarket.mjs';
+import { checkModeration } from './moderation.mjs';
 import { PARTNERS, resolvePartners } from './partners.mjs';
 
 const PRIMARY_MODEL = 'gemini-3-flash-preview';
 const FALLBACK_MODEL = 'gemini-3.5-flash-lite';
+const TTS_MODEL = 'gemini-2.5-flash-preview-tts';
 
 function buildPartnerCatalogText() {
   return Object.values(PARTNERS)
@@ -86,59 +88,63 @@ export async function askJarvisAI({ prompt, context = {}, history = [], apiKey }
     };
   }
 
+  const mod = checkModeration(prompt);
+  if (mod.status === 'ban') {
+    return {
+      ok: true,
+      model: 'moderation',
+      text: "Kechirasiz, 18+ kontent, taqiqlangan mahsulotlar yoki noqonuniy mavzular bo'yicha so'rovlar Mizan qoidalariga zid. Agar bu xatolik deb hisoblasangiz, pastdagi «Shikoyat / Murojaat» tugmasi orqali murojaat qoldiring.",
+      moderation: mod,
+      partners: [],
+    };
+  }
+
   const [liveMarket, liveSearch] = await Promise.all([
     getLiveMarketContext().catch(() => ''),
     searchLiveInternet(prompt).catch(() => ''),
   ]);
 
   const systemPrompt = `
-Sen — "Mizan AI", O'zbekistondagi eng aqlli, mustaqil fikrlovchi shaxsiy moliyaviy strateg va cho'ntak CFO'san.
-Sening vazifang: shunchaki umumiy gap aytish EMAS — foydalanuvchining real raqamlarini, jonli internet ma'lumotlarini va O'zbekiston moliya bozorini chuqur tahlil qilib, aniq hisob-kitob, qiyosiy variantlar va eng foydali harakat rejasini berish.
+Sen — "Mizan AI", O'zbekistondagi eng aqlli, har tomonlama bilimli universal sun'iy intellekt yordamchisi va shaxsiy moliyaviy strategsan.
+Sening vazifang:
+1) HAR QANDAY SAVOLGA AQLLI JAVOB BERISH:
+   - Moliya, banklar, kredit/omonat, muddatli to'lov va bozor narxlari bo'yicha O'zbekistondagi eng aniq ekspert bo'l.
+   - Shuningdek, foydalanuvchi sog'liq/kasallik (alomatlar, birinchi yordam, dori xarajati — har doim oxirida "aniq tashxis va davolash uchun shifokorga murojaat qiling" deb eslat), yo'qolgan narsa/hujjatni topish (pasport, karta bloklash, IIB/DXA tartibi), o'qish/imtihon/IELTS/kasb tanlash, texnologiya, kundalik muammolar va huquqiy savollar bersa ham aniq, foydali va amaliy yo'l-yo'riq ber!
+   - Foydalanuvchi NIMA OLMOQCHI bo'lsa (telefon, noutbuk, maishiy texnika, mashina, kiyim, dori, o'quv kursi va h.k. — uning Maqsadlar ro'yxati va suhbatidan kelib chiqib), barcha variantlar, taxminiy real narxlar va eng arzon/halol olish yo'lini bil va tushuntir.
 
 === JONLI INTERNET MA'LUMOTLARI (BUGUNGI KUN HOLATI) ===
 ${liveMarket || "Jonli bank.uz/cbu ma'lumoti vaqtincha olinmadi, bazaviy bilimga tayan."}
 
 ${liveSearch ? `=== SAVOLGA OID JONLI QIDIRUV VA NARXLAR ===\n${liveSearch}\n` : ''}
-=== O'ZBEKISTON BANKLARI, KARTALARI, OMONAT VA KREDITLARI (TO'LIQ ENSIKLOPEDIYA) ===
-1. Raqamli va yetakchi tijorat banklari:
-   - **Uzum Bank**: Uzum Karta (Visa, bepul virtual/plastik ochish), Uzum ekotizimi keshbeki, ilovada bepul P2P oylik limitlar, 25–100 mln so'mgacha onlayn mikroqarz/kredit (~28%–38% yillik).
-   - **TBC Bank**: Salom Card (Humo, bepul ochish va yetkazish, 0% P2P o'tkazma, qoldiqqa foyda/keshbek), Osmon Card (55 kungacha foizsiz kredit karta), TBC Omonat (~20–24% yillik so'mda), onlayn kredit (100 mln gacha ~28%+).
-   - **Anorbank**: Anor Black, TRIA kartalari, keshbek va muddatli to'lov imtiyozlari, yuqori foizli onlayn so'm omonatlari (~20–25% yillik), bepul P2P limitlar.
-   - **AVO Bank**: AVO Platinum kredit karta (45 kungacha foizsiz davr, ilovada tezkor ochish), AVO omonat (~17–19%+).
-   - **Kapitalbank**: Uzcard, Humo, Visa (Classic/Gold/Platinum/Infinite), Mastercard, tezkor valyuta konvertatsiyasi, Visa Direct, so'm (~19–23%) va USD (~5–7%) omonatlari.
-   - **Ipak Yo'li Bank**: Ipak Yo'li Mobile, Visa Start Sum / Classic / Gold, Mastercard, UnionPay (Google/Apple/Amazon/Steam xorijiy to'lovlar uchun eng qulay), so'm (~19–23%) va USD (~5–6%) omonatlar, mikroqarz va avtokredit (~20.9%+).
-   - **Boshqa barcha yirik banklar**: Hamkorbank, Agrobank (Progress ~18%, imtiyozli/iste'mol kreditlari), Xalq Banki (Humo/Uzcard/Visa onlayn va pensiya/ijtimoiy kartalar), Ipoteka Bank (Super BYD va avtokreditlar, ipoteka), SQB / O'zsanoatqurilishbank (Visa Classic bepul chiqarish, ipoteka/biznes), NBU / Milliy Bank (omonat 13–18%, xalqaro Visa), Asakabank (Avtokredit ~18.9%+, omonat), InFinBank (valyuta va omonatlar), Orient Finans Bank (OFB), Aloqabank (omonat ~14–15%), Davr Bank, Trastbank (mikroqarz ~25%+), Turonbank, Tenge Bank (onlayn omonat ~18%+, avtokredit), Octobank (avtokredit ~21%+), Asia Alliance Bank, BRB, Garant Bank, Hayot Bank, Ziraat Bank, Open Bank.
-   *(Eslatma: bank foizlari va aksiyalar o'zgaruvchan; jonli Bank.uz raqamlarini ustuvor ol, qolganlarida taxminiy amaldagi diapazonni ko'rsat va rasmiy ilovada tasdiqlashni eslat.)*
+=== O'ZBEKISTON BANKLARI, KARTALARI, OMONAT VA KREDITLARI ===
+- **Uzum Bank** (Uzum Karta Visa, 0% P2P limit, mikroqarz ~28–38%), **TBC Bank** (Salom Card 0% P2P, Osmon Card 55 kun 0%, omonat ~20–24%), **Anorbank** (Anor Black, omonat ~20–25%), **AVO Bank** (AVO Platinum 45 kun 0%), **Kapitalbank** (Uzcard/Humo/Visa, valyuta), **Ipak Yo'li Bank** (Visa/UnionPay xorijiy to'lovlar), hamda Hamkorbank, Agrobank, Xalq Banki, Ipoteka Bank, SQB, NBU, Asakabank, InFinBank, OFB, Aloqabank, Tenge Bank, Octobank.
+- **To'lovlar**: Payme, Click, Uzum Pay, Soliq.uz 1% keshbek.
+- **Muddatli to'lov va do'konlar**: Uzum Nasiya, Alif Nasiya, Iman Pay (penyadan xoli islomiy nasiya), Open, Malika bozori, Abu Saxiy, Olcha.uz, Asaxiy.uz, Uzum Market, Texnomart, MediaPark, Idea, MacBro.
 
-2. To'lov tizimlari va komissiyadan tejash:
-   - Payme, Click (Click Up), Uzum Pay, Oson, Paynet: oddiy P2P o'tkazmalarda odatda 0.5%–1% komissiya oladi (oyiga 10 mln o'tkazmada ~100 000 so'm kuyadi). TBC Salom Card, Uzum Bank, Anorbank ilovalari ichidagi bepul P2P limitlardan foydalanib komissiyani 0 so'mga tushirish mumkin.
-   - Soliq.uz ilovasi orqali har bir xarid QR-chekini skanerlab 1% keshbek qaytarib olish.
-
-3. Muddatli to'lov (Rassrochka / Nasiya) va Bozorlar:
-   - **Uzum Nasiya**, **Alif Nasiya**, **Iman Pay** (Islomiy murabaha tamoyili, kechikish jarimasiz), **Open**, **ZoodPay**, **Paymart**.
-   - Odatiy shartlar: 3/6/12/24 oy. 12 oylik nasiyada narx odatda naqddan 20%–38% qimmatroq tushadi (ayrim 3 oylik aksiyalar 0%).
-   - **Malika bozori** (smartfon/noutbuk eng arzon naqd narx), **Abu Saxiy** (maishiy texnika ulgurji), **Olcha.uz**, **Asaxiy.uz**, **Uzum Market**, **Texnomart**, **MediaPark**, **Idea**, **MacBro**, **Goodzone**, **Ishonch**.
-
-4. Mizan Biznes va Aqlli Tavsiya Mantiqi (Hamkorlik Modeli):
-   - Sening asosiy tamoyiling: **Avvalo foydalanuvchiga eng halol va eng arzon/foydali moliyaviy yo'lni top!** Agar naqd + omonatda yig'ish nasiyadan 3–4 mln so'm tejasa, buni ochiq ayt.
-   - Shu bilan birga, foydalanuvchi **bank kartasi ochmoqchi**, **pulini foizli omonatda saqlamoqchi**, **komissiyasiz o'tkazma qilmoqchi** yoki **telefon/texnika xarid qilmoqchi** bo'lsa, Mizan hamkorlari orasidan uning vaziyatiga ENG MOS 1–3 ta aniq bank yoki do'konni tavsiya qil! (Hamkorlar Mizan'ga tavsiya komissiyasi to'laydi, foydalanuvchiga narx oshmaydi).
-   - Mavjud tasdiqlangan Mizan hamkorlari:
+=== AQLLI VA BEZOVTA QILMAYDIGAN REKLAMA (HAMKORLIK) QOIDASI ===
+- HAR BIR JAVOBGA REKLAMA TIQISHTIRMA! Agar foydalanuvchi sog'liq, o'qish, yo'qolgan narsa, salomlashish yoki oddiy maslahat so'rayotgan bo'lsa, PARTNER_JSON UMUMAN YOZMA!
+- Faqat QULAY FURSATDA — ya'ni foydalanuvchi aniq bir mahsulot (telefon/texnika) sotib olmoqchi, bank kartasi ochmoqchi, omonat/kredit/muddatli to'lov qidirayotgan yoki pul yig'ayotgan bo'lsa, shunda uning vaziyatiga ENG MOS 1–2 ta hamkorni PARTNER_JSON orqali tavsiya qil.
+- Mavjud hamkor IDlari:
 ${buildPartnerCatalogText()}
 
-5. Fikrlash va Hisob-kitob Qoidalari:
-   - Foydalanuvchining real balansini, bugungi kunlik erkin rejasini, qarz va maqsadlarini hisobga ol!
-   - Agar maqsad yoki xarid so'ralsa: (1) Real narxni so'mda ko'rsat (MB USD kursi bo'yicha ham); (2) Naqd (Malika/Olcha/Asaxiy) vs Muddatli to'lov (Uzum Nasiya/Alif/Iman) farqini aniq so'mda hisobla; (3) Foydalanuvchi kuniga/oyiga qancha yig'sa qachon yetishini va omonat/0% P2P/mayda odatni kesish bilan necha kun tezlashishini ko'rsat; (4) Mos bank kartasi yoki do'kon hamkorini taklif et.
+=== SAYT BO'YLAB BUYRUQ VA NAVIGATSIYA (JARVIS) ===
+- MUHIM: \`ACTION_JSON:{"action":"navigate",...}\` tegini FAQAT foydalanuvchi OCHIQDAN-OCHIQ saytning biror bo'limiga o'tishni yoki sahifani ochishni buyurganda yoz (masalan: "xarajatlarga o't", "maqsadlarni och", "sozlamalarga kir", "xavfsizlikni och"). Oddiy savol-javobda (masalan pasport, kasallik, narx so'raganda) HECH QACHON \`navigate\` yozma!
+  - Mumkin bo'lgan \`page\` qiymatlari: \`bosh\`, \`yozuvlar\`, \`kartalar\`, \`qarzlar\`, \`maqsadlar\`, \`hisobot\`, \`xavfsizlik\`, \`yordam\`, \`sozlamalar\`.
+  - Pro oyna uchun: ACTION_JSON:{"action":"open_pro"}
+  - Shikoyat / murojaat oynasi uchun: ACTION_JSON:{"action":"open_complaint"}
 
-6. Strukturaviy Teglar (agar o'rinli bo'lsa, javobing OXIRIDA alohida qatorda yoz):
-   - Agar foydalanuvchi xarid yoki jamg'arma maqsadini rejalayotgan bo'lsa:
-     ACTION_JSON:{"action":"create_goal","name":"Qisqa maqsad nomi","target":15000000,"daily":85000,"months":6}
-   - Agar foydalanuvchi matnda aniq xarajat yoki daromadni qayd etishni aytgan bo'lsa (masalan "bugun 50 ming kofe ichdim"):
-     DRAFT_JSON:{"type":"expense","title":"Kofe","amount":50000,"category":"oziq"}
-   - Agar javobda Mizan hamkor banki yoki do'koni foydalanuvchiga real foyda keltirsa (faqat ro'yxatdagi haqiqiy IDlardan 1–3 ta tanla):
-     PARTNER_JSON:["tbc_salom","olcha_uz"]
+=== MODERATSIYA (18+ / HAQORAT / TAQIQLANGAN NARSALAR) ===
+- Agar foydalanuvchi 18+ / pornografiya, haqorat, zo'ravonlik, narkotik yoki noqonuniy narsalar so'rasa, muloyim rad et va oxirida yoz:
+  MODERATION_JSON:{"status":"warn","reason":"Sababi"} (jiddiy bo'lsa "ban").
+
+=== STRUKTURAVIY TEGLAR (FAQAT O'RINLI BO'LSA JAVOB OXIRIDA) ===
+- Maqsad yaratish: ACTION_JSON:{"action":"create_goal","name":"Qisqa nom","target":15000000,"daily":85000,"months":6}
+- Xarajat/daromad qayd etish: DRAFT_JSON:{"type":"expense","title":"Kofe","amount":50000,"category":"oziq"}
+- Qulay fursatdagi hamkor (faqat xarid/bank/nasiya savolida, max 2 ta): PARTNER_JSON:["tbc_salom","olcha_uz"]
 
 Uslubing:
-O'zbek tilida (lotin yozuvida), o'ta ravon, aqlli, mustaqil tahlil qiladigan, aniq raqamlar va qisqa sarlavhalar bilan yoz. Javobing ixcham va lo'nda bo'lsin (taxminan 200–350 so'z, suv va uzun kirish so'zlarisiz — faqat foydali fakt, aniq hisob va oxirida kerakli JSON teglari).`;
+O'zbek tilida (lotin yozuvida), jonli, samimiy, aqlli va lo'nda (150–320 so'z) yoz.
+MUHIM HURMAT QOIDASI: Foydalanuvchi bilan DOIMO hurmat bilan «Siz»lab gaplash (masalan: «Sizning balansingiz», «tavsiya qilaman», «ko'rishingiz mumkin»). Hech qachon «sen» deb murojaat qilma! Ovozda o'qib berishga qulay, ravon jumlalardan foydalan.`;
 
   const userSummary = `
 [Foydalanuvchining joriy Mizan ma'lumotlari]
@@ -146,15 +152,14 @@ O'zbek tilida (lotin yozuvida), o'ta ravon, aqlli, mustaqil tahlil qiladigan, an
 - Bugungi kunlik erkin reja: ${Number(context.dailyLimit || 0).toLocaleString('uz-UZ')} so'm (bugun sarflandi: ${Number(context.todaySpent || 0).toLocaleString('uz-UZ')} so'm)
 - Shu oy: daromad ${Number(context.monthIncome || 0).toLocaleString('uz-UZ')} so'm | xarajat ${Number(context.monthExpense || 0).toLocaleString('uz-UZ')} so'm
 - Kartalar: ${JSON.stringify(context.cards || [])}
-- Maqsadlar: ${JSON.stringify(context.goals || [])}
+- Maqsadlar (nima olmoqchi): ${JSON.stringify(context.goals || [])}
 - Qarzlar: ${JSON.stringify(context.debts || [])}
-- So'nggi xarajatlar (namuna): ${JSON.stringify(context.recentTx || [])}
+- So'nggi xarajatlar: ${JSON.stringify(context.recentTx || [])}
 
 Foydalanuvchi xabari:
 "${prompt}"
 `;
 
-  // Ko'p bosqichli suhbat tarixi (oxirgi 10 ta xabar)
   const contents = [];
   if (Array.isArray(history)) {
     for (const h of history.slice(-10)) {
@@ -184,9 +189,17 @@ Foydalanuvchi xabari:
     text = pDraft.cleaned;
     const pPartner = parseTagJson(text, 'PARTNER_JSON');
     text = pPartner.cleaned;
+    const pMod = parseTagJson(text, 'MODERATION_JSON');
+    text = pMod.cleaned;
 
-    let partners = resolvePartners(pPartner.value);
-    if (!partners.length) partners = inferPartnersFromReply(text);
+    // Reklamani faqat AI o'rinli deb bilgan qulay fursatda yoki aniq xarid/bank kontekstida chiqaramiz
+    const isCommerceQuery = /(olmoqchi|sotib|narx|bozor|do'kon|dukon|nasiya|rassrochka|muddatli|karta|omonat|kredit|mikroqarz|bank|iphone|samsung|noutbuk|telefon|televizor|muzlatgich|konditsioner|keshbek|komissiya)/i.test(prompt);
+    let partners = resolvePartners(pPartner.value).slice(0, 2);
+    if (!partners.length && isCommerceQuery) {
+      partners = inferPartnersFromReply(text).slice(0, 2);
+    }
+
+    const moderation = mod.status !== 'ok' ? mod : pMod.value || { status: 'ok' };
 
     return {
       ok: true,
@@ -195,6 +208,7 @@ Foydalanuvchi xabari:
       action: pAction.value,
       draft: pDraft.value,
       partners,
+      moderation,
     };
   } catch (err) {
     return {
@@ -304,4 +318,204 @@ export function computeFinancialHealth({ transactions = [], balance = 0, dailyLi
     gradeColor,
     tips: tips.slice(0, 3),
   };
+}
+
+// Shubhali xabar va skrinshotni Gemini Multimodal AI yordamida tekshirish
+export async function analyzeScamWithAI({ text = '', imageBase64 = '', mimeType = 'image/png', apiKey }) {
+  const key = apiKey || process.env.GEMINI_API_KEY;
+  if (!key) {
+    return { ok: false, error: "Gemini API kaliti topilmadi." };
+  }
+  const parts = [
+    {
+      text: `Sen O'zbekiston kiberxavfsizlik va moliyaviy firibgarlikni aniqlash bo'yicha AI ekspertisan.
+Foydalanuvchi yuborgan xabar matni va/yoki skrinshotni chuqur tekshir (Click, Payme, Uzum, Humo, Uzcard, soxta bank xodimi, SMS/OTP kod so'rash, .apk fayl, soxta yutuq/bonus, qisqa shubhali havolalar, Telegram firibgarligi).
+
+Faqat quyidagi JSON formatida javob qaytar (boshqa matn yozma):
+{
+  "verdict": "high" | "mid" | "low" | "none",
+  "riskScore": 0-100,
+  "summary": "Qisqa va aniq xulosa (1-2 gap, o'zbek tilida)",
+  "reasons": [
+    { "level": "high" | "mid" | "low", "text": "Aniqlangan xavf belgisi izohi" }
+  ],
+  "advice": "Foydalanuvchi nima qilishi kerak (aniq amaliy maslahat)"
+}
+
+Tekshiriladigan matn:
+"""${String(text || '').slice(0, 4000)}"""`,
+    },
+  ];
+
+  if (imageBase64 && typeof imageBase64 === 'string') {
+    const cleanB64 = imageBase64.replace(/^data:[^;]+;base64,/, '');
+    if (cleanB64.length > 20) {
+      parts.push({
+        inlineData: {
+          mimeType: mimeType || 'image/png',
+          data: cleanB64,
+        },
+      });
+    }
+  }
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${PRIMARY_MODEL}:generateContent?key=${key}`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(20000),
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens: 1500,
+          responseMimeType: 'application/json',
+        },
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${res.status}`);
+    }
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+    const parsed = JSON.parse(raw);
+    return {
+      ok: true,
+      verdict: ['high', 'mid', 'low', 'none'].includes(parsed.verdict) ? parsed.verdict : 'mid',
+      riskScore: Math.max(0, Math.min(100, Number(parsed.riskScore) || 0)),
+      summary: String(parsed.summary || "Tekshiruv yakunlandi."),
+      reasons: Array.isArray(parsed.reasons) ? parsed.reasons.slice(0, 6) : [],
+      advice: String(parsed.advice || "Shubhangiz bo'lsa, rasmiy bank ilovasi orqali tekshiring."),
+    };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+// Raw 16-bit PCM (24kHz mono) uchun 44 baytli WAV sarlavhasi
+function pcmToWavBuffer(pcmBuffer, sampleRate = 24000, channels = 1, bitsPerSample = 16) {
+  const byteRate = (sampleRate * channels * bitsPerSample) / 8;
+  const blockAlign = (channels * bitsPerSample) / 8;
+  const dataSize = pcmBuffer.length;
+  const header = Buffer.alloc(44);
+  header.write('RIFF', 0);
+  header.writeUInt32LE(36 + dataSize, 4);
+  header.write('WAVE', 8);
+  header.write('fmt ', 12);
+  header.writeUInt32LE(16, 16);
+  header.writeUInt16LE(1, 20);
+  header.writeUInt16LE(channels, 22);
+  header.writeUInt32LE(sampleRate, 24);
+  header.writeUInt32LE(byteRate, 28);
+  header.writeUInt16LE(blockAlign, 32);
+  header.writeUInt16LE(bitsPerSample, 34);
+  header.write('data', 36);
+  header.writeUInt32LE(dataSize, 40);
+  return Buffer.concat([header, pcmBuffer]);
+}
+
+// Gemini Neural TTS — odamnikidek tiniq va tabiiy ovoz sintezi
+export async function synthesizeSpeechWithGemini({ text, voiceName = 'Kore', apiKey }) {
+  const key = apiKey || process.env.GEMINI_API_KEY;
+  if (!key) throw new Error('Gemini API kaliti topilmadi.');
+
+  const cleanText = String(text || '')
+    .replace(/[*#_`~>|•«»]/g, ' ')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 1200);
+
+  if (!cleanText) throw new Error("O'qish uchun matn yo'q.");
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${key}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(22000),
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `O'zbek tilida tabiiy, iliq va tiniq ohangda o'qi: ${cleanText}` }] }],
+      generationConfig: {
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName },
+          },
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || `TTS API error ${res.status}`);
+  }
+  const data = await res.json();
+  const part = data.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+  if (!part?.data) throw new Error('Audio maʼlumot qaytmadi.');
+
+  const rawBuf = Buffer.from(part.data, 'base64');
+  if (part.mimeType && part.mimeType.includes('wav')) {
+    return rawBuf;
+  }
+  return pcmToWavBuffer(rawBuf, 24000, 1, 16);
+}
+
+// Chek / kvitansiya rasmini Gemini Vision orqali o'qib, xarajatga aylantirish
+export async function scanReceiptWithAI({ imageBase64, mimeType = 'image/jpeg', apiKey }) {
+  const key = apiKey || process.env.GEMINI_API_KEY;
+  if (!key) return { ok: false, error: 'Gemini API kaliti topilmadi.' };
+
+  const cleanB64 = String(imageBase64 || '').replace(/^data:[^;]+;base64,/, '');
+  if (cleanB64.length < 30) return { ok: false, error: 'Rasm yuborilmadi.' };
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${PRIMARY_MODEL}:generateContent?key=${key}`;
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(20000),
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `Sen chek va kvitansiya o'quvchi AI'san. Rasmdan do'kon/joy nomi, jami to'langan summa (faqat raqam, so'mda) va toifani aniqlab, FAQAT JSON qaytar:
+{
+  "title": "Qisqa joy yoki xarid nomi (masalan: Korzinka, Apteka, Kafe)",
+  "amount": 125000,
+  "category": "oziq|bozor|transport|kommunal|aloqa|uy|ijtimoiy|kiyim|salomatlik|talim|dam|texnika|kredit|sport|bolalar|obuna|xayriya|boshqa",
+  "note": "Chekdagi asosiy mahsulotlar qisqacha"
+}`,
+              },
+              { inlineData: { mimeType: mimeType || 'image/jpeg', data: cleanB64 } },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 500,
+          responseMimeType: 'application/json',
+        },
+      }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${res.status}`);
+    }
+    const data = await res.json();
+    const raw = data.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('') || '';
+    const parsed = JSON.parse(raw);
+    return {
+      ok: true,
+      title: String(parsed.title || 'Chek xarajat').slice(0, 80),
+      amount: Math.max(0, Math.round(Number(parsed.amount) || 0)),
+      category: String(parsed.category || 'boshqa'),
+      note: String(parsed.note || '').slice(0, 140),
+    };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
 }

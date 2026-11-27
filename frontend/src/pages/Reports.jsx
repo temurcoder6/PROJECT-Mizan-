@@ -3,7 +3,7 @@ import { ChartColumn, ChevronLeft, ChevronRight, CreditCard, Download, Repeat, T
 import { Button, Card, CardTitle, Empty, Estimate, IconButton, Segmented, Stat } from '../components/ui';
 import { categoryOf, methodLabel } from '../lib/categories';
 import { addDays, dateLabel, monthLabel, money, percent, shiftMonth, todayISO } from '../lib/format';
-import { detectRecurring, frequencyLabel, inRange, periodRange, summarize } from '../lib/finance';
+import { detectRecurring, frequencyLabel, inRange, periodRange, summarize, computePriceMemory } from '../lib/finance';
 import { exportCSV, useStore } from '../store';
 
 export default function Reports() {
@@ -16,6 +16,7 @@ export default function Reports() {
   const items = inRange(transactions, from, to);
   const s = summarize(items);
   const habits = detectRecurring(transactions, today);
+  const priceMem = computePriceMemory(transactions);
   const label = kind === 'week' ? `${dateLabel(from)} – ${dateLabel(to)}` : monthLabel(from);
   const shift = (n) => setRef(kind === 'week' ? addDays(ref, 7 * n) : shiftMonth(ref, n));
 
@@ -168,6 +169,42 @@ export default function Reports() {
               Hisob: o'rtacha summa × (yozuvlar soni − 1) ÷ birinchi va oxirgi yozuv orasidagi kunlar × 30. Hozirgi odat davom etsa shunday bo'ladi; sizning yozuvlaringizga asoslangan.
             </p>
           </>
+        )}
+      </Card>
+
+      <Card>
+        <CardTitle icon={TrendingUp} action={priceMem.items.length > 0 ? <span className={`text-xs font-bold ${priceMem.avgInflation > 0 ? 'text-rose-300' : 'text-turq-soft'}`}>O'rtacha: {priceMem.avgInflation > 0 ? '+' : ''}{priceMem.avgInflation.toFixed(1)}%</span> : undefined}>
+          Shaxsiy inflyatsiya va narxlar xotirasi
+        </CardTitle>
+        {priceMem.items.length === 0 ? (
+          <Empty title="Narxlar tarixi yetarli emas" text="Bir xil nomdagi xarid (masalan: Non, Kofe, Benzin) kamida 2 marta yozilganda, Mizan narx o'zgarishini avtomatik eslab qoladi." />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-plaster/45 uppercase">
+                  <th className="py-2 font-semibold">Mahsulot / Xizmat</th>
+                  <th className="py-2 text-right font-semibold">Avvalgi narx</th>
+                  <th className="py-2 text-right font-semibold">Oxirgi narx</th>
+                  <th className="py-2 text-right font-semibold">O'zgarish</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-plaster/10">
+                {priceMem.items.map((it) => (
+                  <tr key={it.key}>
+                    <td className="py-2 font-semibold text-plaster">
+                      {it.title} <span className="text-xs font-normal text-plaster/45">({it.count}x)</span>
+                    </td>
+                    <td className="py-2 text-right tabular-nums text-plaster/65">{money(it.firstPrice)}</td>
+                    <td className="py-2 text-right font-semibold tabular-nums text-plaster">{money(it.lastPrice)}</td>
+                    <td className={`py-2 text-right font-bold tabular-nums ${it.diff > 0 ? 'text-rose-300' : it.diff < 0 ? 'text-turq-soft' : 'text-plaster/60'}`}>
+                      {it.diff > 0 ? '+' : ''}{it.pct.toFixed(1)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </Card>
     </div>

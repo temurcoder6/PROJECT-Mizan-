@@ -234,7 +234,7 @@ export default function AuthPanel({ onOpen, defaultMode = 'register', nextHash =
               <b className="flex size-5 items-center justify-center rounded-[3px] bg-plaster text-[11px] font-semibold text-cobalt">
                 {mode === 'recover' ? '3' : '2'}
               </b>
-              {mode === 'recover' ? 'Yangi parol (kamida 8 belgi)' : mode === 'register' ? 'Parol (kamida 8 belgi)' : 'Parol'}
+              {mode === 'recover' ? 'Yangi parol (kamida 8 belgi)' : mode === 'register' ? 'Mizan uchun yangi parol (kamida 8 belgi)' : 'Parol'}
             </span>
             <input
               type="password"
@@ -244,6 +244,11 @@ export default function AuthPanel({ onOpen, defaultMode = 'register', nextHash =
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               placeholder="••••••••"
             />
+            {mode === 'register' && (
+              <span className="mt-1.5 block text-[11px] text-turq-soft/90">
+                Shaxsiy Gmail yoki bank parolingizni yozmang — Mizan uchun alohida, esda qoladigan parol o'ylab toping.
+              </span>
+            )}
           </label>
 
           {mode === 'register' && (

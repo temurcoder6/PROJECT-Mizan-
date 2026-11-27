@@ -207,3 +207,43 @@ export function whatIf(goal, spend, today, weeklyCapacity = 0) {
   }
   return out;
 }
+
+// Shaxsiy inflyatsiya va narxlar xotirasi: bir xil nomli xaridlarning oldingi va oxirgi narxini solishtiradi
+export function computePriceMemory(transactions) {
+  const byTitle = new Map();
+  const sorted = [...(transactions || [])]
+    .filter((t) => t.type === 'expense' && t.category !== 'kunjami' && t.title && Number(t.amount) > 0)
+    .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.createdAt || 0) - (b.createdAt || 0));
+
+  for (const t of sorted) {
+    const key = t.title.trim().toLowerCase();
+    if (!key) continue;
+    if (!byTitle.has(key)) byTitle.set(key, []);
+    byTitle.get(key).push({ title: t.title.trim(), amount: Number(t.amount), date: t.date });
+  }
+
+  const items = [];
+  for (const [key, list] of byTitle.entries()) {
+    if (list.length < 2) continue;
+    const first = list[0];
+    const last = list[list.length - 1];
+    if (!first.amount) continue;
+    const diff = last.amount - first.amount;
+    const pct = (diff / first.amount) * 100;
+    items.push({
+      key,
+      title: last.title,
+      count: list.length,
+      firstPrice: first.amount,
+      firstDate: first.date,
+      lastPrice: last.amount,
+      lastDate: last.date,
+      diff,
+      pct,
+    });
+  }
+
+  items.sort((a, b) => Math.abs(b.pct) - Math.abs(a.pct));
+  const avgInflation = items.length ? items.reduce((s, i) => s + i.pct, 0) / items.length : 0;
+  return { items: items.slice(0, 8), avgInflation };
+}

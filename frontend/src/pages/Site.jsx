@@ -82,8 +82,8 @@ function PhoneTabs({ tabs, size = 560 }) {
 
 function Logo() {
   return (
-    <a href="#/" className={`flex items-center gap-2.5 ${display} text-lg font-semibold text-plaster`}>
-      <StarMark className="size-8" live />
+    <a href="#/" className={`group flex items-center gap-2.5 ${display} text-lg font-semibold text-plaster`}>
+      <StarMark className="size-8 transition-transform duration-700 ease-out group-hover:rotate-180" live interactive />
       Mizan
     </a>
   );
@@ -367,24 +367,24 @@ function Home({ onOpen, isAdmin }) {
         </div>
       </section>
 
-      {/* Mizan Pro & Jarvis AI — Katta Kuch */}
+      {/* Mizan Pro & Mizan AI — Katta Kuch */}
       <section className="relative overflow-hidden bg-gradient-to-br from-[#0c234f] via-[#071633] to-[#040e22] text-plaster py-24 sm:py-32">
         <GirihField id="g-pro" opacity={0.08} size={130} />
         <div className={`${wrap} relative`}>
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
             <div className="max-w-2xl">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-ochre/20 border border-ochre/45 px-3 py-1 text-xs font-bold text-ochre uppercase tracking-wider">
-                <Crown className="size-3.5" /> Mizan Pro & Jarvis AI
+                <Crown className="size-3.5" /> Mizan Pro & Mizan AI
               </span>
               <h2 className={`${display} mt-4 text-[1.85rem] leading-[1.15] font-semibold text-balance sm:text-[2.6rem]`}>
                 Oddiy xarajat daftaridan — shaxsiy moliyaviy imperiyaga.
               </h2>
               <p className="mt-4 text-base text-plaster/75 leading-relaxed">
-                iPhone 17, yangi avtomobil yoki uy olishni rejalashtiryapsizmi? <strong>Mizan Jarvis AI</strong> O'zbekistondagi bozorlar (Malika, Abu Saxiy) va muddatli to'lov tashkilotlari (Uzum Nasiya, Alif, Iman Pay) bo'yicha to'liq hisob-kitob qilib, eng arzon va tejamkor yo'lni ko'rsatadi.
+                iPhone 17, yangi avtomobil yoki uy olishni rejalashtiryapsizmi? <strong>Mizan AI</strong> O'zbekistondagi bozorlar (Malika, Abu Saxiy) va muddatli to'lov tashkilotlari (Uzum Nasiya, Alif, Iman Pay) bo'yicha to'liq hisob-kitob qilib, eng arzon va tejamkor yo'lni ko'rsatadi.
               </p>
               <div className="mt-6 flex flex-wrap gap-4">
                 <a href="#/yordamchi" className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-ochre to-amber-600 px-6 py-3.5 font-bold text-cobalt-night shadow-lg transition hover:opacity-95">
-                  <Sparkles className="size-4" /> Jarvis bilan sinab ko'rish
+                  <Sparkles className="size-4" /> Mizan AI bilan sinab ko'rish
                 </a>
               </div>
             </div>

@@ -1,8 +1,9 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ChartColumn, ChevronLeft, CreditCard, HandCoins, House, KeyRound, LifeBuoy, ListChecks, Menu, Settings as Cog, ShieldCheck, Sparkles, Target, X } from 'lucide-react';
+import { ArrowUpRight, ChartColumn, ChevronLeft, CreditCard, HandCoins, House, KeyRound, LifeBuoy, ListChecks, Menu, Settings as Cog, ShieldCheck, Sparkles, Store, Target, X } from 'lucide-react';
 import { ConflictModal, SyncChip } from './components/Account';
 import { GirihField, StarMark } from './components/Girih';
 import { ReminderWatcher } from './components/Insights';
+import MizanOrb from './components/MizanOrb';
 import { LITE } from './lib/perf';
 import { DEMO, StoreProvider, useStore } from './store';
 
@@ -14,6 +15,7 @@ const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Debts = lazy(() => import('./pages/Debts'));
 const Goals = lazy(() => import('./pages/Goals'));
 const Help = lazy(() => import('./pages/Help'));
+const Marketplace = lazy(() => import('./pages/Marketplace'));
 const AdPage = lazy(() => import('./pages/AdPage'));
 const Film = lazy(() => import('./pages/Film'));
 const Reports = lazy(() => import('./pages/Reports'));
@@ -29,6 +31,7 @@ const TABS = [
   { id: 'kartalar', label: 'Kartalar', icon: CreditCard, page: Cards },
   { id: 'qarzlar', label: 'Qarzlar', icon: HandCoins, page: Debts },
   { id: 'maqsadlar', label: 'Maqsadlar', icon: Target, page: Goals },
+  { id: 'bozor', label: 'Bozor', icon: Store, page: Marketplace },
   { id: 'yordamchi', label: 'Yordamchi', icon: Sparkles, page: Assistant },
   { id: 'hisobot', label: 'Hisobot', icon: ChartColumn, page: Reports },
   { id: 'xavfsizlik', label: 'Xavfsizlik', icon: ShieldCheck, page: Safety },
@@ -152,6 +155,7 @@ function Shell() {
     return (
       <Suspense fallback={pageFallback}>
         <Site page={route || '/'} onOpen={() => go('bosh')} />
+        {!DEMO && <MizanOrb go={go} currentRoute={route || '/'} />}
       </Suspense>
     );
   }
@@ -397,6 +401,7 @@ function Shell() {
           </button>
         </div>
       </nav>
+      {!DEMO && <MizanOrb go={go} currentRoute={tab.id} />}
     </div>
   );
 }

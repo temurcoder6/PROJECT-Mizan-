@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 // Koshin geometriyasi: sakkiz qirrali girih yulduzi (ikkita kesishgan kvadrat). Faqat chiziq, arzon SVG.
 
 export function starPoints(cx, cy, R, ratio = 0.765) {
@@ -10,9 +12,20 @@ export function starPoints(cx, cy, R, ratio = 0.765) {
   return pts.join(' ');
 }
 
-export function StarMark({ className = 'size-8', live = false }) {
+export function StarMark({ className = 'size-8', live = false, interactive = false }) {
+  const [turns, setTurns] = useState(0);
+  const spin = () => {
+    if (!interactive) return;
+    setTurns((t) => t + 1);
+  };
   return (
-    <svg viewBox="0 0 32 32" className={className} aria-hidden>
+    <svg
+      viewBox="0 0 32 32"
+      onClick={spin}
+      style={interactive ? { transform: `rotate(${turns * 360}deg)` } : undefined}
+      className={`${className} ${interactive ? 'cursor-pointer transition-transform duration-700 ease-out active:scale-90' : ''}`}
+      aria-hidden
+    >
       <polygon points={starPoints(16, 16, 15)} className="fill-cobalt stroke-ochre" strokeWidth="1" />
       <polygon points={starPoints(16, 16, 8.2)} className={live ? 'fill-turq' : 'fill-plaster'} />
     </svg>
