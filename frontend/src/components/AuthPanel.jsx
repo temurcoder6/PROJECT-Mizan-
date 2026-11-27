@@ -189,7 +189,7 @@ export default function AuthPanel({ onOpen, defaultMode = 'register', nextHash =
 
         {mode !== 'recover' && (
           <div className="mt-6">
-            <OAuthButtons theme="site" mode="login" next={nextHash} />
+            <OAuthButtons theme="site" mode="login" next={nextHash} onOpen={onOpen} />
             <div className="my-6 flex items-center gap-3 text-xs text-plaster/55">
               <span className="h-px flex-1 bg-ochre/45" />
               <span>yoki nom va parol bilan</span>
