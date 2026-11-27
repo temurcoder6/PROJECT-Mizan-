@@ -23,82 +23,47 @@ export const VOICE_LANGS = [
   { value: 'en-US', label: 'English' },
 ];
 
-export function listen({ lang, onResult, onEnd, onError, onSpeechEnd }) {
-  if (!Recognition) return () => {};
+export function listen({ lang, onResult, onEnd, onError }) {
+  if (!Recognition) {
+    onError?.('not-supported');
+    return () => {};
+  }
   const rec = new Recognition();
   rec.lang = lang || 'uz-UZ';
   rec.interimResults = true;
   rec.continuous = true;
   rec.maxAlternatives = 1;
 
-  let stopped = false;
-  let accumulated = '';
-  let silenceTimer = null;
-
-  const clearSilence = () => {
-    if (silenceTimer) {
-      clearTimeout(silenceTimer);
-      silenceTimer = null;
-    }
-  };
-
-  const scheduleSilenceCheck = () => {
-    clearSilence();
-    silenceTimer = setTimeout(() => {
-      if (!stopped && accumulated.trim()) {
-        stopped = true;
-        try { rec.stop(); } catch {}
-        onSpeechEnd?.(accumulated.trim());
-      }
-    }, 2500);
-  };
-
   rec.onresult = (e) => {
     let full = '';
     for (let i = 0; i < e.results.length; i++) {
       full += e.results[i][0].transcript;
     }
-    accumulated = full;
-    onResult?.(full);
-    scheduleSilenceCheck();
-  };
-
-  rec.onspeechend = () => {
-    scheduleSilenceCheck();
+    if (full) {
+      onResult?.(full);
+    }
   };
 
   rec.onerror = (e) => {
-    if (e.error === 'no-speech' && !stopped) {
-      return;
-    }
+    if (e.error === 'no-speech') return;
     if (e.error === 'aborted') {
       onEnd?.();
       return;
     }
-    clearSilence();
     onError?.(e.error);
   };
 
   rec.onend = () => {
-    clearSilence();
-    if (!stopped) {
-      try {
-        rec.start();
-        return;
-      } catch {}
-    }
     onEnd?.();
   };
 
   try {
     rec.start();
-  } catch {
+  } catch (err) {
     onError?.('start-failed');
   }
 
   return () => {
-    clearSilence();
-    stopped = true;
     try {
       rec.stop();
     } catch {}

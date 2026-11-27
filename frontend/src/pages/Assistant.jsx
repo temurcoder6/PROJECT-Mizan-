@@ -277,7 +277,6 @@ export default function Assistant({ go }) {
   const [strikes, setStrikes] = useState(() => Number(localStorage.getItem('mizan_mod_strikes') || 0));
   const [banned, setBanned] = useState(() => Number(localStorage.getItem('mizan_mod_ban_until') || 0) > Date.now());
   const [notice, setNotice] = useState('');
-  const [consent, setConsent] = useState(false);
   const stopRef = useRef(null);
   const bottomRef = useRef(null);
   const textRef = useRef(null);
@@ -463,7 +462,6 @@ export default function Assistant({ go }) {
       setListening(false);
       return;
     }
-    if (!settings.voiceConsent) return setConsent(true);
     startListening();
   };
 
@@ -597,48 +595,6 @@ export default function Assistant({ go }) {
           </button>
         </form>
       </Card>
-
-      {consent && (
-        <Modal title="Mikrofondan foydalanish" onClose={() => setConsent(false)}>
-          <div className="space-y-3 text-sm text-plaster/80">
-            <p>
-              Ovoz bilan kiritish uchun brauzer mikrofonga ruxsat so'raydi. Ovoz brauzerning nutqni tanish xizmati orqali matnga aylantiriladi (Chrome'da bu xizmat Google serverlari orqali
-              ishlashi mumkin).
-            </p>
-            <p>
-              <b>Mizan ovozni yozib olmaydi va saqlamaydi.</b> Faqat matn qoladi va siz uni tasdiqlamaguningizcha yozuv saqlanmaydi. Xohlasangiz, hamma narsani yozib ham kiritishingiz mumkin.
-            </p>
-            <label className="block">
-              <span className="mb-1 block text-xs font-semibold text-plaster/55 uppercase">Gapirish tili</span>
-              <select className={inputCls} value={settings.voiceLang} onChange={(e) => actions.setSetting('voiceLang', e.target.value)}>
-                {VOICE_LANGS.map((l) => (
-                  <option key={l.value} value={l.value}>
-                    {l.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <p className="rounded-lg border border-ochre/30 bg-ochre/12 px-3 py-2 text-xs text-[#F2C46B]">
-              O'zbek tilini tanish sifati qurilma va brauzerga bog'liq va ba'zan xato qiladi. Shuning uchun har doim tasdiqlash oynasida summani tekshiring.
-            </p>
-            <div className="flex gap-2 pt-1">
-              <Button variant="ghost" className="flex-1" onClick={() => setConsent(false)}>
-                Yozib kiritaman
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={() => {
-                  actions.setSetting('voiceConsent', true);
-                  setConsent(false);
-                  startListening();
-                }}
-              >
-                Roziman, yoqish
-              </Button>
-            </div>
-          </div>
-        </Modal>
-      )}
 
       <ProModal open={showPro} onClose={() => setShowPro(false)} />
       <ComplaintModal open={complaint.open} initialReason={complaint.reason} onClose={() => setComplaint({ open: false, reason: '' })} />

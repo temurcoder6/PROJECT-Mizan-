@@ -29,7 +29,6 @@ const NAV_MAP = [
   { rx: /\b(karta|kartalar)\b/i, page: 'kartalar', label: 'Kartalar' },
   { rx: /\b(qarz|qarzlar)\b/i, page: 'qarzlar', label: 'Qarzlar' },
   { rx: /\b(maqsad|maqsadlar)\b/i, page: 'maqsadlar', label: 'Maqsadlar' },
-  { rx: /\b(bozor|keshbek|vaucher|hamkor|chegirma)\b/i, page: 'bozor', label: 'Mizan Bozor' },
   { rx: /\b(hisobot|statistika|grafik)\b/i, page: 'hisobot', label: 'Hisobot' },
   { rx: /\b(xavfsizlik|firibgar|shubhali)\b/i, page: 'xavfsizlik', label: 'Xavfsizlik' },
   { rx: /\b(sozlama|sozlamalar|telegram)\b/i, page: 'sozlamalar', label: 'Sozlamalar' },
@@ -147,7 +146,11 @@ export default function MizanOrb({ go, currentRoute }) {
     };
     rec.onerror = () => setListeningCmd(false);
     rec.onend = () => setListeningCmd(false);
-    rec.start();
+    try {
+      rec.start();
+    } catch {
+      setListeningCmd(false);
+    }
     cmdRecRef.current = rec;
   };
 
