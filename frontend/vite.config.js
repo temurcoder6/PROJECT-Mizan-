@@ -11,7 +11,10 @@ export default defineConfig(({ mode }) => {
     base: single ? './' : '/',
     define: { __BUILD__: JSON.stringify(new Date().toISOString().slice(0, 16).replace('T', ' ')) },
     plugins: [react(), tailwindcss(), ...(single ? [viteSingleFile()] : [])],
-    build: { outDir: single ? 'dist-single' : 'dist' },
+    build: {
+      outDir: single ? 'dist-single' : 'dist',
+      ...(!single ? { rolldownOptions: { output: { manualChunks: (id) => (id.includes('node_modules') ? 'vendor' : undefined) } } } : {}),
+    },
     server: { proxy: { '/api': 'http://localhost:8787' } },
   }
 })

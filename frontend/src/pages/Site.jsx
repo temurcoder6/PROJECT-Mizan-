@@ -94,7 +94,7 @@ function Nav({ page, onOpen }) {
   const { auth } = useStore();
   const signedIn = auth.status === 'in' && auth.user;
   return (
-    <header className="app-glass sticky top-0 z-40 border-b border-plaster/12" style={{ transform: 'translate3d(0, 0, 0)', willChange: 'transform' }}>
+    <header className="app-glass sticky top-0 z-40 border-b border-plaster/12">
       <div className={`${wrap} flex h-16 items-center justify-between gap-4`}>
         <Logo />
         <nav className="hidden items-center gap-6 lg:flex" aria-label="Sahifalar">
@@ -281,7 +281,7 @@ function Home({ onOpen, isAdmin }) {
   return (
     <>
       {/* Birinchi ekran: kobalt maydon, girih yulduzi ichida jonli telefon */}
-      <section className="relative overflow-hidden bg-cobalt text-plaster" style={{ transform: 'translate3d(0, 0, 0)', contain: 'layout style' }}>
+      <section className="relative overflow-hidden bg-cobalt text-plaster">
         <GirihField id="g-hero" opacity={0.13} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-cobalt-deep to-transparent" aria-hidden />
         <div className={`${wrap} relative grid items-end gap-8 pt-14 pb-16 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[1fr_1.05fr] lg:gap-4 lg:pt-10 lg:pb-20`}>
@@ -388,7 +388,7 @@ function Home({ onOpen, isAdmin }) {
                 </a>
               </div>
             </div>
-            <div className="w-full lg:max-w-md rounded-3xl border border-ochre/35 bg-[#091b3a]/90 p-6 shadow-2xl backdrop-blur-md">
+            <div className="w-full lg:max-w-md rounded-3xl border border-ochre/35 bg-[#091b3a]/96 p-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-plaster/10 pb-4">
                 <span className="font-bold text-sm text-ochre">Mizan Pro imkoniyatlari</span>
                 <span className="text-xs text-turq font-semibold">Max Daraja</span>

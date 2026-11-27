@@ -9,6 +9,7 @@ const SCREEN_H = 800;
 export default function Laptop3D({ route, className = '' }) {
   const box = useRef(null);
   const [scale, setScale] = useState(0.5);
+  const [mountFrame, setMountFrame] = useState(() => typeof IntersectionObserver === 'undefined');
   const src = `${window.location.pathname}?demo=1#${route}`;
 
   useEffect(() => {
@@ -18,6 +19,61 @@ export default function Laptop3D({ route, className = '' }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+
+  // Skroll o'rtasida emas, faqat noutbuk bo'limi ekranga kirganda va skroll to'xtaganda iframe yuklanadi
+  useEffect(() => {
+    if (mountFrame) return undefined;
+    const el = box.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return undefined;
+    let timer = 0;
+    let visible = false;
+    const triggerWhenIdle = () => {
+      if (!visible) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        if (visible) setMountFrame(true);
+      }, 220);
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        visible = entries.some((e) => e.isIntersecting);
+        if (visible) triggerWhenIdle();
+        else clearTimeout(timer);
+      },
+      { rootMargin: '120px 0px' },
+    );
+    io.observe(el);
+    window.addEventListener('scroll', triggerWhenIdle, { passive: true });
+    return () => {
+      io.disconnect();
+      window.removeEventListener('scroll', triggerWhenIdle);
+      clearTimeout(timer);
+    };
+  }, [mountFrame]);
+
+  useEffect(() => {
+    const el = box.current;
+    if (!el || !mountFrame) return undefined;
+    let timer = 0;
+    let scrolling = false;
+    const onScroll = () => {
+      if (!scrolling) {
+        scrolling = true;
+        el.classList.add('is-scrolling');
+      }
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        scrolling = false;
+        el.classList.remove('is-scrolling');
+      }, 180);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      clearTimeout(timer);
+      el.classList.remove('is-scrolling');
+    };
+  }, [mountFrame]);
 
   return (
     <div className={`group relative mx-auto w-full max-w-[780px] ${className}`}>
@@ -46,13 +102,14 @@ export default function Laptop3D({ route, className = '' }) {
                   {/* jonli ko'rsatkich: firuza faqat shu yerda */}
                   <span className="absolute top-[4px] left-1/2 size-[4px] -translate-x-1/2 rounded-full bg-[#1FA6A0]" />
                 </span>
-                <iframe
-                  title="Mizan ilovasi, kompyuter ko'rinishi (namuna ma'lumot bilan)"
-                  src={src}
-                  loading="lazy"
-                  className="absolute top-0 left-0 border-0 bg-[#060E1F]"
-                  style={{ width: SCREEN_W, height: SCREEN_H, transform: `scale(${scale})`, transformOrigin: 'top left' }}
-                />
+                {mountFrame && (
+                  <iframe
+                    title="Mizan ilovasi, kompyuter ko'rinishi (namuna ma'lumot bilan)"
+                    src={src}
+                    className="absolute top-0 left-0 border-0 bg-[#060E1F]"
+                    style={{ width: SCREEN_W, height: SCREEN_H, transform: `scale(${scale})`, transformOrigin: 'top left' }}
+                  />
+                )}
                 <span
                   className="pointer-events-none absolute inset-0 z-20"
                   style={{ background: 'linear-gradient(115deg, rgba(255,255,255,.10) 0%, rgba(255,255,255,0) 30%)' }}

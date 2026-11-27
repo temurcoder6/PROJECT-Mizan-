@@ -1,24 +1,27 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, ChartColumn, ChevronLeft, CreditCard, HandCoins, House, KeyRound, LifeBuoy, ListChecks, Menu, Settings as Cog, ShieldCheck, Sparkles, Target, X } from 'lucide-react';
 import { ConflictModal, SyncChip } from './components/Account';
 import { GirihField, StarMark } from './components/Girih';
 import { ReminderWatcher } from './components/Insights';
 import { LITE } from './lib/perf';
-import Admin from './pages/Admin';
-import Assistant from './pages/Assistant';
-import Cards from './pages/Cards';
-import Dashboard from './pages/Dashboard';
-import Debts from './pages/Debts';
-import Goals from './pages/Goals';
-import Help from './pages/Help';
-import AdPage from './pages/AdPage';
-import Film from './pages/Film';
-import Reports from './pages/Reports';
-import Safety from './pages/Safety';
-import Settings from './pages/Settings';
-import Site, { SITE_PAGES } from './pages/Site';
-import Transactions from './pages/Transactions';
 import { DEMO, StoreProvider, useStore } from './store';
+
+const Site = lazy(() => import('./pages/Site'));
+const Admin = lazy(() => import('./pages/Admin'));
+const Assistant = lazy(() => import('./pages/Assistant'));
+const Cards = lazy(() => import('./pages/Cards'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Debts = lazy(() => import('./pages/Debts'));
+const Goals = lazy(() => import('./pages/Goals'));
+const Help = lazy(() => import('./pages/Help'));
+const AdPage = lazy(() => import('./pages/AdPage'));
+const Film = lazy(() => import('./pages/Film'));
+const Reports = lazy(() => import('./pages/Reports'));
+const Safety = lazy(() => import('./pages/Safety'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Transactions = lazy(() => import('./pages/Transactions'));
+
+const SITE_PAGES = ['/', '/xarajatlar', '/qarzlar', '/maqsadlar', '/yordamchi', '/xavfsizlik', '/kirish', '/film', '/reklama'];
 
 const TABS = [
   { id: 'bosh', label: 'Bosh sahifa', icon: House, page: Dashboard },
@@ -95,9 +98,63 @@ function Shell() {
     window.scrollTo({ top: 0 });
   }, [route]);
 
-  if (route === '/film') return isAdmin ? <Film onExit={() => go('/')} /> : <Site page="/" onOpen={() => go('bosh')} />;
-  if (route === '/reklama') return isAdmin ? <AdPage onExit={() => go('/')} /> : <Site page="/" onOpen={() => go('bosh')} />;
-  if (!route || route.startsWith('/')) return <Site page={route || '/'} onOpen={() => go('bosh')} />;
+  // Landing ichidagi (?demo=1) iframe bosilmaguncha sahifa skrollini ushlab qolmasligi uchun
+  useEffect(() => {
+    if (!DEMO || typeof window === 'undefined' || window.self === window.top) return undefined;
+    let active = false;
+    let resetTimer = 0;
+    const onDown = () => {
+      active = true;
+      clearTimeout(resetTimer);
+    };
+    const onLeave = () => {
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => {
+        active = false;
+      }, 1200);
+    };
+    const onWheel = (e) => {
+      if (active) return;
+      e.preventDefault();
+      try {
+        window.parent.scrollBy(0, e.deltaY);
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener('pointerdown', onDown, { passive: true });
+    document.addEventListener('mouseleave', onLeave);
+    window.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      clearTimeout(resetTimer);
+      window.removeEventListener('pointerdown', onDown);
+      document.removeEventListener('mouseleave', onLeave);
+      window.removeEventListener('wheel', onWheel);
+    };
+  }, []);
+
+  const pageFallback = <div className="min-h-dvh bg-[#060E1F]" />;
+  if (route === '/film') {
+    return (
+      <Suspense fallback={pageFallback}>
+        {isAdmin ? <Film onExit={() => go('/')} /> : <Site page="/" onOpen={() => go('bosh')} />}
+      </Suspense>
+    );
+  }
+  if (route === '/reklama') {
+    return (
+      <Suspense fallback={pageFallback}>
+        {isAdmin ? <AdPage onExit={() => go('/')} /> : <Site page="/" onOpen={() => go('bosh')} />}
+      </Suspense>
+    );
+  }
+  if (!route || route.startsWith('/')) {
+    return (
+      <Suspense fallback={pageFallback}>
+        <Site page={route || '/'} onOpen={() => go('bosh')} />
+      </Suspense>
+    );
+  }
   const chip = <SyncChip onClick={() => go('sozlamalar')} onConflict={() => setConflictHidden(false)} />;
 
   const tab = visibleTabs.find((t) => t.id === route) || visibleTabs[0];
@@ -114,7 +171,7 @@ function Shell() {
 
   return (
     <div className="relative min-h-dvh overflow-x-clip bg-[#060E1F] text-plaster selection:bg-turq/30 selection:text-plaster">
-      {!LITE && <GirihField id="app-girih" opacity={0.045} size={112} />}
+      {!LITE && !DEMO && <GirihField id="app-girih" opacity={0.045} size={112} />}
 
       {DEMO && (
         <div className="relative z-20 border-b border-ochre/30 bg-[#1A140A] py-1 text-center text-[11px] font-semibold text-[#F2C46B]">
@@ -157,7 +214,9 @@ function Shell() {
       <main className="relative z-10 px-4 pt-5 pb-28 sm:px-6 lg:px-8 lg:pt-7 lg:pb-32">
         <div className="mx-auto max-w-5xl">
           <div key={route} className={settings.animations ? 'animate-page' : ''}>
-            <Page go={go} />
+            <Suspense fallback={<div className="py-12" />}>
+              <Page go={go} />
+            </Suspense>
           </div>
         </div>
       </main>

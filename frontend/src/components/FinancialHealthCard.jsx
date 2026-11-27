@@ -3,7 +3,7 @@ import { Activity, AlertTriangle, CheckCircle2, ChevronRight, Flame, Sparkles, Z
 import { Badge, Card } from './ui';
 import { api } from '../lib/api';
 import { money, todayISO } from '../lib/format';
-import { useStore } from '../store';
+import { DEMO, useStore } from '../store';
 
 export default function FinancialHealthCard({ onOpenAssistant }) {
   const { transactions = [], cards = [], goals = [], debts = [], actions } = useStore();
@@ -32,6 +32,7 @@ export default function FinancialHealthCard({ onOpenAssistant }) {
   const [lazySuccess, setLazySuccess] = useState('');
 
   useEffect(() => {
+    if (DEMO && typeof window !== 'undefined' && window.self !== window.top) return;
     const totalBalance = cards.reduce((s, c) => s + (Number(c.balance) || 0), 0);
     api
       .aiHealthScore({

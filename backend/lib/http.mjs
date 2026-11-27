@@ -1,5 +1,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
+
+const COMPRESSIBLE = new Set(['.html', '.js', '.css', '.svg', '.json', '.webmanifest', '.txt']);
+const gzCache = new Map();
+
+function getGzipped(file, etag) {
+  const key = `${file}:${etag}`;
+  if (gzCache.has(key)) return gzCache.get(key);
+  const gz = zlib.gzipSync(fs.readFileSync(file), { level: 6 });
+  if (gzCache.size >= 64) gzCache.delete(gzCache.keys().next().value);
+  gzCache.set(key, gz);
+  return gz;
+}
 
 export class HttpError extends Error {
   constructor(status, message, extra) {
@@ -182,8 +195,19 @@ export function serveStatic(req, res, pathname, staticDir) {
 
   const ifNoneMatch = req.headers['if-none-match'];
   if (ifNoneMatch && ifNoneMatch.split(',').map((s) => s.trim()).includes(etag)) {
-    res.writeHead(304, baseHeaders);
+    res.writeHead(304, { ...baseHeaders, Vary: 'Accept-Encoding' });
     return res.end();
+  }
+
+  const acceptGz = req.method === 'GET' && !range && size >= 1024 && COMPRESSIBLE.has(ext) && /\bgzip\b/i.test(req.headers['accept-encoding'] || '');
+  if (acceptGz) {
+    try {
+      const gz = getGzipped(file, etag);
+      res.writeHead(200, { ...baseHeaders, 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding', 'Content-Length': gz.length });
+      return res.end(gz);
+    } catch {
+      // Fallback to raw streaming if compression read fails
+    }
   }
 
   res.writeHead(200, { ...baseHeaders, 'Content-Length': size });

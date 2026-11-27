@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Download, Film } from 'lucide-react';
 
 const VIDEO = {
@@ -10,10 +10,18 @@ const VIDEO = {
   filename: 'mizan-tanishtirish.mp4',
 };
 
-// Yagona ixcham tanishtirish videosi: faqat metadata yuklanadi, bosilganda o'ynaydi.
+// Yagona ixcham tanishtirish videosi: dastlabki skrollni to'smaslik uchun metadata bo'sh vaqtda yuklanadi.
 export default function ExplainerVideo() {
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [metaReady, setMetaReady] = useState(false);
+
+  useEffect(() => {
+    const schedule = window.requestIdleCallback || ((cb) => setTimeout(cb, 1500));
+    const cancel = window.cancelIdleCallback || clearTimeout;
+    const id = schedule(() => setMetaReady(true), { timeout: 2500 });
+    return () => cancel(id);
+  }, []);
 
   return (
     <section className="relative overflow-hidden bg-cobalt-night text-plaster" id="tanishtirish">
@@ -59,13 +67,13 @@ export default function ExplainerVideo() {
                 </button>
               </div>
             ) : (
-              <video
+                <video
                 key={`${VIDEO.id}-${attempt}`}
                 className="block aspect-video w-full rounded-xl bg-cobalt-night"
                 src={VIDEO.src}
                 controls
                 playsInline
-                preload="metadata"
+                preload={metaReady ? 'metadata' : 'none'}
                 aria-label={VIDEO.title}
                 onError={() => setFailed(true)}
               />

@@ -4,7 +4,11 @@ import { useStore } from '../store';
 import { LITE } from '../lib/perf';
 
 const R = '3.4rem';
-const DEPTH = 6;
+const EDGES = [
+  [-2.8, '#0c2550'],
+  [-5.8, '#7a5c1f'],
+  [-9.0, '#071731'],
+];
 const REST = { x: 5, y: -14, gx: 28, gy: 22 };
 const FLAT = { x: 0, y: 0, gx: 50, gy: 25 };
 const STILL = { x: 0, y: 0, gx: 50, gy: 30 };
@@ -14,13 +18,13 @@ const OCHRE = '#C9962B';
 const TURQUOISE = '#1FA6A0';
 
 // Koshin medalyoni kabi telefon: quyuq kobalt korpus, ingichka oxra hoshiya, yengil sir yaltirog'i.
-// Qalinlik — bir nechta qatlam (translateZ). Ekran — haqiqiy ilova (?demo=1 rejimidagi iframe).
+// Qalinlik — 3 ta GPU qatlam (translateZ). Ekran — haqiqiy ilova (?demo=1 rejimidagi iframe).
 // Arzon: faqat transform animatsiya qilinadi, harakatlanuvchi qatlamlarda blur yo'q, sichqoncha
 // harakati React'ni qayta chizdirmaydi (ref orqali). html.lite va "kamroq harakat"da tebranish/og'ish o'chadi.
 const rotation = (t) => `rotateX(${t.x}deg) rotateY(${t.y}deg)`;
-const shadowShift = (t) => `translateX(calc(-50% + ${-t.y * 2.2}px))`;
+const shadowShift = (t) => `translate3d(calc(-50% + ${-t.y * 2.2}px), 0, 0)`;
 // Yaltiroq qatlam konteynerdan 2 marta katta; uni siljitamiz (fonni qayta chizish o'rniga).
-const glareShift = (t) => `translate(${(t.gx - 50) / 2}%, ${(t.gy - 50) / 2}%)`;
+const glareShift = (t) => `translate3d(${(t.gx - 50) / 2}%, ${(t.gy - 50) / 2}%, 0)`;
 
 export default function Phone3D({ route, className = '', iframeRef, runKey = 0, fresh = false, showCaption = true, still = false, screen = null, dark = true }) {
   const { settings } = useStore();
@@ -29,27 +33,29 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
   const src = `${window.location.pathname}?demo=1${fresh ? `&fresh=1&t=${runKey}` : ''}#${route}`;
   const wrap = useRef(null);
   const rotor = useRef(null);
+  const floatEl = useRef(null);
   const shadow = useRef(null);
   const glare = useRef(null);
   const inside = useRef(false);
+  const smoothMode = useRef(true);
   const [reload, setReload] = useState(0);
   const [inView, setInView] = useState(true);
   const start = still ? STILL : REST;
 
-  const apply = (t, smooth = false) => {
+  const setTransition = (smooth) => {
+    if (smoothMode.current === smooth) return;
+    smoothMode.current = smooth;
     const tr = smooth ? 'transform .25s ease-out' : 'none';
-    if (rotor.current) {
-      rotor.current.style.transition = tr;
-      rotor.current.style.transform = rotation(t);
-    }
-    if (shadow.current) {
-      shadow.current.style.transition = tr;
-      shadow.current.style.transform = shadowShift(t);
-    }
-    if (glare.current) {
-      glare.current.style.transition = tr;
-      glare.current.style.transform = glareShift(t);
-    }
+    if (rotor.current) rotor.current.style.transition = tr;
+    if (shadow.current) shadow.current.style.transition = tr;
+    if (glare.current) glare.current.style.transition = tr;
+  };
+
+  const apply = (t, smooth = false) => {
+    setTransition(smooth);
+    if (rotor.current) rotor.current.style.transform = rotation(t);
+    if (shadow.current) shadow.current.style.transform = shadowShift(t);
+    if (glare.current) glare.current.style.transform = glareShift(t);
   };
 
   // Faqat ko'rinib turganda ishlash (viewportdan chiqsa resurs sarflamaslik)
@@ -63,6 +69,35 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
     return () => io.disconnect();
   }, []);
 
+  // Skroll paytida float animatsiyasini va iframe g'ildirak tutishini qisqa pauza qilish (silliq 60fps skroll)
+  useEffect(() => {
+    if (!inView) return undefined;
+    const floatNode = floatEl.current;
+    const wrapNode = wrap.current;
+    let scrollTimer = 0;
+    let scrolling = false;
+    const onScroll = () => {
+      if (!scrolling) {
+        scrolling = true;
+        floatNode?.classList.add('is-scrolling');
+        wrapNode?.classList.add('is-scrolling');
+      }
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => {
+        scrolling = false;
+        floatNode?.classList.remove('is-scrolling');
+        wrapNode?.classList.remove('is-scrolling');
+      }, 180);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      clearTimeout(scrollTimer);
+      floatNode?.classList.remove('is-scrolling');
+      wrapNode?.classList.remove('is-scrolling');
+    };
+  }, [inView]);
+
   useEffect(() => {
     apply(start, true);
     if (!motion || !inView) return undefined;
@@ -73,15 +108,17 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
 
     let raf = 0;
     let rect = null;
+    let lastScrollAt = 0;
 
-    const onScrollOrResize = () => {
+    const onInvalidate = () => {
       rect = null;
+      lastScrollAt = performance.now();
     };
-    window.addEventListener('resize', onScrollOrResize, { passive: true });
-    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onInvalidate, { passive: true });
+    window.addEventListener('scroll', onInvalidate, { passive: true });
 
     const onMove = (e) => {
-      if (inside.current) return;
+      if (inside.current || performance.now() - lastScrollAt < 180) return;
       if (!rect && wrap.current) rect = wrap.current.getBoundingClientRect();
       if (!rect) return;
       cancelAnimationFrame(raf);
@@ -95,8 +132,8 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
     window.addEventListener('pointermove', onMove, { passive: true });
     return () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('resize', onScrollOrResize);
-      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onInvalidate);
+      window.removeEventListener('scroll', onInvalidate);
       cancelAnimationFrame(raf);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,9 +147,6 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
     inside.current = false;
     if (motion) apply(start, true);
   };
-
-  // Yon qirra: kobalt qatlamlar, o'rtasida oltin choki — burilganda medalyon qirrasi ko'rinadi.
-  const edge = (i) => (i === 2 ? '#7a5c1f' : i % 2 ? '#071731' : '#0c2550');
 
   return (
     <div className={`relative mx-auto w-[300px] shrink-0 ${className}`}>
@@ -143,12 +177,12 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
             backfaceVisibility: 'hidden',
           }}
         >
-          <div className={motion && inView ? 'animate-float lite-static' : ''} style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}>
-            {Array.from({ length: DEPTH }).map((_, i) => (
+          <div ref={floatEl} className={motion && inView ? 'animate-float lite-static' : ''} style={{ transformStyle: 'preserve-3d', backfaceVisibility: 'hidden' }}>
+            {EDGES.map(([tz, bg], i) => (
               <span
                 key={i}
                 className="pointer-events-none absolute inset-0"
-                style={{ borderRadius: R, background: edge(i), transform: `translateZ(${-(i + 1) * 1.8}px)` }}
+                style={{ borderRadius: R, background: bg, transform: `translateZ(${tz}px)` }}
                 aria-hidden
               />
             ))}

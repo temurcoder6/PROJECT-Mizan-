@@ -19,28 +19,39 @@ export function StarMark({ className = 'size-8', live = false }) {
   );
 }
 
-// Fon uchun girih to'ri: bitta pattern, takrorlanadi. Rasm emas, juda yengil.
-export function GirihField({ id, className = '', opacity = 0.16, size = 96 }) {
+// Fon uchun girih to'ri: bir marta keshlangan SVG data-URI rasm (DOM'da yuzlab polygon qatlamlar chizmaydi).
+const fieldCache = new Map();
+function fieldBg(size) {
+  let uri = fieldCache.get(size);
+  if (uri) return uri;
   const h = size / 2;
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='${size}' height='${size}' viewBox='0 0 ${size} ${size}'>` +
+    `<g fill='none' stroke='#C9962B' stroke-width='1'>` +
+    `<polygon points='${starPoints(h, h, h * 0.62)}'/>` +
+    `<polygon points='${starPoints(0, 0, h * 0.3)}'/>` +
+    `<polygon points='${starPoints(size, 0, h * 0.3)}'/>` +
+    `<polygon points='${starPoints(0, size, h * 0.3)}'/>` +
+    `<polygon points='${starPoints(size, size, h * 0.3)}'/>` +
+    `<path d='M${h} ${h - h * 0.62}L${h} 0M${h} ${h + h * 0.62}L${h} ${size}M${h - h * 0.62} ${h}L0 ${h}M${h + h * 0.62} ${h}L${size} ${h}'/>` +
+    `</g></svg>`;
+  uri = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  fieldCache.set(size, uri);
+  return uri;
+}
+
+export function GirihField({ className = '', opacity = 0.16, size = 96 }) {
   return (
-    <svg
+    <div
       className={`pointer-events-none absolute inset-0 size-full ${className}`}
-      style={{ contain: 'strict', transform: 'translateZ(0)' }}
-      shapeRendering="optimizeSpeed"
+      style={{
+        backgroundImage: fieldBg(size),
+        backgroundSize: `${size}px ${size}px`,
+        backgroundRepeat: 'repeat',
+        opacity,
+      }}
       aria-hidden
-    >
-      <defs>
-        <pattern id={id} width={size} height={size} patternUnits="userSpaceOnUse">
-          <polygon points={starPoints(h, h, h * 0.62)} fill="none" stroke="#C9962B" strokeWidth="1" />
-          <polygon points={starPoints(0, 0, h * 0.3)} fill="none" stroke="#C9962B" strokeWidth="1" />
-          <polygon points={starPoints(size, 0, h * 0.3)} fill="none" stroke="#C9962B" strokeWidth="1" />
-          <polygon points={starPoints(0, size, h * 0.3)} fill="none" stroke="#C9962B" strokeWidth="1" />
-          <polygon points={starPoints(size, size, h * 0.3)} fill="none" stroke="#C9962B" strokeWidth="1" />
-          <path d={`M${h} ${h - h * 0.62}L${h} 0M${h} ${h + h * 0.62}L${h} ${size}M${h - h * 0.62} ${h}L0 ${h}M${h + h * 0.62} ${h}L${size} ${h}`} stroke="#C9962B" strokeWidth="1" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill={`url(#${id})`} opacity={opacity} />
-    </svg>
+    />
   );
 }
 
