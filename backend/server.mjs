@@ -1087,7 +1087,11 @@ async function api(req, res, pathname, url) {
         telegramChats: scalar('SELECT COUNT(*) FROM telegram_chats'),
         openTickets: scalar("SELECT COUNT(*) FROM support_tickets WHERE status = 'open'"),
         partnerClicks: scalar('SELECT COUNT(*) FROM partner_clicks'),
+        totalTxVolume: scalar('SELECT COALESCE(SUM(amount), 0) FROM transactions'),
+        totalCardsVolume: scalar('SELECT COALESCE(SUM(balance), 0) FROM cards'),
       },
+      partnerBreakdown: db.prepare('SELECT partner_id, COUNT(*) AS clicks FROM partner_clicks GROUP BY partner_id ORDER BY clicks DESC').all(),
+      partners: Object.values(PARTNERS),
     });
   }
 
@@ -1174,6 +1178,42 @@ async function api(req, res, pathname, url) {
     const r = q.replyTicket.run(status, reply, reply, Date.now(), id);
     if (!r.changes) throw new HttpError(404, 'Murojaat topilmadi.');
     return send(res, 200, { ok: true });
+  }
+
+  if (pathname === '/api/admin/claim' && method === 'POST') {
+    const user = requireUser(req);
+    const body = await readJSON(req);
+    const passcode = str(body?.passcode || '', 128);
+    const adminPass = process.env.ADMIN_PASSWORD || 'MizanAdmin2026!';
+    if (!passcode || passcode !== adminPass) {
+      throw new HttpError(401, "Maxfiy admin paroli noto'g'ri.");
+    }
+    q.setAdminRole.run(1, user.id);
+    const updated = q.userById.get(user.id);
+    return send(res, 200, { ok: true, user: userPayload(updated) });
+  }
+
+  if (pathname === '/api/admin/login' && method === 'POST') {
+    const body = await readJSON(req);
+    const passcode = str(body?.passcode || '', 128);
+    const username = str(body?.username || 'admin', 32).trim().toLowerCase() || 'admin';
+    const adminPass = process.env.ADMIN_PASSWORD || 'MizanAdmin2026!';
+    if (!passcode || passcode !== adminPass) {
+      throw new HttpError(401, "Maxfiy admin paroli noto'g'ri.");
+    }
+    let u = q.userByName.get(username);
+    if (!u) {
+      const salt = crypto.randomBytes(16);
+      const hash = await scrypt(passcode, salt, 64);
+      const r = q.insertUser.run(username, salt, hash, Date.now());
+      q.setAdminRole.run(1, r.lastInsertRowid);
+      u = q.userById.get(r.lastInsertRowid);
+    } else {
+      q.setAdminRole.run(1, u.id);
+      u = q.userById.get(u.id);
+    }
+    startSession(res, u.id, req);
+    return send(res, 200, { ok: true, user: userPayload(u) });
   }
 
   if (pathname === '/api/password' && method === 'POST') {

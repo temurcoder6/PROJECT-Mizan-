@@ -54,7 +54,6 @@ export default function MizanOrb({ go, currentRoute }) {
     const step = TOUR_STEPS[0];
     go(step.page);
     setReply(`${step.title}: ${step.text}`);
-    if (settings.autoSpeak) speak(step.text, 'uz');
   };
 
   const nextTourStep = () => {
@@ -68,7 +67,6 @@ export default function MizanOrb({ go, currentRoute }) {
     const step = TOUR_STEPS[next];
     go(step.page);
     setReply(`${step.title}: ${step.text}`);
-    if (settings.autoSpeak) speak(step.text, 'uz');
   };
 
   const handleCommand = async (raw) => {
@@ -89,7 +87,6 @@ export default function MizanOrb({ go, currentRoute }) {
         go(nav.page);
         const msg = `Xo'p, «${nav.label}» bo'limini ochdim!`;
         setReply(msg);
-        if (settings.autoSpeak) speak(msg, 'uz');
         return;
       }
     }

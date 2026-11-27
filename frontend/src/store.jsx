@@ -315,7 +315,7 @@ export function StoreProvider({ children }) {
         return r;
       },
       markRecovery: () => setAuth((a) => (a.user ? { ...a, user: { ...a.user, hasRecovery: true } } : a)),
-      setUser: (user) => setAuth((a) => ({ ...a, user })),
+      setUser: (user) => setAuth({ status: 'in', user }),
       async unlinkOAuth(provider) {
         const r = await api.unlinkOAuth(provider);
         if (r.user) setAuth((a) => ({ ...a, user: r.user }));

@@ -438,19 +438,8 @@ export default function Assistant({ go }) {
   const sendRef = useRef(null);
   useEffect(() => { sendRef.current = send; });
 
-  const startListening = async () => {
+  const startListening = () => {
     setNotice('');
-    if (typeof navigator !== 'undefined' && navigator.mediaDevices?.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach((t) => t.stop());
-      } catch (err) {
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          setNotice("Mikrofonga brauzerda ruxsat berilmagan. Sozlamalardan mikrofonga ruxsat bering yoki yozib kiriting.");
-          return;
-        }
-      }
-    }
     setListening(true);
     stopRef.current = listen({
       lang: settings.voiceLang || 'uz-UZ',
@@ -461,7 +450,7 @@ export default function Assistant({ go }) {
       onError: (code) => {
         setListening(false);
         if (code === 'not-allowed' || code === 'service-not-allowed') {
-          setNotice("Mikrofonga ruxsat berilmadi. Matn yozib kiritishingiz mumkin.");
+          setNotice("Mikrofonga ruxsat berilmadi. Sozlamalardan mikrofonga ruxsat bering yoki yozib kiriting.");
         } else if (code === 'audio-capture') {
           setNotice("Mikrofon topilmadi. Qurilma mikrofonini tekshiring yoki yozib kiriting.");
         }
