@@ -202,14 +202,14 @@ export default function AuthPanel({ onOpen, defaultMode = 'register', nextHash =
           <label className="block">
             <span className="flex items-center gap-2 text-xs font-semibold text-plaster/75">
               <b className="flex size-5 items-center justify-center rounded-[3px] bg-plaster text-[11px] font-semibold text-cobalt">1</b>
-              Foydalanuvchi nomi
+              Email (Gmail) yoki foydalanuvchi nomi
             </span>
             <input
               className={fieldCls}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="username"
-              placeholder="temur_01"
+              placeholder="temur@gmail.com yoki temur_01"
             />
           </label>
 

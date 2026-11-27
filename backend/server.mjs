@@ -9,7 +9,7 @@ import { HttpError, checkOrigin, readJSON, send, serveStatic } from './lib/http.
 import { askJarvisAI, analyzeScamWithAI, computeFinancialHealth, scanReceiptWithAI, synthesizeSpeechWithGemini } from './lib/jarvis.mjs';
 import { PARTNERS } from './lib/partners.mjs';
 import {
-  CONTROL, LIMITS, USERNAME_RE, cleanState, findForbiddenCardKey, int, oneOf, passwordIssue, sanitizeCard, str,
+  CONTROL, LIMITS, USERNAME_RE, cleanState, findForbiddenCardKey, int, isValidLoginId, oneOf, passwordIssue, sanitizeCard, str,
 } from './lib/validate.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -1219,13 +1219,14 @@ async function api(req, res, pathname, url) {
     const ip = clientIp(req);
     if (tooMany(registrations, ip, 10, 3600000)) throw new HttpError(429, "Juda ko'p urinish. Keyinroq qayta urinib ko'ring.");
     const { username, password } = await readJSON(req);
-    if (typeof username !== 'string' || !USERNAME_RE.test(username)) throw new HttpError(400, "Foydalanuvchi nomi 3-32 belgi: harf, raqam, nuqta, pastki chiziq yoki chiziqcha.");
-    assertStrong(password, username);
-    if (q.userByName.get(username)) throw new HttpError(409, 'Bu nom band.');
+    if (typeof username !== 'string' || !isValidLoginId(username.trim())) throw new HttpError(400, "Email (Gmail) yoki foydalanuvchi nomini to'g'ri kiriting (kamida 3 belgi).");
+    const cleanName = username.trim();
+    assertStrong(password, cleanName);
+    if (q.userByName.get(cleanName)) throw new HttpError(409, 'Bu email yoki nom band.');
     const { salt, hash } = await hashPassword(password);
     let id;
     try {
-      const r = q.insertUser.run(username, salt, hash, Date.now());
+      const r = q.insertUser.run(cleanName, salt, hash, Date.now());
       id = Number(r.lastInsertRowid);
     } catch (e) {
       if (e?.code === 'ERR_SQLITE_CONSTRAINT' || /UNIQUE constraint/i.test(e?.message || '')) {

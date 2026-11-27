@@ -12,6 +12,8 @@ export const LIMITS = {
 };
 
 export const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,32}$/;
+export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+export const isValidLoginId = (v) => typeof v === 'string' && (USERNAME_RE.test(v) || (v.length <= 80 && EMAIL_RE.test(v)));
 export const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // Control characters are stripped from stored text to prevent terminal escape spoofing in admin tools.
 export const CONTROL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g;
