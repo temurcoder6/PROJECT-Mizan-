@@ -17,6 +17,10 @@ const COBALT = '#0A1F45';
 const OCHRE = '#C9962B';
 const TURQUOISE = '#1FA6A0';
 
+const SCREEN_W = 375;
+const SCREEN_H = 745;
+const SCREEN_SCALE = 280 / SCREEN_W; // ~0.746667 (280px ichki eniga to'liq sig'adi)
+
 // Koshin medalyoni kabi telefon: quyuq kobalt korpus, ingichka oxra hoshiya, yengil sir yaltirog'i.
 // Qalinlik — 3 ta GPU qatlam (translateZ). Ekran — haqiqiy ilova (?demo=1 rejimidagi iframe).
 // Arzon: faqat transform animatsiya qilinadi, harakatlanuvchi qatlamlarda blur yo'q, sichqoncha
@@ -244,15 +248,23 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
                   {screen ? (
                     <div className="h-[556px] w-full overflow-hidden">{screen}</div>
                   ) : (
-                    <iframe
-                      key={`${runKey}-${reload}`}
-                      ref={iframeRef}
-                      title="Mizan ilovasi (namuna ma'lumot bilan)"
-                      src={src}
-                      loading="lazy"
-                      className="block h-[556px] w-full border-0 bg-[#060E1F]"
-                      style={{ transform: 'translateZ(0)', contain: 'paint' }}
-                    />
+                    <div className="relative h-[556px] w-full overflow-hidden bg-[#060E1F]">
+                      <iframe
+                        key={`${runKey}-${reload}`}
+                        ref={iframeRef}
+                        title="Mizan ilovasi (namuna ma'lumot bilan)"
+                        src={src}
+                        loading="lazy"
+                        className="absolute top-0 left-0 border-0 bg-[#060E1F]"
+                        style={{
+                          width: `${SCREEN_W}px`,
+                          height: `${SCREEN_H}px`,
+                          transform: `scale(${SCREEN_SCALE})`,
+                          transformOrigin: 'top left',
+                          contain: 'paint',
+                        }}
+                      />
+                    </div>
                   )}
                   <div className="flex h-[16px] items-center justify-center bg-[#060E1F]" aria-hidden>
                     <span className="h-1 w-24 rounded-full bg-plaster/70" />

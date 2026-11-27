@@ -211,7 +211,7 @@ function Shell() {
         </div>
       </header>
 
-      <main className="relative z-10 px-4 pt-5 pb-28 sm:px-6 lg:px-8 lg:pt-7 lg:pb-32">
+      <main className="relative z-10 px-4 pt-5 pb-36 sm:px-6 lg:px-8 lg:pt-7 lg:pb-32">
         <div className="mx-auto max-w-5xl">
           <div key={route} className={settings.animations ? 'animate-page' : ''}>
             <Suspense fallback={<div className="py-12" />}>
@@ -364,7 +364,7 @@ function Shell() {
         </div>
 
         {/* Mobile compact floating dock */}
-        <div className="app-dock flex items-center gap-1 rounded-2xl px-2 py-1.5 shadow-2xl md:hidden">
+        <div className="app-dock flex w-full max-w-[390px] items-center justify-between gap-0.5 rounded-2xl px-1.5 py-1.5 shadow-2xl md:hidden">
           {MOBILE_TABS.map((id) => {
             const t = TABS.find((x) => x.id === id);
             const active = tab.id === id;
@@ -374,24 +374,26 @@ function Shell() {
                 type="button"
                 onClick={() => go(id)}
                 aria-current={active ? 'page' : undefined}
-                className={`flex min-w-13 flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[10px] font-semibold transition ${
+                className={`flex flex-1 min-w-0 max-w-[58px] flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-semibold transition ${
                   active ? 'bg-cobalt text-plaster ring-1 ring-ochre/50' : 'text-plaster/65 hover:text-plaster'
                 }`}
               >
-                <t.icon className={`size-4.5 ${active ? 'text-ochre' : ''}`} aria-hidden />
-                <span className="truncate">{id === 'maqsadlar' ? 'Maqsad' : t.label}</span>
+                <t.icon className={`size-4.5 shrink-0 ${active ? 'text-ochre' : ''}`} aria-hidden />
+                <span className="truncate max-w-full">
+                  {id === 'bosh' ? 'Bosh' : id === 'yozuvlar' ? 'Yozuv' : id === 'yordamchi' ? 'AI' : id === 'maqsadlar' ? 'Maqsad' : t.label}
+                </span>
               </button>
             );
           })}
-          <div className="mx-0.5 h-6 w-px bg-plaster/15" />
+          <div className="mx-0.5 h-6 w-px shrink-0 bg-plaster/15" />
           <button
             type="button"
             onClick={openDrawer}
             aria-label="Barcha bo'limlar"
-            className="flex min-w-12 flex-col items-center gap-0.5 rounded-xl px-2 py-1.5 text-[10px] font-semibold text-plaster/65 hover:text-plaster"
+            className="flex flex-1 min-w-0 max-w-[54px] flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[10px] font-semibold text-plaster/65 hover:text-plaster"
           >
-            <Menu className="size-4.5" aria-hidden />
-            <span>Menyu</span>
+            <Menu className="size-4.5 shrink-0" aria-hidden />
+            <span className="truncate max-w-full">Menyu</span>
           </button>
         </div>
       </nav>
