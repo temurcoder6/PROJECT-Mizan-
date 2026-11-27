@@ -41,9 +41,11 @@ const TABS = [
 const MOBILE_TABS = ['bosh', 'yozuvlar', 'kartalar', 'yordamchi', 'maqsadlar'];
 
 function readHash() {
+  const norm = window.location.hash.replace(/^#\/?/, '');
+  if (norm === 'admin') return 'admin';
   const h = window.location.hash.replace('#', '');
   if (h.startsWith('/')) return DEMO ? 'bosh' : SITE_PAGES.includes(h) ? h : '';
-  if (TABS.some((t) => t.id === h)) return h;
+  if (TABS.some((t) => t.id === h || t.id === norm)) return norm || h;
   return DEMO ? 'bosh' : '';
 }
 
@@ -159,7 +161,7 @@ function Shell() {
   }
   const chip = <SyncChip onClick={() => go('sozlamalar')} onConflict={() => setConflictHidden(false)} />;
 
-  const tab = visibleTabs.find((t) => t.id === route) || visibleTabs[0];
+  const tab = (route === 'admin' ? TABS.find((t) => t.id === 'admin') : null) || visibleTabs.find((t) => t.id === route) || visibleTabs[0];
   const Page = tab.page;
   const allowMotion = !LITE && settings.animations;
 
