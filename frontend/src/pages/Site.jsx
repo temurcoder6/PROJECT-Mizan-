@@ -103,7 +103,7 @@ function Nav({ page, onOpen }) {
               key={p}
               href={`#${p}`}
               aria-current={page === p ? 'page' : undefined}
-              className={`border-b py-1 text-sm font-medium transition ${page === p ? 'border-ochre text-plaster' : 'border-transparent text-plaster/65 hover:text-plaster'}`}
+              className={`whitespace-nowrap border-b py-1 text-sm font-medium transition ${page === p ? 'border-ochre text-plaster' : 'border-transparent text-plaster/65 hover:text-plaster'}`}
             >
               {label}
             </a>
@@ -117,10 +117,10 @@ function Nav({ page, onOpen }) {
               page === '/kirish' ? 'bg-plaster/12 text-plaster' : 'text-plaster/80 hover:bg-plaster/8 hover:text-plaster'
             }`}
           >
-            {signedIn && <span className="size-2 rounded-full bg-turq" />}
-            {signedIn ? auth.user.username : 'Kirish'}
+            {signedIn && <span className="size-2 shrink-0 rounded-full bg-turq" />}
+            <span className="max-w-[130px] truncate whitespace-nowrap">{signedIn ? auth.user.username : 'Kirish'}</span>
           </a>
-          <button type="button" onClick={onOpen} className="rounded-md bg-turq px-4 py-2 text-sm font-semibold text-cobalt-night transition hover:bg-[#32BDB6]">
+          <button type="button" onClick={onOpen} className="whitespace-nowrap rounded-md bg-turq px-4 py-2 text-sm font-semibold text-cobalt-night transition hover:bg-[#32BDB6]">
             Ilovani ochish
           </button>
           <button type="button" aria-label="Menyu" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="rounded-md p-2 text-plaster hover:bg-plaster/10 lg:hidden">
