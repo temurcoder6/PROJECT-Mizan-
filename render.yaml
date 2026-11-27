@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: mizan-app
+    runtime: node
+    plan: free
+    buildCommand: cd frontend && npm ci && npm run build
+    startCommand: HOST=0.0.0.0 TRUST_PROXY=1 COOKIE_SECURE=1 node backend/server.mjs
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: BOT_TOKEN
+        sync: false
+      - key: BOT_USERNAME
+        sync: false
+      - key: ADMIN_USERNAMES
+        sync: false

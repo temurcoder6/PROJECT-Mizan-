@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { HttpError, checkOrigin, readJSON, send, serveStatic } from './lib/http.mjs';
 import { askJarvisAI, computeFinancialHealth } from './lib/jarvis.mjs';
+import { PARTNERS } from './lib/partners.mjs';
 import {
   CONTROL, LIMITS, USERNAME_RE, cleanState, findForbiddenCardKey, int, oneOf, passwordIssue, sanitizeCard, str,
 } from './lib/validate.mjs';
@@ -201,6 +202,14 @@ CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_links_expires ON telegram_links(expires_at);
 CREATE INDEX IF NOT EXISTS idx_debts_user_due ON debts(user_id, due_date);
 CREATE INDEX IF NOT EXISTS idx_cards_user ON cards(user_id);
+CREATE TABLE IF NOT EXISTS partner_clicks (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  partner_id TEXT NOT NULL,
+  user_id INTEGER,
+  source TEXT NOT NULL DEFAULT 'assistant',
+  created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_partner_clicks_pid ON partner_clicks(partner_id, created_at);
 `);
 
 // Sxema versiyalari (PRAGMA user_version). Yangi o'zgarish = ro'yxat oxiriga yangi funksiya; eskisini o'zgartirmang.
@@ -1072,6 +1081,7 @@ async function api(req, res, pathname, url) {
         cards: scalar('SELECT COUNT(*) FROM cards'),
         telegramChats: scalar('SELECT COUNT(*) FROM telegram_chats'),
         openTickets: scalar("SELECT COUNT(*) FROM support_tickets WHERE status = 'open'"),
+        partnerClicks: scalar('SELECT COUNT(*) FROM partner_clicks'),
       },
     });
   }
@@ -1334,10 +1344,30 @@ async function api(req, res, pathname, url) {
   if (pathname === '/api/ai/jarvis') {
     if (req.method !== 'POST') throw new HttpError(405, 'Faqat POST ruxsat etilgan.');
     const body = await readJSON(req, SMALL_BODY);
-    const { prompt, context } = body || {};
+    const { prompt, context, history } = body || {};
     if (!prompt || typeof prompt !== 'string') throw new HttpError(400, "Savol matni kiritilmagan.");
-    const result = await askJarvisAI({ prompt, context, apiKey: process.env.GEMINI_API_KEY });
+    const safeHistory = Array.isArray(history)
+      ? history.slice(-10).map((h) => ({ role: h?.role === 'assistant' ? 'assistant' : 'user', text: str(h?.text || '', 1500) }))
+      : [];
+    const result = await askJarvisAI({ prompt: str(prompt, 2000), context, history: safeHistory, apiKey: process.env.GEMINI_API_KEY });
     return send(res, 200, result);
+  }
+
+  if (pathname === '/api/partners/click') {
+    if (req.method !== 'POST') throw new HttpError(405, 'Faqat POST ruxsat etilgan.');
+    const body = await readJSON(req);
+    const partnerId = str(body?.partnerId || '', 64).trim();
+    const partner = PARTNERS[partnerId];
+    if (!partner) throw new HttpError(404, 'Hamkor topilmadi.');
+    const user = currentUser(req);
+    const source = str(body?.source || 'assistant', 32).trim() || 'assistant';
+    db.prepare('INSERT INTO partner_clicks (partner_id, user_id, source, created_at) VALUES (?, ?, ?, ?)').run(
+      partnerId,
+      user ? user.id : null,
+      source,
+      Date.now(),
+    );
+    return send(res, 200, { ok: true, partner });
   }
 
   if (pathname === '/api/ai/health-score') {

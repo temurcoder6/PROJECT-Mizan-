@@ -1,22 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, Crown, Loader2, Mic, MicOff, Send, ShieldCheck, Sparkles, Trash2, Volume2, X, Zap } from 'lucide-react';
+import { ArrowUpRight, Check, Crown, Loader2, Mic, MicOff, Send, ShieldCheck, Sparkles, Trash2, Volume2, X } from 'lucide-react';
 import { Badge, Button, Card, Modal, MoneyInput, inputCls } from '../components/ui';
 import ProModal from '../components/ProModal';
 import { api } from '../lib/api';
 import { respond } from '../lib/assistant/assistant';
 import { categoryLabel, methodLabel } from '../lib/categories';
+import { debtRemaining, inRange, periodRange, summarize } from '../lib/finance';
 import { addDays, dateLabel, formatDigitsInput, money, parseDigits, todayISO, uid } from '../lib/format';
+import { dailyPlan } from '../lib/plan';
 import { findVoice, listen, speak, stopSpeaking, voiceInputSupported, voiceOutputSupported, VOICE_LANGS } from '../lib/voice';
 import { useStore } from '../store';
-
-const SUGGESTIONS = [
-  "iPhone 17 olmoqchiman: qancha yig'sam bo'ladi va Malika yaxshimi yoki Uzum Nasiyami?",
-  "Qayerdan pul tejashim mumkin? Tahlil qilib ber",
-  "Nasiyaga (muddatli to'lov) olgan ma'qulmi yoki naqd yig'ganmi?",
-  "Bugun yo'lga 12 ming sarfladim",
-  "Pulim nimaga ko'p ketdi?",
-  "50 ming sarflasam, maqsadim nima bo'ladi?",
-];
 
 function DraftCard({ draft, msgId }) {
   const { actions } = useStore();
@@ -113,7 +106,7 @@ function DraftCard({ draft, msgId }) {
   );
 }
 
-function JarvisActionCard({ action, msgId }) {
+function JarvisActionCard({ action }) {
   const { actions } = useStore();
   const [added, setAdded] = useState(false);
 
@@ -202,6 +195,52 @@ function FormattedText({ text }) {
   );
 }
 
+function PartnerCards({ partners }) {
+  const [clickedId, setClickedId] = useState('');
+  if (!Array.isArray(partners) || !partners.length) return null;
+
+  const onPartnerOpen = (p) => {
+    setClickedId(p.id);
+    api.trackPartnerClick(p.id, 'assistant').catch(() => {});
+  };
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="flex items-center justify-between text-[11px] font-semibold text-turq-soft">
+        <span className="uppercase tracking-wider">Mizan Hamkor Takliflari</span>
+        <span className="text-plaster/45">Siz uchun qo'shimcha to'lovsiz</span>
+      </div>
+      <div className="grid gap-2">
+        {partners.map((p) => (
+          <div key={p.id} className="rounded-2xl border border-turq/30 bg-[#061530]/95 p-3 text-plaster">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs font-bold text-plaster">{p.name}</span>
+                  <span className="rounded-full bg-turq/15 px-2 py-0.5 text-[10px] font-semibold text-turq-soft ring-1 ring-turq/30">
+                    {p.badge}
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-plaster/70">{p.tagline}</p>
+                {p.benefit && <p className="mt-1 text-[11px] text-ochre/90">{p.benefit}</p>}
+              </div>
+              <a
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => onPartnerOpen(p)}
+                className="inline-flex shrink-0 items-center gap-1 rounded-xl bg-turq px-3 py-1.5 text-xs font-bold text-cobalt-night transition hover:bg-[#32BDB6]"
+              >
+                {clickedId === p.id ? 'Ochildi' : "Ko'rish"} <ArrowUpRight className="size-3.5" />
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Bubble({ msg, onChoice, onSpeak, lastId }) {
   const mine = msg.role === 'user';
   return (
@@ -211,7 +250,8 @@ function Bubble({ msg, onChoice, onSpeak, lastId }) {
         {msg.drafts?.map((d) => (
           <DraftCard key={d.id} draft={d} msgId={msg.id} />
         ))}
-        {msg.action && <JarvisActionCard action={msg.action} msgId={msg.id} />}
+        {msg.action && <JarvisActionCard action={msg.action} />}
+        {msg.partners?.length > 0 && <PartnerCards partners={msg.partners} />}
         {msg.choices && msg.id === lastId && (
           <div className="mt-2 flex flex-wrap gap-2">
             {msg.choices.map((c) => (
@@ -253,67 +293,80 @@ export default function Assistant() {
     stopSpeaking();
   }, []);
 
-  const isAdviceOrComplex = (str) => {
-    const s = str.toLowerCase();
-    return (
-      s.includes('iphone') ||
-      s.includes('olmoqchiman') ||
-      s.includes('nasiya') ||
-      s.includes('malika') ||
-      s.includes('abu saxiy') ||
-      s.includes('qayerdan') ||
-      s.includes('tavsiya') ||
-      s.includes('maslahat') ||
-      s.includes('jarvis') ||
-      s.includes('qancha yig') ||
-      s.includes('solishtir') ||
-      s.includes('qachon olaman') ||
-      s.includes('tejash') ||
-      s.includes('qimmat') ||
-      s.includes('arzon') ||
-      s.includes('uzum') ||
-      s.includes('alif') ||
-      s.includes('iman') ||
-      s.includes('mashina') ||
-      s.includes('telefon')
-    );
+  const isQuickLocalEntry = (str, hasPending) => {
+    if (hasPending) return true;
+    const s = str.toLowerCase().trim();
+    if (s.includes('?')) return false;
+    if (/(qanday|qaysi|necha|nima|qancha|nega|kim|qayer|qachon|bo'ladimi|buladimi|yaxshi|arzon|qimmat|bank|karta|foiz|omonat|kredit|mikroqarz|nasiya|rassrochka|uzum|tbc|anor|avo|kapital|ipak|hamkor|agro|xalq|sqb|nbu|infin|alif|iman|payme|click|olcha|asaxiy|texnomart|mediapark|malika|abu saxiy|iphone|samsung|macbook|noutbuk|mashina|telefon|uy|kurs|dollar|yevro|tejash|teja|maslahat|tavsiya|solishtir|tahlil|reja|olmoqchiman|yig'moqchiman|yigmoqchiman|yig'sam|yigsam|salom|assalom|rahmat|jarvis|mizan)/i.test(s)) {
+      return false;
+    }
+    return /\d/.test(s) && s.split(/\s+/).length <= 8 && /(sarfla|xarajat|tushdi|oldim|berdim|qarz|bozor|taksi|non|kofe|ovqat|kommunal|ijara|internet|maosh|oylik|\d+\s*(ming|mln|k|m)?$)/i.test(s);
   };
 
   const send = async (raw) => {
     const input = (raw ?? text).trim();
     if (!input || thinking) return;
 
+    const priorHistory = chat.slice(-10).map((m) => ({ role: m.role, text: m.text }));
     actions.pushMessage({ id: uid(), role: 'user', text: input });
     setText('');
     setNotice('');
 
-    // Agar savol maslahat, bozor yoki katta xarid (iPhone, nasiya, tejash) bo'lsa — Gemini Jarvis AI ga yuboramiz
-    if (isAdviceOrComplex(input)) {
+    // Sodda xarajat/daromad kiritishdan tashqari BARCHA savol va suhbatlar Mizan AI (Gemini + jonli internet) ga yuboriladi
+    if (!isQuickLocalEntry(input, pending)) {
       setThinking(true);
       try {
+        const today = todayISO();
+        const plan = dailyPlan({ profile: store.profile, transactions: store.transactions, debts: store.debts, goals: store.goals, today });
+        const month = periodRange('month', today);
+        const ms = summarize(inRange(store.transactions, month.from, month.to));
         const totalCards = (store.cards || []).reduce((s, c) => s + (Number(c.balance) || 0), 0);
-        const monthExp = (store.transactions || [])
-          .filter((t) => t.type === 'expense')
+        const todaySpent = (store.transactions || [])
+          .filter((t) => t.type === 'expense' && t.date === today)
           .reduce((s, t) => s + (Number(t.amount) || 0), 0);
 
         const context = {
-          balance: totalCards,
-          dailyLimit: 85000,
-          todaySpent: 0,
-          monthExpense: monthExp,
-          goals: (store.goals || []).map((g) => ({ name: g.name, target: g.target, saved: g.saved })),
-          debts: (store.debts || []).map((d) => ({ person: d.person, amount: d.amount, direction: d.direction })),
-          profile: store.profile,
+          balance: plan.status === 'ok' || plan.status === 'deficit' ? plan.cash : totalCards,
+          dailyLimit: plan.status === 'ok' ? Math.round(plan.leftToday) : 0,
+          todaySpent,
+          monthIncome: ms.income,
+          monthExpense: ms.expense,
+          cards: (store.cards || []).map((c) => ({ label: c.label, network: c.network, balance: c.balance })),
+          goals: (store.goals || []).map((g) => ({ name: g.name, target: g.target, saved: g.saved, deadline: g.deadline })),
+          debts: (store.debts || []).map((d) => ({ person: d.person, remaining: debtRemaining(d), direction: d.direction, dueDate: d.dueDate })),
+          recentTx: (store.transactions || []).slice(0, 8).map((t) => ({ type: t.type, title: t.title, amount: t.amount, category: t.category, date: t.date })),
         };
 
-        const res = await api.askJarvis(input, context);
+        const res = await api.askJarvis(input, context, priorHistory);
         if (res?.ok && res.text) {
+          const drafts =
+            res.draft && Number(res.draft.amount) > 0
+              ? [
+                  {
+                    id: uid(),
+                    kind: 'tx',
+                    status: 'pending',
+                    data: {
+                      type: res.draft.type === 'income' ? 'income' : 'expense',
+                      title: String(res.draft.title || 'Xarajat'),
+                      amount: Number(res.draft.amount),
+                      category: String(res.draft.category || 'boshqa'),
+                      date: today,
+                      method: 'karta',
+                      planned: true,
+                      note: '',
+                    },
+                  },
+                ]
+              : undefined;
           const jarvisReply = {
             id: uid(),
             role: 'assistant',
             lang: 'uz',
             text: res.text,
             action: res.action,
+            partners: res.partners,
+            drafts,
           };
           actions.pushMessage(jarvisReply);
           if (settings.autoSpeak && voiceOutputSupported) {
@@ -323,12 +376,12 @@ export default function Assistant() {
           return;
         }
       } catch (err) {
-        console.warn('Jarvis AI ulanmadi, lokal tizimga o\'tildi:', err.message);
+        console.warn('Mizan AI ulanmadi, lokal tizimga o\'tildi:', err.message);
       }
       setThinking(false);
     }
 
-    // Lokal qoidalar asosidagi tezkor yordamchi (xarajat/daromad kiritish va sodda hisobotlar)
+    // Lokal qoidalar asosidagi tezkor yordamchi (xarajat/daromad kiritish va oflayn rejim)
     const data = { transactions: store.transactions, debts: store.debts, goals: store.goals, profile: store.profile };
     const { reply, pending: next } = respond(input, { data, today: todayISO(), pending });
     actions.pushMessage(reply);
@@ -384,7 +437,7 @@ export default function Assistant() {
             <Sparkles className="size-6 text-ochre" aria-hidden /> Mizan AI
           </h1>
           <p className="text-xs text-plaster/65">
-            O'zbekistondagi barcha to'lov tizimlari (Payme, Click, Uzum), muddatli to'lovlar (Alif, Uzum Nasiya, Iman) va bozorlar bo'yicha shaxsiy aqlli maslahatchi.
+            Jonli MB kurslari, O'zbekiston banklari (Uzum Bank, TBC, Anorbank, AVO, Kapitalbank, Ipak Yo'li), omonat/kredit foizlari va bozorlar bo'yicha aqlli maslahatchi.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -408,9 +461,7 @@ export default function Assistant() {
                   <Sparkles className="size-4" /> Salom! Men Mizan AI — shaxsiy moliyaviy maslahatchiman.
                 </div>
                 <p className="mt-1.5 text-xs text-plaster/80 leading-relaxed">
-                  Ovoz bilan gapiring yoki matn yozing. O'zbekistonning barcha do'konlari (Malika, Abu Saxiy, Texnomart, Mediapark), 
-                  muddatli to'lov tashkilotlari (Uzum Nasiya, Alif Nasiya, Iman Pay) hamda to'lov tizimlari (Payme, Click, Uzum) 
-                  bo'yicha xarajatlaringizni tahlil qilib, eng to'g'ri moliyaviy yo'lni ko'rsataman.
+                  Ovoz bilan gapiring yoki matn yozing. Men jonli internet ma'lumotlariga ulanib, O'zbekistondagi barcha banklar (Uzum Bank, TBC, Anorbank, Kapitalbank, Ipak Yo'li, AVO va boshqalar), karta ochish shartlari, omonat/kredit foizlari, muddatli to'lovlar hamda do'kon narxlarini solishtirib eng foydali yo'lni ko'rsataman.
                 </p>
               </div>
 

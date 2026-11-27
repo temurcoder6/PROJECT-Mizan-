@@ -48,7 +48,8 @@ export const api = {
   mySupport: () => call('GET', '/support/mine'),
   adminOverview: () => call('GET', '/admin/overview'),
   adminTickets: () => call('GET', '/admin/tickets'),
-  askJarvis: (prompt, context) => call('POST', '/ai/jarvis', { prompt, context }),
+  askJarvis: (prompt, context, history = []) => call('POST', '/ai/jarvis', { prompt, context, history }),
+  trackPartnerClick: (partnerId, source = 'assistant') => call('POST', '/partners/click', { partnerId, source }),
   aiHealthScore: (payload) => call('POST', '/ai/health-score', payload),
   adminReply: (payload) => call('POST', '/admin/tickets/reply', payload),
 };

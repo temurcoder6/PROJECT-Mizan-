@@ -98,7 +98,7 @@ export default function Admin({ go }) {
             <Stat label="Hisoblar" value={c.users} icon={Users} sub={`7 kunda faol: ${c.active7d}`} />
             <Stat label="Yozuvlar / Kartalar" value={`${c.transactions} / ${c.cards}`} icon={Database} sub={`Qarz: ${c.debts} · Maqsad: ${c.goals}`} />
             <Stat label="Telegram bot" value={c.telegramChats} icon={Send} tone={overview.telegram.configured ? 'green' : 'slate'} sub={overview.telegram.configured ? 'Ulangan chatlar' : "Bot o'chiq (.env)"} />
-            <Stat label="Ochiq murojaat" value={c.openTickets} icon={MessageSquare} tone={c.openTickets > 0 ? 'red' : 'green'} sub={`Baza v${overview.schemaVersion}`} />
+            <Stat label="Ochiq murojaat" value={c.openTickets} icon={MessageSquare} tone={c.openTickets > 0 ? 'red' : 'green'} sub={`Baza v${overview.schemaVersion} · Hamkor o'tish: ${c.partnerClicks || 0}`} />
           </div>
 
           <Card>

@@ -3,10 +3,11 @@ import { Activity, AlertTriangle, CheckCircle2, ChevronRight, Flame, Sparkles, Z
 import { Badge, Card } from './ui';
 import { api } from '../lib/api';
 import { money, todayISO } from '../lib/format';
+import { dailyPlan } from '../lib/plan';
 import { DEMO, useStore } from '../store';
 
 export default function FinancialHealthCard({ onOpenAssistant }) {
-  const { transactions = [], cards = [], goals = [], debts = [], actions } = useStore();
+  const { transactions = [], cards = [], goals = [], debts = [], profile, actions } = useStore();
   const [data, setData] = useState({
     score: 82,
     grade: "A'lo daraja",
@@ -34,11 +35,13 @@ export default function FinancialHealthCard({ onOpenAssistant }) {
   useEffect(() => {
     if (DEMO && typeof window !== 'undefined' && window.self !== window.top) return;
     const totalBalance = cards.reduce((s, c) => s + (Number(c.balance) || 0), 0);
+    const plan = dailyPlan({ profile, transactions, debts, goals, today: todayISO() });
+    const limit = plan.status === 'ok' ? Math.round(plan.todayBudget) : 85000;
     api
       .aiHealthScore({
         transactions,
-        balance: totalBalance,
-        dailyLimit: 85000,
+        balance: plan.status === 'ok' || plan.status === 'deficit' ? plan.cash : totalBalance,
+        dailyLimit: limit,
         goals,
         debts,
       })
@@ -46,7 +49,7 @@ export default function FinancialHealthCard({ onOpenAssistant }) {
         if (res?.score) setData(res);
       })
       .catch(() => {});
-  }, [transactions.length, cards.length, goals.length]);
+  }, [transactions, cards, goals, debts, profile]);
 
   const handleLazyAdd = (amount) => {
     actions.addTx({

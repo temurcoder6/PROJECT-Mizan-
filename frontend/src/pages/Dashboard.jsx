@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, ChartColumn, CreditCard, Crown, Minus, PiggyBank, Plus, Repeat, Sparkles, TrendingDown, TrendingUp, Wallet, Zap } from 'lucide-react';
+import { Bell, ChartColumn, CreditCard, Crown, Minus, PiggyBank, Plus, Repeat, Sparkles, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import AdviceCard from '../components/AdviceCard';
 import DailyPlanCard from '../components/DailyPlan';
 import { MissingDaysCard } from '../components/DayFill';
