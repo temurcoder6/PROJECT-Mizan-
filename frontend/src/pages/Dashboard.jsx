@@ -3,6 +3,7 @@ import { Bell, ChartColumn, CreditCard, Crown, Minus, PiggyBank, Plus, Repeat, S
 import AdviceCard from '../components/AdviceCard';
 import DailyPlanCard from '../components/DailyPlan';
 import { MissingDaysCard } from '../components/DayFill';
+import FinancialHealthCard from '../components/FinancialHealthCard';
 import { GoalStepLine, ReminderCard, WeeklyCard } from '../components/Insights';
 import ProModal from '../components/ProModal';
 import QuickEntry from '../components/QuickEntry';
@@ -87,34 +88,8 @@ export default function Dashboard({ go }) {
         <QuickEntry />
       </div>
 
-      {/* Mizan Jarvis AI — Tezkor Moliyaviy Maslahatchi Vidjeti */}
-      <Card className="border-ochre/35 bg-gradient-to-br from-[#0c234f]/90 via-[#071633] to-[#040e22] text-plaster p-5 shadow-xl">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className="rounded-2xl bg-gradient-to-br from-ochre to-amber-600 p-2.5 text-cobalt-night shadow-md">
-              <Sparkles className="size-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-display text-base font-bold text-plaster">Mizan Jarvis AI Maslahatchisi</h3>
-                <span className="rounded-full bg-turq/15 border border-turq/35 px-2 py-0.5 text-[10px] font-bold text-turq uppercase">
-                  Jonli AI
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-plaster/75 leading-relaxed max-w-xl">
-                iPhone 17, mashina yoki yirik xarid rejangiz bormi? Jarvis bilan bir zumda hisoblang: 
-                <strong> Malika / Abu Saxiy</strong> (naqd) arzonmi yoki <strong>Uzum / Alif Nasiya</strong>? Aniq kunlik jamg'arma rejasini oling.
-              </p>
-            </div>
-          </div>
-          <Button
-            onClick={() => go('yordamchi')}
-            className="w-full sm:w-auto shrink-0 gap-1.5 bg-gradient-to-r from-ochre to-amber-600 text-cobalt-night font-bold shadow-md hover:opacity-95"
-          >
-            <Sparkles className="size-4" /> Jarvis bilan hisoblash →
-          </Button>
-        </div>
-      </Card>
+      {/* Mizan AI — Moliyaviy Salomatlik Indeksi, 3 ta CFO Maslahat va Dangasa Rejimi */}
+      <FinancialHealthCard onOpenAssistant={() => go('yordamchi')} />
 
       <ReminderCard />
       <MissingDaysCard />

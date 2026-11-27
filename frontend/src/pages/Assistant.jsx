@@ -381,10 +381,10 @@ export default function Assistant() {
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <h1 className="font-display flex items-center gap-2 text-2xl font-semibold tracking-[-0.02em] text-plaster">
-            <Sparkles className="size-6 text-ochre" aria-hidden /> Mizan Jarvis AI
+            <Sparkles className="size-6 text-ochre" aria-hidden /> Mizan AI
           </h1>
           <p className="text-xs text-plaster/65">
-            O'zbekiston bozorlari (Malika, Abu Saxiy), muddatli to'lovlar (Uzum, Alif) va xarid strategiyasi bo'yicha shaxsiy maslahatchingiz.
+            O'zbekistondagi barcha to'lov tizimlari (Payme, Click, Uzum), muddatli to'lovlar (Alif, Uzum Nasiya, Iman) va bozorlar bo'yicha shaxsiy aqlli maslahatchi.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -402,28 +402,16 @@ export default function Assistant() {
       <Card className="flex min-h-0 flex-1 flex-col !p-0">
         <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite">
           {chat.length === 0 && (
-            <div className="space-y-4 py-2">
+            <div className="space-y-4 py-3">
               <div className="rounded-2xl border border-ochre/30 bg-gradient-to-br from-[#0c234f] to-[#071633] p-4 text-plaster">
                 <div className="flex items-center gap-2 text-sm font-bold text-ochre">
-                  <Sparkles className="size-4" /> Salom! Men Mizan Jarvis — sizning shaxsiy moliyaviy agentingizman.
+                  <Sparkles className="size-4" /> Salom! Men Mizan AI — shaxsiy moliyaviy maslahatchiman.
                 </div>
                 <p className="mt-1.5 text-xs text-plaster/80 leading-relaxed">
-                  Menga har qanday moliyaviy maqsadingizni ayting: masalan, <strong>iPhone 17</strong> yoki mashina olmoqchi bo'lsangiz, kunlik qancha yig'ishingizni, 
-                  <strong> Malika bozoridan naqd</strong> olish arzonmi yoki <strong>Uzum Nasiya / Alif</strong> orqali olish ma'qulmi — hammasini aniq hisoblab beraman!
+                  Ovoz bilan gapiring yoki matn yozing. O'zbekistonning barcha do'konlari (Malika, Abu Saxiy, Texnomart, Mediapark), 
+                  muddatli to'lov tashkilotlari (Uzum Nasiya, Alif Nasiya, Iman Pay) hamda to'lov tizimlari (Payme, Click, Uzum) 
+                  bo'yicha xarajatlaringizni tahlil qilib, eng to'g'ri moliyaviy yo'lni ko'rsataman.
                 </p>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s}
-                    type="button"
-                    onClick={() => send(s)}
-                    className="rounded-full border border-plaster/14 bg-[#071633] px-3.5 py-1.5 text-xs font-medium text-plaster/85 transition hover:border-ochre/45 hover:bg-cobalt/60 hover:text-plaster text-left"
-                  >
-                    {s}
-                  </button>
-                ))}
               </div>
 
               <p className="flex items-start gap-2 rounded-xl border border-plaster/10 bg-[#071633]/80 px-3 py-2.5 text-[11px] text-plaster/60">

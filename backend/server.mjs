@@ -6,7 +6,7 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { HttpError, checkOrigin, readJSON, send, serveStatic } from './lib/http.mjs';
-import { askJarvisAI } from './lib/jarvis.mjs';
+import { askJarvisAI, computeFinancialHealth } from './lib/jarvis.mjs';
 import {
   CONTROL, LIMITS, USERNAME_RE, cleanState, findForbiddenCardKey, int, oneOf, passwordIssue, sanitizeCard, str,
 } from './lib/validate.mjs';
@@ -1337,6 +1337,13 @@ async function api(req, res, pathname, url) {
     const { prompt, context } = body || {};
     if (!prompt || typeof prompt !== 'string') throw new HttpError(400, "Savol matni kiritilmagan.");
     const result = await askJarvisAI({ prompt, context, apiKey: process.env.GEMINI_API_KEY });
+    return send(res, 200, result);
+  }
+
+  if (pathname === '/api/ai/health-score') {
+    if (req.method !== 'POST') throw new HttpError(405, 'Faqat POST ruxsat etilgan.');
+    const body = await readJSON(req, SMALL_BODY);
+    const result = computeFinancialHealth(body || {});
     return send(res, 200, result);
   }
 
