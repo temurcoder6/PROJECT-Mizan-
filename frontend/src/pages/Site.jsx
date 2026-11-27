@@ -284,15 +284,15 @@ function Home({ onOpen, isAdmin }) {
       <section className="relative overflow-hidden bg-cobalt text-plaster">
         <GirihField id="g-hero" opacity={0.13} />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-cobalt-deep to-transparent" aria-hidden />
-        <div className={`${wrap} relative grid items-end gap-8 pt-14 pb-16 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[1fr_1.05fr] lg:gap-4 lg:pt-10 lg:pb-20`}>
-          <div className="relative z-20 lg:pb-10">
-            <h1 className={`${display} text-[2.1rem] leading-[1.1] font-semibold text-balance sm:text-[2.9rem] xl:text-[3.35rem]`}>
+        <div className={`${wrap} relative grid items-center gap-8 pt-10 pb-12 lg:min-h-[calc(100dvh-4rem)] lg:grid-cols-[1fr_1.05fr] lg:gap-4 lg:py-6`}>
+          <div className="relative z-20 lg:pb-4">
+            <h1 className={`${display} text-[2.05rem] leading-[1.1] font-semibold text-balance sm:text-[2.7rem] xl:text-[3.15rem]`}>
               <span className="text-plaster/80">Oy oxirida «pulim qayerga ketdi?» demang.</span> <span className="block text-plaster">Bugunni rejalang.</span>
             </h1>
-            <p className="mt-7 max-w-[34rem] text-lg leading-relaxed text-plaster/78">
+            <p className="mt-5 max-w-[34rem] text-base leading-relaxed text-plaster/78 sm:text-lg">
               Hozirgi pulingiz, daromad sanasi, to'lovlar, qarzlar va jamg'arma maqsadidan kunlik reja. Xarajatni yozish esa bir necha bosishda.
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-3">
               <button type="button" onClick={onOpen} className={`${btnLight} text-base`}>
                 Ilovani ochish <ArrowRight className="size-5" />
               </button>
@@ -300,12 +300,12 @@ function Home({ onOpen, isAdmin }) {
                 Qanday ishlaydi <ArrowUpRight className="size-5" />
               </a>
             </div>
-            <p className="mt-8 flex max-w-md items-start gap-2.5 text-[13px] text-plaster/60">
+            <p className="mt-5 flex max-w-md items-start gap-2.5 text-[13px] text-plaster/60">
               <Lock className="mt-0.5 size-4 shrink-0" /> Ro'yxatdan o'tish shart emas. Bankka ulanmagan: hamma narsani o'zingiz kiritasiz.
             </p>
           </div>
           <div>
-            <PhoneTabs size={800} tabs={heroTabs} />
+            <PhoneTabs size={620} tabs={heroTabs} />
           </div>
         </div>
       </section>

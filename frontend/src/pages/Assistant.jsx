@@ -506,22 +506,22 @@ export default function Assistant({ go }) {
   const pendingCount = chat.reduce((n, m) => n + (m.drafts?.filter((d) => d.status === 'pending').length || 0), 0);
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-10.5rem)] max-w-3xl flex-col md:h-[calc(100dvh-11.5rem)]">
+    <div className="mx-auto flex h-[calc(100dvh-13rem)] max-w-3xl flex-col md:h-[calc(100dvh-12rem)]">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h1 className="font-display flex items-center gap-2 text-2xl font-semibold tracking-[-0.02em] text-plaster">
-            <Sparkles className="size-6 text-ochre" aria-hidden /> Mizan AI
+            <Sparkles className="size-6 shrink-0 text-ochre" aria-hidden /> Mizan AI
           </h1>
-          <p className="text-xs text-plaster/65">
-            Jonli MB kurslari, O'zbekiston banklari (Uzum Bank, TBC, Anorbank, AVO, Kapitalbank, Ipak Yo'li), omonat/kredit foizlari va bozorlar bo'yicha aqlli maslahatchi.
+          <p className="text-xs text-plaster/65 line-clamp-2">
+            Jonli MB kurslari, O'zbekiston banklari, omonat/kredit foizlari va har qanday savol bo'yicha aqlli maslahatchi.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => setComplaint({ open: true, reason: '' })} title="Shikoyat yoki murojaat yuborish" className="text-plaster/70 hover:text-plaster">
             <MessageSquareWarning className="size-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShowPro(true)} className="gap-1.5 border-ochre/40 text-ochre hover:bg-ochre/15">
-            <Crown className="size-4" /> Pro Rejim
+          <Button variant="outline" size="sm" onClick={() => setShowPro(true)} className="shrink-0 whitespace-nowrap gap-1.5 border-ochre/40 text-ochre hover:bg-ochre/15">
+            <Crown className="size-4 shrink-0" /> Pro Rejim
           </Button>
           {chat.length > 0 && (
             <Button variant="subtle" size="sm" onClick={actions.clearChat}>
@@ -619,8 +619,8 @@ export default function Assistant({ go }) {
           <textarea
             ref={textRef}
             rows={1}
-            className={`${inputCls} max-h-32 min-h-11 flex-1 resize-none`}
-            placeholder={listening ? 'Eshityapman...' : 'Xarajat yozing yoki savol bering'}
+            className={`${inputCls} max-h-32 min-h-11 flex-1 resize-none overflow-hidden py-2.5 leading-snug`}
+            placeholder={listening ? 'Eshityapman...' : 'Savol yoki xarajat yozing...'}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {

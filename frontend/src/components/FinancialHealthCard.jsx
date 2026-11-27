@@ -144,7 +144,7 @@ export default function FinancialHealthCard({ onOpenAssistant }) {
                   ) : (
                     <AlertTriangle className="size-3.5 text-ochre shrink-0" />
                   )}
-                  <span className="truncate">{t.title}</span>
+                  <span className="line-clamp-2">{t.title}</span>
                 </div>
                 <p className="mt-1 text-[11px] text-plaster/75 leading-relaxed">{t.text}</p>
               </div>
