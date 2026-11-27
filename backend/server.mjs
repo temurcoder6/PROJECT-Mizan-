@@ -557,7 +557,11 @@ function oauthConfig(provider) {
 
 function requestOrigin(req) {
   if (PUBLIC_URL) return PUBLIC_URL;
-  const host = String(req.headers.host || '');
+  const host = String(req.headers['x-forwarded-host'] || req.headers.host || '');
+  const proto = String(req.headers['x-forwarded-proto'] || (req.socket?.encrypted ? 'https' : 'http'));
+  if (host && !/^(localhost|127\.0\.0\.1)(:\d{1,5})?$/i.test(host)) {
+    return `${proto}://${host}`;
+  }
   if (/^(localhost|127\.0\.0\.1)(:\d{1,5})?$/i.test(host)) return `http://${host}`;
   return `http://localhost:${PORT}`;
 }
