@@ -36,7 +36,7 @@ const PETALS = Array.from({ length: 8 }, (_, k) => {
 // 8 ta kite tashqi uchlarda (radius 72..93): markazdagi telefon yopsa ham 8 ta uch ko'rinadi
 const KITES = Array.from({ length: 8 }, (_, k) => toSvg([pt(72, k * 45), pt(84, k * 45 - 7), pt(93, k * 45), pt(84, k * 45 + 7)]));
 
-const SLICES = 3; // 940px da ham arzon: kam qatlam
+const SLICES = 1; // 1 qatlam yetarli: 3D chuqurlik saqlanadi va GPU ga ortiqcha yuk tushmaydi
 const z = (n) => `translateZ(calc(${n} * 1cqi))`;
 
 function prefersStill() {
@@ -88,12 +88,11 @@ export default function Girih3D({ className = '', children, size = 520 }) {
     const cur = { x: 0, y: 0 };
     let rect = null;
 
-    const updateRect = () => {
-      if (root.current) rect = root.current.getBoundingClientRect();
+    const onScrollOrResize = () => {
+      rect = null;
     };
-    updateRect();
-    window.addEventListener('resize', updateRect, { passive: true });
-    window.addEventListener('scroll', updateRect, { passive: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
 
     const tick = () => {
       cur.x += (target.x - cur.x) * 0.08;
@@ -105,7 +104,7 @@ export default function Girih3D({ className = '', children, size = 520 }) {
       if (!raf) raf = requestAnimationFrame(tick);
     };
     const onMove = (e) => {
-      if (!rect) updateRect();
+      if (!rect && root.current) rect = root.current.getBoundingClientRect();
       if (!rect) return;
       const dx = Math.max(-1, Math.min(1, (e.clientX - (rect.left + rect.width / 2)) / (window.innerWidth / 2)));
       const dy = Math.max(-1, Math.min(1, (e.clientY - (rect.top + rect.height / 2)) / (window.innerHeight / 2)));
@@ -122,8 +121,8 @@ export default function Girih3D({ className = '', children, size = 520 }) {
     document.documentElement.addEventListener('pointerleave', onLeave);
     return () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('resize', updateRect);
-      window.removeEventListener('scroll', updateRect);
+      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', onScrollOrResize);
       document.documentElement.removeEventListener('pointerleave', onLeave);
       cancelAnimationFrame(raf);
     };

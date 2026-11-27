@@ -74,16 +74,15 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
     let raf = 0;
     let rect = null;
 
-    const updateRect = () => {
-      if (wrap.current) rect = wrap.current.getBoundingClientRect();
+    const onScrollOrResize = () => {
+      rect = null;
     };
-    updateRect();
-    window.addEventListener('resize', updateRect, { passive: true });
-    window.addEventListener('scroll', updateRect, { passive: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
 
     const onMove = (e) => {
       if (inside.current) return;
-      if (!rect) updateRect();
+      if (!rect && wrap.current) rect = wrap.current.getBoundingClientRect();
       if (!rect) return;
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
@@ -96,8 +95,8 @@ export default function Phone3D({ route, className = '', iframeRef, runKey = 0, 
     window.addEventListener('pointermove', onMove, { passive: true });
     return () => {
       window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('resize', updateRect);
-      window.removeEventListener('scroll', updateRect);
+      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', onScrollOrResize);
       cancelAnimationFrame(raf);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
