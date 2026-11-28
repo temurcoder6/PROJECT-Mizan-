@@ -139,6 +139,7 @@ ${buildPartnerCatalogText()}
 
 === STRUKTURAVIY TEGLAR (FAQAT O'RINLI BO'LSA JAVOB OXIRIDA) ===
 - Maqsad yaratish: ACTION_JSON:{"action":"create_goal","name":"Qisqa nom","target":15000000,"daily":85000,"months":6}
+  - Agar foydalanuvchi narxni o'zi aytmagan va jonli ma'lumotda aniq narx topilmagan bo'lsa, narxni o'ylab topma: javobda «taxminiy narx» deb yoz va ACTION_JSON ga "estimated":true qo'sh. Foydalanuvchi qo'lidagi pulni "saved" maydoniga yoz.
 - Xarajat/daromad qayd etish: DRAFT_JSON:{"type":"expense","title":"Kofe","amount":50000,"category":"oziq"}
 - Qulay fursatdagi hamkor (faqat xarid/bank/nasiya savolida, max 2 ta): PARTNER_JSON:["tbc_salom","olcha_uz"]
 

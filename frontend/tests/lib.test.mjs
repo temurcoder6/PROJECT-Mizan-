@@ -330,3 +330,26 @@ test('summa kiritishda raqamlar orasiga bo\'shliq qo\'yiladi', () => {
   assert.equal(parseDigits('1 500 000'), 1500000);
   assert.equal(parseDigits(''), 0);
 });
+
+test('hamkor reklamasi: iPhone savoliga omonat + nasiya kartalari, oddiy xarajatga yo\'q', async () => {
+  const { adPartnerIds, pickPartners } = await import('../src/lib/assistant/partnerAds.js');
+  const ids = adPartnerIds("iPhone olmoqchiman, narxi 20 million, pulim 3,5 million, qancha yig'ishim kerak?");
+  assert.equal(ids[0], 'anor_black');
+  assert.ok(ids.length >= 2 && ids.length <= 3);
+  assert.deepEqual(adPartnerIds('taksiga 20 ming'), []);
+  assert.deepEqual(adPartnerIds('Chet elga ketmoqchiman, aviachipta'), ['ipak_visa', 'kapital_bank', 'tbc_salom']);
+  const catalog = [{ id: 'anor_black' }, { id: 'texnomart' }];
+  assert.deepEqual(pickPartners(catalog, ['anor_black', 'yoq', 'anor_black', 'texnomart']).map((p) => p.id), ['anor_black', 'texnomart']);
+});
+
+test("mahalliy 'olmoqchiman' javobi tasdiq tugmali maqsad kartasini qaytaradi, hech narsa saqlamaydi", () => {
+  const data = { transactions: [], debts: [], goals: [], profile: {} };
+  const { reply } = respond("iPhone olmoqchiman, narxi 20 million, pulim 3,5 million, qancha yig'ishim kerak?", { data, today: TODAY, pending: null });
+  assert.equal(reply.action?.action, 'create_goal');
+  assert.equal(reply.action.name.toLowerCase(), 'iphone');
+  assert.equal(reply.action.target, 20000000);
+  assert.equal(reply.action.saved, 3500000);
+  assert.equal(reply.action.months, 12);
+  assert.equal(reply.action.daily, Math.round(16500000 / 365));
+  assert.equal(reply.drafts, undefined);
+});

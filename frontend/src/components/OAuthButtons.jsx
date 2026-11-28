@@ -298,13 +298,6 @@ function DirectProviderModal({ provider, open, onClose, next = '#bosh', onOpen }
               </button>
             </form>
 
-            <div className="border-t border-plaster/10 pt-3 text-[11px] text-plaster/50">
-              <p>
-                <b>1-bosqichli (1-click) OAuth haqida:</b> Google Cloud Console orqali bevosita kirish uchun 
-                <code className="mx-1 rounded bg-black/30 px-1 py-0.5 text-ochre">backend/.env</code> ga 
-                <code className="mx-1 rounded bg-black/30 px-1 py-0.5 text-ochre">GOOGLE_CLIENT_ID</code> yoziladi.
-              </p>
-            </div>
           </div>
         )}
       </div>
@@ -313,8 +306,6 @@ function DirectProviderModal({ provider, open, onClose, next = '#bosh', onOpen }
 }
 
 export default function OAuthButtons({ theme = 'site', mode = 'login', next = '#bosh', exclude = [], onOpen }) {
-  const { auth } = useStore();
-  const isAdmin = auth.status === 'in' && Boolean(auth.user?.isAdmin);
   const providers = useAuthProviders();
   const [modalProvider, setModalProvider] = useState(null);
 
@@ -336,7 +327,7 @@ export default function OAuthButtons({ theme = 'site', mode = 'login', next = '#
             const Icon = p.icon;
             const label = `${p.name} ${verb}`;
             
-            // Agar serverda to'liq OAuth (Google Cloud Client ID) sozlangan bo'lsa:
+            // To'liq OAuth sozlangan bo'lsa:
             if (p.ready) {
               return (
                 <a
@@ -356,7 +347,7 @@ export default function OAuthButtons({ theme = 'site', mode = 'login', next = '#
               );
             }
 
-            // Agar Google Cloud Client ID hali kiritilmagan bo'lsa, to'g'ridan-to'g'ri haqiqiy Gmail bilan kirish modalini ochadi:
+            // To'liq OAuth sozlanmagan bo'lsa, bevosita kirish modalini ochadi:
             return (
               <button
                 key={p.id}
@@ -377,11 +368,6 @@ export default function OAuthButtons({ theme = 'site', mode = 'login', next = '#
           })}
         </div>
 
-        {isAdmin && !providers.google && (
-          <p className="text-[11px] leading-relaxed text-plaster/50">
-            Admin eslatmasi: Google 1-bosqichli (1-click) OAuth uchun <code className="text-ochre">backend/.env</code> ga <code className="text-ochre">GOOGLE_CLIENT_ID</code> va <code className="text-ochre">GOOGLE_CLIENT_SECRET</code> yoziladi.
-          </p>
-        )}
       </div>
 
       <DirectProviderModal

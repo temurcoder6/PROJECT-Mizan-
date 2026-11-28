@@ -22,7 +22,9 @@ const RX = {
   debt: /(qarz|долг|взайм|занял|одолжил|debt|\bowe|lent|loan|borrow)/,
   repay: /(qaytardi|qaytardim|qaytarib berdi|qaytarib berdim|вернул|returned|paid back|repaid)/,
   repayMine: /(qaytardim|qaytarib berdim|я вернул|\bi (paid back|returned|repaid))/,
-  goal: /(yig'|jamg'ar|maqsad|tejab|tejash|накоп|копить|цел[ьи]|отлож|\bsave|saving|goal)/,
+  goal: /(yig'|yig'?(ish|ib|sam|moqchi)|jamg'ar|maqsad|tejab|tejash|накоп|копить|цел[ьи]|отлож|\bsave|saving|goal)/,
+  wish: /(olmoqchi|sotib olmoq|olgim kel|olishni (xohla|istay)|xohlayman|хочу (купить|взять)|хочу накопить|want to (buy|get)|planning to buy)/,
+  haveMoney: /(pulim|puli\S* bor|qo'lim\S* bor|bor|mavjud|есть|у меня|i have|have)/,
   goalAdded: /(yig'dim|qo'ydim|tejadim|jamg'ardim|qo'shdim|отложил|накопил|добавил|i saved|put aside|added)/,
   top: /(nimaga ko'p|nimalarga ko'p|qayerga (ketdi|ketyapti|ketayapti|ketgan|ketadi)|eng ko'p|ko'p ketdi|ko'p sarfla|на что|куда (ушл|уход|трат|деньги)|больше всего|where (did|does|do) (my|the) money|spent the most|most money|where.{0,20}money go)/,
   question: /(qancha|nechpul|necha|qayer|qaysi|\?|сколько|куда|how much|how many|where|what)/,
@@ -149,6 +151,14 @@ function incomeDropAnswer(T, data, today, amounts, lang) {
 
 const capitalizeRaw = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+// "iPhone 18 Pro olmoqchiman, ..." -> "iPhone 18 Pro": "olmoqchi" so'zidan oldingi oxirgi 3 so'z.
+function wishName(input) {
+  const m = String(input).match(/^(.*?)\s*(olmoqchi|sotib olmoq|olgim|olishni|xohlayman)/i);
+  const words = (m ? m[1] : '').replace(/[^\p{L}\p{N}\s'-]/gu, ' ').split(/\s+/).filter(Boolean).slice(-3);
+  const name = words.join(' ');
+  return name ? capitalizeRaw(name) : 'Yangi maqsad';
+}
+
 function resolvePending(pending, input, proc, lang, today) {
   const T = repliesFor(pending.lang);
   const { amounts } = scanNumbers(proc, lang);
@@ -252,6 +262,27 @@ export function respond(rawInput, { data, today, pending }) {
       };
     }
     return debtFlow(debt, lang);
+  }
+
+  // "iPhone olmoqchiman, pulim 3,5 million, qancha yig'ishim kerak?" — bu xarajat emas, jamg'arma savoli.
+  // Hech narsa saqlanmaydi: narx va muddat bo'lsa hisoblab beradi, bo'lmasa so'raydi.
+  if (RX.wish.test(proc) && (RX.question.test(proc) || RX.goal.test(proc)) && !RX.goalAdded.test(proc)) {
+    // "iPhone 18 Pro" dagi 18 kabi model raqamlari summa emas: 1000 dan kichiklarini hisobga olmaymiz.
+    const vals = amounts.map((a) => a.value).filter((v) => v >= 1000).sort((x, y) => y - x);
+    let price = 0;
+    let have = 0;
+    if (vals.length >= 2) { price = vals[0]; have = vals[vals.length - 1]; }
+    else if (vals.length === 1) { if (RX.haveMoney.test(proc)) have = vals[0]; else price = vals[0]; }
+    if (!price) return { reply: say(lang, T.wishAsk(have)), pending: null };
+    const need = Math.max(price - have, 0);
+    if (need <= 0) return { reply: say(lang, T.wishEnough(price, have)), pending: null };
+    // Maqsad kartasi (tasdiq tugmali): bosilmaguncha hech narsa saqlanmaydi. Muddat aytilmasa 12 oy.
+    const goalDays = durations.length ? durations[0].days : 365;
+    const goalCard = lang === 'uz'
+      ? { action: 'create_goal', name: wishName(input), target: price, saved: have, daily: Math.round(need / goalDays), months: Math.max(1, Math.round(goalDays / 30)) }
+      : undefined;
+    const plans = durations.length ? [planForDays(need, durations[0].days)] : [90, 180, 365].map((d) => planForDays(need, d));
+    return { reply: say(lang, T.wishPlan(price, have, need, plans), goalCard ? { action: goalCard } : {}), pending: null };
   }
 
   // Goals: adding money to a goal, or asking how much to save.

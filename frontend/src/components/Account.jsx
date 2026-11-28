@@ -279,7 +279,7 @@ export function TelegramCard() {
     <Card>
       <CardTitle icon={Send}>Telegram bot</CardTitle>
       {!st.configured ? (
-        <p className="text-sm text-plaster/70">Telegram bot serverda sozlanmagan (faqat admin ko'radi). Ishga tushirish: <code className="rounded bg-[#071633] px-1.5 py-0.5 text-plaster/90">BOT_TOKEN</code> ni <code className="rounded bg-[#071633] px-1.5 py-0.5 text-plaster/90">backend/.env</code> ga yozing.</p>
+        <p className="text-sm text-plaster/70">Telegram bot hozircha sozlanmagan. Bu eslatmani faqat administrator ko'radi.</p>
       ) : st.linked ? (
         <div className="space-y-3 text-sm text-plaster/80">
           <p className="flex items-center gap-2 font-semibold text-plaster"><CloudCheck className="size-4 text-turq-soft" /> Telegram ulangan</p>

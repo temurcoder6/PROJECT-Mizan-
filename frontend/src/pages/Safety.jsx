@@ -75,8 +75,8 @@ export default function Safety() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Xavfsizlik</h1>
+    <div className="mx-auto max-w-3xl space-y-4 xl:grid xl:max-w-none xl:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] xl:items-start xl:gap-4 xl:space-y-0">
+      <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster xl:col-span-full">Xavfsizlik</h1>
 
       <Card>
         <CardTitle icon={Lock}>Mizan nimani so'ramaydi</CardTitle>

@@ -176,6 +176,23 @@ export default function Admin({ go }) {
     }
   };
 
+  const handleSetPro = async (user, action) => {
+    if (action === 'revoke' && !window.confirm(`@${user.username} hisobidan Pro olinsinmi?`)) return;
+    setBusyId(user.id);
+    setErr('');
+    try {
+      await api.adminSetPro(user.id, action, 30);
+      setMsg(action === 'grant' ? `@${user.username} hisobiga +30 kun Pro berildi.` : `@${user.username} hisobidan Pro olindi.`);
+      setTimeout(() => setMsg(''), 3000);
+      const res = await api.adminUsers(userQuery);
+      setUsersList(res.users || []);
+    } catch (e) {
+      setErr(e.message || "Pro holatini o'zgartirib bo'lmadi.");
+    } finally {
+      setBusyId(0);
+    }
+  };
+
   const handleReplyTicket = async (id, status) => {
     const reply = String(replyDraft[id] || '').trim();
     if (status === 'answered' && !reply) return;
@@ -303,9 +320,6 @@ export default function Admin({ go }) {
             </Button>
           </form>
 
-          <div className="mt-5 border-t border-plaster/10 pt-3 text-center text-[11px] text-plaster/50">
-            Parol server <code className="text-ochre">.env</code> faylidagi <code className="text-ochre">ADMIN_PASSWORD</code> bilan himoyalangan.
-          </div>
         </Card>
       </div>
     );
@@ -434,7 +448,7 @@ export default function Admin({ go }) {
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-plaster/10 pb-3">
               <div>
                 <CardTitle icon={Database}>Tizim Ma'lumotlar Bazasi Zaxiralari</CardTitle>
-                <p className="text-xs text-plaster/65">SQLite ma'lumotlar bazasidan avtomatik va qo'lda to'liq zaxira olish</p>
+                <p className="text-xs text-plaster/65">Ma'lumotlar bazasidan avtomatik va qo'lda to'liq zaxira olish</p>
               </div>
               <Button size="sm" onClick={handleCreateBackup} disabled={loading}>
                 <Database className="size-3.5" /> Hozir zaxira nusxa olish (Backup Now)
@@ -730,8 +744,25 @@ export default function Admin({ go }) {
                       ) : (
                         <Badge tone="slate">Foydalanuvchi</Badge>
                       )}
+                      <div className="mt-1">
+                        {u.isPro ? (
+                          <Badge tone="green">Pro: {fmtTime(u.proUntil)} gacha</Badge>
+                        ) : (
+                          <span className="text-[10px] text-plaster/40">Bepul</span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-3 text-right">
+                      <div className="mb-1 flex justify-end gap-1">
+                        <Button size="sm" variant="subtle" disabled={busyId === u.id} onClick={() => handleSetPro(u, 'grant')}>
+                          Pro +30 kun
+                        </Button>
+                        {u.isPro && (
+                          <Button size="sm" variant="outline" disabled={busyId === u.id} onClick={() => handleSetPro(u, 'revoke')}>
+                            Pro ni olish
+                          </Button>
+                        )}
+                      </div>
                       {u.id !== auth.user?.id && (
                         <Button
                           size="sm"

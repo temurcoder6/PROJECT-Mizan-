@@ -5,6 +5,7 @@ import { addDays, todayISO, uid } from './lib/format';
 import { DEFAULT_PROFILE, normProfile, profileHasData } from './lib/plan';
 import { downloadFile, toCSV, useStored } from './lib/storage';
 import { cleanCards, cleanDebts, cleanGoals, cleanTransactions } from './lib/sanitize';
+import { clearReferral, pendingReferral } from './lib/referral';
 
 // ?demo=1 runs the real app on separate storage with sample data (used inside the phone on the website).
 export const DEMO = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo');
@@ -143,6 +144,17 @@ export function StoreProvider({ children }) {
   const [auth, setAuth] = useState({ status: DEMO ? 'noserver' : 'checking', user: null });
   const [sync, setSync] = useState({ state: 'idle', at: null, error: '' });
   const [conflict, setConflict] = useState(null);
+  const [referralBonus, setReferralBonus] = useState(0);
+  const claimTried = useRef(false);
+
+  // Pro holati FAQAT serverdan keladi (auth.user.isPro / proUntil). Mehmon rejimida mahalliy tugma bilan yoqib bo'lmaydi;
+  // faqat ?demo=1 namuna oynasida (telefon maketida) ko'rsatish uchun yoniq.
+  const pro = useMemo(() => {
+    if (DEMO) return { isPro: true, proUntil: null, sample: true };
+    const proUntil = auth.status === 'in' ? auth.user?.proUntil || null : null;
+    const isPro = Boolean(proUntil) && Date.parse(proUntil) > Date.now();
+    return { isPro, proUntil, sample: false };
+  }, [auth]);
 
   const settings = useMemo(() => {
     const s = { ...DEFAULT_SETTINGS, ...rawSettings };
@@ -258,6 +270,27 @@ export function StoreProvider({ children }) {
       .catch((e) => setAuth({ status: e.code ? 'noserver' : 'out', user: null }));
   }, [initialSync]);
 
+  // Do'st taklif havolasi orqali kelgan bo'lsa: hisob ochilgach kod serverga bir marta yuboriladi.
+  // Server "faqat yangi hisob, bir marta, o'zini taklif qilib bo'lmaydi" qoidalarini o'zi tekshiradi.
+  useEffect(() => {
+    if (DEMO || auth.status !== 'in' || claimTried.current) return;
+    const code = pendingReferral();
+    if (!code) return;
+    claimTried.current = true;
+    api
+      .claimReferral(code)
+      .then((r) => {
+        clearReferral();
+        if (r.user) setAuth((a) => (a.user ? { ...a, user: r.user } : a));
+        setReferralBonus(r.days || 0);
+      })
+      .catch((e) => {
+        // Vaqtinchalik xato (internet, juda ko'p urinish) bo'lsa kod saqlanadi; aniq rad etilsa tozalanadi.
+        if (e.code === 'network' || e.status === 429) claimTried.current = false;
+        else clearReferral();
+      });
+  }, [auth.status]);
+
   useEffect(() => {
     if (syncedSig.current === null) {
       syncedSig.current = dataSig;
@@ -315,6 +348,13 @@ export function StoreProvider({ children }) {
         return r;
       },
       markRecovery: () => setAuth((a) => (a.user ? { ...a, user: { ...a.user, hasRecovery: true } } : a)),
+      // Pro holati o'zgargach (sinov, to'lovdan qaytish) serverdan yangilash.
+      async refreshUser() {
+        const r = await api.me();
+        setAuth((a) => (a.user ? { ...a, user: r.user } : a));
+        return r.user;
+      },
+      dismissReferralBonus: () => setReferralBonus(0),
       setUser: (user) => setAuth({ status: 'in', user }),
       async unlinkOAuth(provider) {
         const r = await api.unlinkOAuth(provider);
@@ -460,8 +500,8 @@ export function StoreProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ transactions, debts, goals, cards, profile, settings, chat, pending, actions: combinedActions, auth, sync, conflict, authActions: combinedActions }),
-    [transactions, debts, goals, cards, profile, settings, chat, pending, combinedActions, auth, sync, conflict],
+    () => ({ transactions, debts, goals, cards, profile, settings, chat, pending, actions: combinedActions, auth, sync, conflict, authActions: combinedActions, pro, referralBonus }),
+    [transactions, debts, goals, cards, profile, settings, chat, pending, combinedActions, auth, sync, conflict, pro, referralBonus],
   );
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

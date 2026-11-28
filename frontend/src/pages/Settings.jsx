@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react';
-import { Bell, Check, Clock, Database, Download, Info, Sparkles, Trash2, Upload } from 'lucide-react';
+import { Bell, Check, Clock, Crown, Database, Download, Info, Sparkles, Trash2, Upload } from 'lucide-react';
 import { AccountCard, TelegramCard } from '../components/Account';
+import ProModal from '../components/ProModal';
+import ReferralBlock from '../components/ReferralBlock';
 import { Button, Card, CardTitle, Field, Toggle, inputCls } from '../components/ui';
 import { DEPENDS_ON_DEVICE, NEXT_STAGE, WORKS_NOW } from '../lib/status';
 import { VOICE_LANGS, voiceInputSupported, voiceOutputSupported } from '../lib/voice';
@@ -25,6 +27,7 @@ export default function Settings({ go }) {
   const isAdmin = auth.status === 'in' && Boolean(auth.user?.isAdmin);
   const fileRef = useRef(null);
   const [msg, setMsg] = useState('');
+  const [showPro, setShowPro] = useState(false);
   const hasSample = [...transactions, ...debts, ...goals].some((x) => x.sample);
 
   const onImport = async (e) => {
@@ -50,8 +53,8 @@ export default function Settings({ go }) {
   };
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Sozlamalar</h1>
+    <div className="mx-auto max-w-3xl space-y-4 xl:grid xl:max-w-none xl:grid-cols-2 xl:items-start xl:gap-4 xl:space-y-0 2xl:grid-cols-3">
+      <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster xl:col-span-full">Sozlamalar</h1>
 
       <Card>
         <CardTitle icon={Sparkles}>Ko'rinish va eslatma</CardTitle>
@@ -88,11 +91,42 @@ export default function Settings({ go }) {
             </div>
             <Toggle label="Mikrofon roziligi" checked={settings.voiceConsent} onChange={(v) => actions.setSetting('voiceConsent', v)} />
           </div>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-plaster">Mizan AI saytni boshqarsin</p>
+              <p className="text-xs text-plaster/55">
+                O'chiq bo'lsa, AI sizni boshqa bo'limga o'zi o'tkazmaydi, «Bo'limni ochish» tugmasi chiqadi. Yozuv saqlash va maqsad yaratish doim tasdiq so'raydi.
+              </p>
+            </div>
+            <Toggle label="Mizan AI saytni boshqarsin" checked={settings.aiControl === true} onChange={(v) => actions.setSetting('aiControl', v)} />
+          </div>
         </div>
       </Card>
 
       <AccountCard />
       <TelegramCard />
+
+      <Card>
+        <CardTitle
+          icon={Crown}
+          action={
+            <Button size="sm" variant="outline" onClick={() => setShowPro(true)}>
+              Mizan Pro
+            </Button>
+          }
+        >
+          Mizan Pro va taklif
+        </CardTitle>
+        <p className="mb-3 text-sm text-plaster/75">
+          {store.pro.isPro
+            ? store.pro.sample
+              ? "Namuna oynasi: Pro faqat ko'rsatish uchun yoqilgan."
+              : `Pro faol${store.pro.proUntil ? `: ${new Date(store.pro.proUntil).toLocaleDateString('uz-UZ')} gacha` : ''}.`
+            : "Pro yoqilmagan. Tarif va to'lov usullari «Mizan Pro» oynasida."}
+        </p>
+        <ReferralBlock />
+      </Card>
+      <ProModal open={showPro} onClose={() => setShowPro(false)} />
 
       <Card>
         <CardTitle icon={Bell}>Eslatma</CardTitle>

@@ -154,7 +154,7 @@ function WhatIfCard({ goals }) {
       <CardTitle icon={Calculator} action={<Estimate />}>
         Agar shu pulni sarflasam-chi?
       </CardTitle>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-3 xl:max-w-4xl">
         <Field label="Maqsad">
           <select className={inputCls} value={goal?.id} onChange={(e) => setGoalId(e.target.value)}>
             {goals.map((g) => (
@@ -173,7 +173,7 @@ function WhatIfCard({ goals }) {
       </div>
 
       {r && (
-        <div className="mt-4 space-y-2 text-sm text-plaster/85">
+        <div className="measure mt-4 space-y-2 text-sm text-plaster/85">
           <p>
             Bu summa «{goal.name}» maqsadining <b className="text-plaster">{percent(r.shareOfTarget)}</b> qismi. Yig'ish kerak bo'lgan pul {money(r.remaining)} dan{' '}
             <b className="text-plaster">{money(r.newRemaining)}</b> ga oshadi.
@@ -217,7 +217,7 @@ export default function Goals() {
         </Card>
       ) : (
         <>
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3 xl:items-start">
             {goals.map((g) => (
               <GoalCard key={g.id} goal={g} onEdit={setForm} />
             ))}

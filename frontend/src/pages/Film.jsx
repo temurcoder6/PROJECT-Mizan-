@@ -147,7 +147,7 @@ export default function Film({ onExit }) {
       setCaption('');
       const ready = await waitFor(() => doc()?.querySelector('main'), 10000);
       if (!ready) {
-        c.say("Avto-namoyish faqat server orqali ishlaydi: backend ni ishga tushirib, http://localhost:8787/#/film ni oching (Mizan.html faylida brauzer buni to'sadi).");
+        c.say("Avto-namoyishni hozir boshlab bo'lmadi. Sahifani yangilab, qayta urinib ko'ring.");
         return;
       }
       await wait(1200);

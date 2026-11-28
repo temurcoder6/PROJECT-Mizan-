@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Compass, Crown, Loader2, MessageSquareWarning, Mic, MicOff, Send, ShieldAlert, ShieldCheck, Sparkles, Square, Trash2, Volume2, X } from 'lucide-react';
 import { Badge, Button, Card, Modal, MoneyInput, inputCls } from '../components/ui';
+import { ASK_EVENT, takeAsk } from '../lib/askQueue';
 import ComplaintModal from '../components/ComplaintModal';
 import PartnerSticker from '../components/PartnerSticker';
 import ProModal from '../components/ProModal';
 import { api } from '../lib/api';
 import { respond } from '../lib/assistant/assistant';
+import { adPartnerIds, pickPartners } from '../lib/assistant/partnerAds';
 import { categoryLabel, methodLabel } from '../lib/categories';
 import { debtRemaining, inRange, periodRange, summarize } from '../lib/finance';
 import { addDays, dateLabel, formatDigitsInput, money, parseDigits, todayISO, uid } from '../lib/format';
@@ -108,9 +110,38 @@ function DraftCard({ draft, msgId }) {
   );
 }
 
+const PAGE_LABEL = {
+  bosh: 'Bosh sahifa',
+  yozuvlar: 'Yozuvlar',
+  kartalar: 'Kartalar',
+  qarzlar: 'Qarzlar',
+  maqsadlar: 'Maqsadlar',
+  hisobot: 'Hisobot',
+  xavfsizlik: 'Xavfsizlik',
+  yordam: 'Yordam',
+  sozlamalar: 'Sozlamalar',
+};
+
 function JarvisActionCard({ action, go }) {
   const { actions } = useStore();
   const [added, setAdded] = useState(false);
+
+  // auto === false: AI o'zi o'tmagan, foydalanuvchi tugmani o'zi bosadi (Sozlamalar → "Mizan AI saytni boshqarsin" o'chiq).
+  if (action?.action === 'navigate' && action?.page && action.auto === false) {
+    const label = PAGE_LABEL[action.page] || action.label || action.page;
+    return (
+      <div className="mt-3 flex items-center justify-between gap-2 rounded-2xl border border-plaster/14 bg-[#071633] px-3.5 py-2.5 text-xs text-plaster">
+        <span className="flex items-center gap-2 font-semibold text-plaster/80">
+          <Compass className="size-4" /> Bo'lim taklif qilindi: {label}
+        </span>
+        {go && (
+          <Button size="sm" variant="outline" onClick={() => go(action.page)}>
+            {label} bo'limini ochish
+          </Button>
+        )}
+      </div>
+    );
+  }
 
   if (action?.action === 'navigate' && action?.page) {
     return (
@@ -137,7 +168,7 @@ function JarvisActionCard({ action, go }) {
       name: action.name || 'Yangi maqsad',
       target: Number(action.target) || 10000000,
       deadline,
-      saved: 0,
+      saved: Math.max(0, Number(action.saved) || 0),
     });
     setAdded(true);
   };
@@ -162,7 +193,11 @@ function JarvisActionCard({ action, go }) {
       </div>
       <div className="mt-2 text-base font-bold text-plaster">{action.name}</div>
       <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-plaster/75">
-        <div>Kerakli summa: <strong className="text-ochre">{money(action.target)}</strong></div>
+        <div>
+          {action.estimated ? 'Taxminiy narx' : 'Kerakli summa'}: <strong className="text-ochre">{money(action.target)}</strong>
+          {action.estimated && <span className="ml-1 text-plaster/55">(aniq narxni do'konda tekshiring)</span>}
+        </div>
+        {Number(action.saved) > 0 && <div>Sizda bor: <strong className="text-plaster">{money(action.saved)}</strong></div>}
         {action.daily && <div>Kunlik jamg'arma: <strong className="text-turq">{money(action.daily)}</strong></div>}
         {action.months && <div>Muddat: <strong className="text-plaster">{action.months} oy</strong></div>}
       </div>
@@ -216,7 +251,7 @@ function Bubble({ msg, onChoice, lastId, go, animations, onOpenComplaint }) {
   const mine = msg.role === 'user';
   return (
     <div className={`flex ${mine ? 'justify-end' : 'justify-start'}`}>
-      <div className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${mine ? 'rounded-br-md border border-turq/35 bg-cobalt/90 text-plaster' : 'rounded-bl-md border border-plaster/12 bg-[#0A1F45]/85 text-plaster/90'}`}>
+      <div className={`max-w-[88%] xl:max-w-[42rem] rounded-2xl px-4 py-2.5 text-[15px] leading-relaxed ${mine ? 'rounded-br-md border border-turq/35 bg-cobalt/90 text-plaster' : 'rounded-bl-md border border-plaster/12 bg-[#0A1F45]/85 text-plaster/90'}`}>
         <FormattedText text={msg.text} />
         {msg.drafts?.map((d) => (
           <DraftCard key={d.id} draft={d} msgId={msg.id} />
@@ -253,6 +288,27 @@ function Bubble({ msg, onChoice, lastId, go, animations, onOpenComplaint }) {
   );
 }
 
+// Hamkorlar katalogi serverdan bir marta olinadi (backend/lib/partners.mjs), kalit kerak emas.
+let catalogPromise = null;
+function loadCatalog() {
+  if (!catalogPromise) {
+    catalogPromise = api.partners().then((r) => r?.partners || []).catch(() => {
+      catalogPromise = null;
+      return [];
+    });
+  }
+  return catalogPromise;
+}
+
+// Mahalliy rejimda so'zlar bo'yicha hamkor kartalari; ketma-ket ikki javobga reklama qo'yilmaydi.
+async function localAds(input, chat) {
+  const lastAssistant = [...chat].reverse().find((m) => m.role === 'assistant');
+  if (lastAssistant?.partners?.length) return [];
+  const ids = adPartnerIds(input);
+  if (!ids.length) return [];
+  return pickPartners(await loadCatalog(), ids);
+}
+
 const LOCAL_NAV_ROUTES = [
   { rx: /\b(bosh\s*sahifa|asosiy|home|pulingiz\s*holati)\b/i, page: 'bosh', label: 'Bosh sahifa' },
   { rx: /\b(xarajat|yozuvlar|daromad|kirim|chiqim)\b.*\b(och|kir|o't|ot|ko'rsat|korsat)\b|\b(och|kir|o't|ot|ko'rsat|korsat)\b.*\b(xarajat|yozuvlar|daromad)\b/i, page: 'yozuvlar', label: 'Yozuvlar' },
@@ -268,7 +324,8 @@ const LOCAL_NAV_ROUTES = [
 export default function Assistant({ go }) {
   const store = useStore();
   const { chat, pending, settings, actions } = store;
-  const [text, setText] = useState('');
+  // Proaktiv ogohlantirishdan "Mizan AI tushuntirsin" bosilgan bo'lsa, savol kiritish qatoriga qo'yiladi (yuborilmaydi).
+  const [text, setText] = useState(() => takeAsk());
   const [listening, setListening] = useState(false);
   const [thinking, setThinking] = useState(false);
   const [speakingId, setSpeakingId] = useState(null);
@@ -287,6 +344,19 @@ export default function Assistant({ go }) {
 
   useEffect(() => () => {
     stopRef.current?.();
+  }, []);
+
+  // Sahifa allaqachon ochiq bo'lsa ham (remount bo'lmaydi) savol qatorga tushsin.
+  useEffect(() => {
+    const onAsk = () => {
+      const q = takeAsk();
+      if (q) {
+        setText(q);
+        textRef.current?.focus();
+      }
+    };
+    window.addEventListener(ASK_EVENT, onAsk);
+    return () => window.removeEventListener(ASK_EVENT, onAsk);
   }, []);
 
   const isQuickLocalEntry = (str, hasPending) => {
@@ -376,7 +446,8 @@ export default function Assistant({ go }) {
           // Reklamani ketma-ket har javobda chiqarmaslik (qulay fursat nazorati)
           const lastAssistant = [...chat].reverse().find((m) => m.role === 'assistant');
           const hadRecentAd = Boolean(lastAssistant?.partners?.length);
-          const safePartners = hadRecentAd ? [] : (res.partners || []);
+          const aiPartners = res.partners?.length ? res.partners : await localAds(input, chat);
+          const safePartners = hadRecentAd ? [] : aiPartners;
 
           const drafts =
             res.draft && Number(res.draft.amount) > 0
@@ -404,14 +475,15 @@ export default function Assistant({ go }) {
             role: 'assistant',
             lang: 'uz',
             text: res.text,
-            action: res.action,
+            action: res.action?.action === 'navigate' ? { ...res.action, auto: settings.aiControl === true } : res.action,
             partners: safePartners,
             moderation: modInfo,
             drafts,
           };
           actions.pushMessage(jarvisReply);
 
-          if (res.action?.action === 'navigate' && res.action.page && go) {
+          // AI o'zi bo'limga o'tishi faqat foydalanuvchi ruxsat bergan bo'lsa (Sozlamalar). Aks holda tugma chiqadi.
+          if (res.action?.action === 'navigate' && res.action.page && go && settings.aiControl === true) {
             setTimeout(() => go(res.action.page), 700);
           } else if (res.action?.action === 'open_pro') {
             setShowPro(true);
@@ -431,6 +503,10 @@ export default function Assistant({ go }) {
     // Lokal qoidalar asosidagi tezkor yordamchi (xarajat/daromad kiritish va oflayn rejim)
     const data = { transactions: store.transactions, debts: store.debts, goals: store.goals, profile: store.profile };
     const { reply, pending: next } = respond(input, { data, today: todayISO(), pending });
+    if (!reply.drafts?.length && !next) {
+      const ads = await localAds(input, chat);
+      if (ads.length) reply.partners = ads;
+    }
     actions.pushMessage(reply);
     actions.setPending(next);
   };
@@ -471,7 +547,7 @@ export default function Assistant({ go }) {
   const pendingCount = chat.reduce((n, m) => n + (m.drafts?.filter((d) => d.status === 'pending').length || 0), 0);
 
   return (
-    <div className="mx-auto flex h-[calc(100dvh-13rem)] max-w-3xl flex-col md:h-[calc(100dvh-12rem)]">
+    <div className="mx-auto flex h-[calc(100dvh-12.5rem)] max-w-3xl flex-col lg:h-[calc(100dvh-11.5rem)] xl:max-w-5xl">
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <h1 className="font-display flex items-center gap-2 text-2xl font-semibold tracking-[-0.02em] text-plaster">

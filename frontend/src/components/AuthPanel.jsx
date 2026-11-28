@@ -47,7 +47,7 @@ export default function AuthPanel({ onOpen, defaultMode = 'register', nextHash =
     } catch (err) {
       setError(
         err.code === 'network' || err.code === 'noserver'
-          ? "Serverga ulanib bo'lmadi. Ilovani backend orqali oching (http://localhost:8787)."
+          ? "Serverga ulanib bo'lmadi. Internet aloqasini tekshirib, qayta urinib ko'ring."
           : err.message,
       );
     }

@@ -54,7 +54,7 @@ export default function Reports() {
         <Stat label="Qoldiq" value={money(s.balance)} tone={s.balance < 0 ? 'red' : 'slate'} icon={Wallet} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3 xl:items-start">
         <Card>
           <CardTitle icon={ChartColumn}>Toifalar bo'yicha</CardTitle>
           {s.categories.length === 0 ? (
@@ -84,7 +84,7 @@ export default function Reports() {
           )}
         </Card>
 
-        <div className="space-y-4">
+        <div className="space-y-4 xl:contents xl:space-y-0">
           <Card>
             <CardTitle icon={Wallet}>Rejalangan va kutilmagan</CardTitle>
             {s.expense === 0 ? (
@@ -133,6 +133,7 @@ export default function Reports() {
         </div>
       </div>
 
+      <div className="grid gap-4 2xl:grid-cols-2 2xl:items-start">
       <Card>
         <CardTitle icon={Repeat} action={<Estimate />}>
           Takrorlanadigan xarajatlar (oxirgi 90 kun)
@@ -165,7 +166,7 @@ export default function Reports() {
                 </tbody>
               </table>
             </div>
-            <p className="mt-3 text-xs text-plaster/50">
+            <p className="measure mt-3 text-xs text-plaster/50">
               Hisob: o'rtacha summa × (yozuvlar soni − 1) ÷ birinchi va oxirgi yozuv orasidagi kunlar × 30. Hozirgi odat davom etsa shunday bo'ladi; sizning yozuvlaringizga asoslangan.
             </p>
           </>
@@ -207,6 +208,7 @@ export default function Reports() {
           </div>
         )}
       </Card>
+      </div>
     </div>
   );
 }

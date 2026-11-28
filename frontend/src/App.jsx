@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, ChartColumn, ChevronLeft, CreditCard, HandCoins, House, KeyRound, LifeBuoy, ListChecks, Menu, Settings as Cog, ShieldCheck, Sparkles, Target, X } from 'lucide-react';
 import { ConflictModal, SyncChip } from './components/Account';
 import { GirihField, StarMark } from './components/Girih';
+import { AlertBell } from './components/Alerts';
 import { ReminderWatcher } from './components/Insights';
 import MizanOrb from './components/MizanOrb';
 import { LITE } from './lib/perf';
@@ -184,7 +185,7 @@ function Shell() {
       )}
 
       <header className="app-glass sticky top-0 z-30 border-b border-plaster/10">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="app-container flex items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <button type="button" onClick={() => go('bosh')} className="group flex items-center gap-2.5 text-left">
             <StarMark className="size-8 transition-transform duration-300 group-hover:rotate-45" live />
             <div className="leading-none">
@@ -194,6 +195,7 @@ function Shell() {
           </button>
 
           <div className="flex items-center gap-2">
+            {!DEMO && <AlertBell go={go} />}
             {chip}
             <button
               type="button"
@@ -215,8 +217,8 @@ function Shell() {
         </div>
       </header>
 
-      <main className="relative z-10 px-4 pt-5 pb-36 sm:px-6 lg:px-8 lg:pt-7 lg:pb-32">
-        <div className="mx-auto max-w-5xl">
+      <main className="relative z-10 px-4 pt-5 pb-32 sm:px-6 lg:px-8 lg:pt-6 lg:pb-28">
+        <div className="app-container">
           <div key={route} className={settings.animations ? 'animate-page' : ''}>
             <Suspense fallback={<div className="py-12" />}>
               <Page go={go} />

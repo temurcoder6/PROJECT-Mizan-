@@ -3,10 +3,10 @@ import { Download, Film } from 'lucide-react';
 
 const VIDEO = {
   id: 'asosiy',
-  duration: '0:37',
-  title: 'Qisqa tanishtirish · 37 soniya',
-  summary: "Kunlik erkin summa, kartalar, Yordamchi tasdig'i va xavfsizlik — hammasi bitta ixcham rolikda.",
-  src: '/tanitish.mp4?v=sardor2',
+  duration: '0:47',
+  title: 'Qisqa tanishtirish · 47 soniya',
+  summary: "Muammo, kunlik reja, ikki bosishda kiritish, maqsad qachon va qancha pul yig'ish hisobi, xavfsizlik: bitta ixcham rolikda.",
+  src: '/tanitish.mp4?v=sardor6',
   filename: 'mizan-tanishtirish.mp4',
 };
 

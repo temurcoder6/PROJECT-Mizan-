@@ -1,5 +1,7 @@
-// Mizan B2B Hamkorlik Katalogi: bank kartalari, omonatlar, do'konlar va muddatli to'lov hamkorlari.
-// Foydalanuvchi uchun narx oshmaydi — hamkor bank yoki do'kon Mizan'ga tavsiya (CPA/affiliate) komissiyasi to'laydi.
+// Mizan hamkorlik katalogi: bank kartalari, omonatlar, do'konlar va muddatli to'lov variantlari.
+// Hozircha bu faqat tavsiya: hamkorlar bilan shartnoma tuzilmagan, komissiya olinmaydi. Shartnoma rejada.
+// Narx, foiz va komissiya shartlari hamkorning o'z saytida; bu yerda ular o'ylab topilmaydi.
+// `installment: true` — muddatli to'lov (nasiya) beruvchi hamkor; kartada umumiy narx oshishi mumkinligi eslatiladi.
 
 export const PARTNERS = {
   tbc_salom: {
@@ -119,7 +121,30 @@ export const PARTNERS = {
     benefit: "Mavsumiy 0% chegirma va naqd xarid bonuslaridan foydalanish mumkin.",
     url: 'https://texnomart.uz/',
   },
+  // Idea va Ishonch: rasmiy saytlari 2026-11-28 da tekshirildi (idea.uz, ishonchsavdo.uz — ochiladi, muddatli to'lov bo'limi bor).
+  idea_uz: {
+    id: 'idea_uz',
+    name: 'Idea',
+    category: "Do'konlar tarmog'i",
+    badge: "Muddatli to'lov",
+    tagline: "Smartfon va maishiy texnika onlayn do'koni · muddatli to'lov bo'limi mavjud",
+    benefit: "Muddatli to'lov shartlari rasmiy saytida ko'rsatilgan.",
+    url: 'https://idea.uz/',
+  },
+  ishonch: {
+    id: 'ishonch',
+    name: 'Ishonch',
+    category: "Do'konlar tarmog'i",
+    badge: "Muddatli to'lov",
+    tagline: "Maishiy texnika, elektronika va uy jihozlari · muddatli to'lov mavjud",
+    benefit: "Muddatli to'lov shartlari rasmiy saytida ko'rsatilgan.",
+    url: 'https://ishonchsavdo.uz/',
+  },
 };
+
+// Nasiya (muddatli to'lov) beruvchi hamkorlar: kartada halollik izohi chiqadi.
+const INSTALLMENT_IDS = new Set(['olcha_uz', 'uzum_nasiya', 'asaxiy_uz', 'alif_nasiya', 'iman_pay', 'texnomart', 'idea_uz', 'ishonch']);
+for (const id of INSTALLMENT_IDS) PARTNERS[id].installment = true;
 
 export function resolvePartners(ids = []) {
   if (!Array.isArray(ids)) return [];

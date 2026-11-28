@@ -391,23 +391,23 @@ function Home({ onOpen, isAdmin }) {
             <div className="w-full lg:max-w-md rounded-3xl border border-ochre/35 bg-[#091b3a]/96 p-6 shadow-2xl">
               <div className="flex items-center justify-between border-b border-plaster/10 pb-4">
                 <span className="font-bold text-sm text-ochre">Mizan Pro imkoniyatlari</span>
-                <span className="text-xs text-turq font-semibold">Max Daraja</span>
+                <span className="text-xs text-turq font-semibold">Hozir mavjud</span>
               </div>
               <ul className="mt-4 space-y-3 text-xs text-plaster/80">
                 <li className="flex items-center gap-2.5">
-                  <Check className="size-4 text-turq shrink-0" /> <span><b>Cheksiz Gemini 3.5 Flash AI</b> moliyaviy tahlillari</span>
+                  <Check className="size-4 text-turq shrink-0" /> <span><b>Mizan AI maslahatchi</b>: xarid va muddatli to'lovni solishtirish</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Check className="size-4 text-turq shrink-0" /> <span><b>Malika / Abu Saxiy vs Nasiya</b> solishtirish grafigi</span>
+                  <Check className="size-4 text-turq shrink-0" /> <span><b>Maqsad bo'yicha jamg'arma rejasi</b> (kuniga, haftasiga, oyiga)</span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Check className="size-4 text-turq shrink-0" /> <span><b>Katta xarid simulyatori</b> (kunlik/oylik reja)</span>
+                  <Check className="size-4 text-turq shrink-0" /> <span><b>Chekni rasmdan AI bilan o'qish</b></span>
                 </li>
                 <li className="flex items-center gap-2.5">
-                  <Check className="size-4 text-turq shrink-0" /> <span><b>Chek va kvitansiyalarni AI skanerlash</b></span>
+                  <Check className="size-4 text-turq shrink-0" /> <span><b>CSV va JSON</b> ga yuklab olish</span>
                 </li>
-                <li className="flex items-center gap-2.5">
-                  <Check className="size-4 text-turq shrink-0" /> <span><b>Oilaviy umumiy byudjet</b> (5 tagacha qurilma)</span>
+                <li className="flex items-center gap-2.5 text-plaster/60">
+                  <span className="shrink-0 rounded border border-ochre/40 px-1 text-[10px] font-bold text-ochre">Tez orada</span> <span>PDF hisobot, oilaviy umumiy byudjet</span>
                 </li>
               </ul>
             </div>

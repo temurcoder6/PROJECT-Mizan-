@@ -18,7 +18,7 @@ import {
 import { useStore } from '../store';
 
 export default function Dashboard({ go }) {
-  const { auth, transactions, debts, goals, cards = [], profile, settings, actions } = useStore();
+  const { auth, transactions, debts, goals, cards = [], settings, actions, pro, referralBonus } = useStore();
   const isAdmin = auth.status === 'in' && Boolean(auth.user?.isAdmin);
   const [form, setForm] = useState(null);
   const today = todayISO();
@@ -31,7 +31,7 @@ export default function Dashboard({ go }) {
   const recent = [...transactions].sort(byDateDesc).slice(0, 5);
   const empty = !transactions.length && !debts.length && !goals.length;
   const [showPro, setShowPro] = useState(false);
-  const isPro = !!profile?.isPro;
+  const isPro = pro.isPro; // faqat serverdan (store.jsx); mahalliy tugma bilan yoqib bo'lmaydi
 
   return (
     <div className="space-y-4">
@@ -41,15 +41,21 @@ export default function Dashboard({ go }) {
             <p className="text-sm text-ochre">{monthLabel(today)}</p>
             {isPro && (
               <span className="flex items-center gap-1 rounded-full bg-ochre/20 border border-ochre/45 px-2 py-0.5 text-[10px] font-bold text-ochre uppercase">
-                <Crown className="size-3" /> Pro Max
+                <Crown className="size-3" /> Pro
               </span>
             )}
           </div>
           <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Pulingiz holati</h1>
+          {referralBonus > 0 && (
+            <p className="mt-1 flex items-center gap-2 text-xs text-turq-soft">
+              Taklif orqali kelganingiz uchun {referralBonus} kunlik Mizan Pro berildi.
+              <button type="button" onClick={actions.dismissReferralBonus} className="text-plaster/60 underline hover:text-plaster">Yopish</button>
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setShowPro(true)} className="border-ochre/40 text-ochre hover:bg-ochre/15">
-            <Crown className="size-4" /> {isPro ? 'Mizan Pro' : 'Pro Daraja'}
+            <Crown className="size-4" /> {isPro ? 'Mizan Pro' : 'Mizan Pro olish'}
           </Button>
           <Button variant="outline" onClick={() => go('kartalar')}>
             <CreditCard className="size-4 text-ochre" /> Kartalar{cards.length > 0 ? ` (${cards.length})` : ''}
@@ -66,7 +72,7 @@ export default function Dashboard({ go }) {
       {empty && (
         <Card className="border-ochre/35 bg-gradient-to-br from-[#0E2A5C]/80 to-[#071633]/90">
           <CardTitle icon={Sparkles}>Xush kelibsiz!</CardTitle>
-          <p className="text-sm text-plaster/75">
+          <p className="measure text-sm text-plaster/75">
             Birinchi daromad yoki xarajatingizni qo'shing yoxud yordamchiga yozing: «bugun yo'lga 12 ming sarfladim».
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
@@ -83,7 +89,7 @@ export default function Dashboard({ go }) {
         </Card>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1.7fr_1fr]">
         <DailyPlanCard onOpenCards={() => go('kartalar')} />
         <QuickEntry />
       </div>
@@ -91,8 +97,10 @@ export default function Dashboard({ go }) {
       {/* Mizan AI — Moliyaviy Salomatlik Indeksi, 3 ta CFO Maslahat va Dangasa Rejimi */}
       <FinancialHealthCard onOpenAssistant={() => go('yordamchi')} />
 
-      <ReminderCard />
-      <MissingDaysCard />
+      <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
+        <ReminderCard />
+        <MissingDaysCard />
+      </div>
 
       {reminders.length > 0 && (
         <Card className="border-ochre/35 bg-[#1B160C]/85">
@@ -117,14 +125,14 @@ export default function Dashboard({ go }) {
         </Card>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Daromad (oy)" value={money(ms.income)} tone="green" icon={TrendingUp} />
         <Stat label="Xarajat (oy)" value={money(ms.expense)} icon={TrendingDown} />
         <Stat label="Qoldiq (oy)" value={money(ms.balance)} tone={ms.balance < 0 ? 'red' : 'slate'} icon={Wallet} />
         <Stat label="Shu hafta xarajat" value={money(ws.expense)} icon={ChartColumn} sub={`${dateLabel(week.from)} – ${dateLabel(week.to)}`} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3 xl:items-start">
         <Card>
           <CardTitle icon={ChartColumn} action={<Button variant="subtle" size="sm" onClick={() => go('hisobot')}>Batafsil</Button>}>
             Pul qayerga ketyapti

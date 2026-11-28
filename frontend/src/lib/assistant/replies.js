@@ -39,6 +39,18 @@ const UZ = {
     `«${g}»: ${money(saved)} / ${money(target)} yig'ilgan. Yana ${money(p.remaining)} kerak, ${p.daysLeft} kun qoldi.\n` +
     `Haftasiga ${money(p.perWeek)}, oyiga ${money(p.perMonth)} yig'ish kerak.\n` +
     `Hisob: ${money(p.remaining)} ÷ ${fmtWeeks(p.weeks)} hafta. Har hafta bir xil summa yig'ilsa shunday bo'ladi.`,
+  wishAsk: (have) =>
+    `Bu xarajat emas, maqsad. Hech narsa saqlanmadi.${have ? ` Qo'lingizda ${money(have)} borligini ko'rdim.` : ''}
+` +
+    `Hisoblab berishim uchun narxi va muddati kerak. Masalan: «Narxi 18 million, 6 oyda». Natijani kuniga, haftasiga va oyiga ko'rsataman.`,
+  wishEnough: (price, have) =>
+    `Pulingiz yetadi: narxi ${money(price)}, sizda ${money(have)}. Yig'ish shart emas.`,
+  wishPlan: (price, have, need, plans) =>
+    `Narxi ${money(price)}${have ? `, sizda ${money(have)}, yetishmaydi ${money(need)}` : ''}.
+` +
+    plans.map((p) => `• ${p.days} kunda: kuniga ${money(p.perDay)}, haftasiga ${money(p.perWeek)}, oyiga ${money(p.perMonth)}`).join('\n') +
+    `
+Hisob: ${money(need)} ÷ kunlar soni. Pastdagi tugma bilan maqsad yaratishingiz mumkin. Tugmani bosmaguningizcha hech narsa saqlanmaydi.`,
   adhocPlan: (amount, p) =>
     `${money(amount)} ni ${p.days} kunda yig'ish uchun: haftasiga ${money(p.perWeek)}, oyiga ${money(p.perMonth)}.\n` +
     `Hisob: ${money(amount)} ÷ ${fmtWeeks(p.weeks)} hafta. Maqsadni saqlash uchun «Maqsadlar» bo'limida yarating.`,
@@ -105,6 +117,18 @@ const RU = {
     `«${g}»: накоплено ${money(saved, 'сум')} из ${money(target, 'сум')}. Осталось ${money(p.remaining, 'сум')}, дней: ${p.daysLeft}.\n` +
     `Нужно откладывать ${money(p.perWeek, 'сум')} в неделю или ${money(p.perMonth, 'сум')} в месяц.\n` +
     `Расчёт: ${money(p.remaining, 'сум')} ÷ ${fmtWeeks(p.weeks)} нед. При равных взносах так и будет.`,
+  wishAsk: (have) =>
+    `Это не расход, а цель. Ничего не сохранено.${have ? ` Вижу, что у вас ${money(have, 'сум')}.` : ''}
+` +
+    `Для расчёта нужны цена и срок. Например: «Цена 18 миллионов, за 6 месяцев». Покажу по дням, неделям и месяцам.`,
+  wishEnough: (price, have) =>
+    `Денег хватает: цена ${money(price, 'сум')}, у вас ${money(have, 'сум')}. Копить не нужно.`,
+  wishPlan: (price, have, need, plans) =>
+    `Цена ${money(price, 'сум')}${have ? `, у вас ${money(have, 'сум')}, не хватает ${money(need, 'сум')}` : ''}.
+` +
+    plans.map((p) => `• за ${p.days} дн.: в день ${money(p.perDay, 'сум')}, в неделю ${money(p.perWeek, 'сум')}, в месяц ${money(p.perMonth, 'сум')}`).join('\n') +
+    `
+Расчёт: ${money(need, 'сум')} ÷ число дней. Ничего не сохранено.`,
   adhocPlan: (amount, p) =>
     `Чтобы накопить ${money(amount, 'сум')} за ${p.days} дн.: ${money(p.perWeek, 'сум')} в неделю, ${money(p.perMonth, 'сум')} в месяц.\n` +
     `Расчёт: ${money(amount, 'сум')} ÷ ${fmtWeeks(p.weeks)} нед. `,
@@ -171,6 +195,18 @@ const EN = {
     `"${g}": ${money(saved)} of ${money(target)} saved. ${money(p.remaining)} left, ${p.daysLeft} days to go.\n` +
     `Save ${money(p.perWeek)} a week or ${money(p.perMonth)} a month.\n` +
     `Calculation: ${money(p.remaining)} ÷ ${fmtWeeks(p.weeks)} weeks. Assuming equal weekly savings.`,
+  wishAsk: (have) =>
+    `This is a goal, not an expense. Nothing was saved.${have ? ` I see you have ${money(have)}.` : ''}
+` +
+    `To calculate I need the price and a deadline. For example: "Price 18 million, in 6 months". I will show it per day, week and month.`,
+  wishEnough: (price, have) =>
+    `You can afford it: price ${money(price)}, you have ${money(have)}. No need to save.`,
+  wishPlan: (price, have, need, plans) =>
+    `Price ${money(price)}${have ? `, you have ${money(have)}, short by ${money(need)}` : ''}.
+` +
+    plans.map((p) => `• in ${p.days} days: ${money(p.perDay)} a day, ${money(p.perWeek)} a week, ${money(p.perMonth)} a month`).join('\n') +
+    `
+Calculation: ${money(need)} ÷ number of days. Nothing was saved.`,
   adhocPlan: (amount, p) =>
     `To save ${money(amount)} in ${p.days} days: ${money(p.perWeek)} a week, ${money(p.perMonth)} a month.\n` +
     `Calculation: ${money(amount)} ÷ ${fmtWeeks(p.weeks)} weeks. `,

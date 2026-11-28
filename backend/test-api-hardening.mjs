@@ -67,9 +67,8 @@ try {
   const h = await new Client().call('GET', '/api/health');
   assert.equal(h.status, 200);
   assert.equal(h.data.ok, true);
-  assert.equal(h.data.db, 'ok');
-  assert.ok(h.data.schemaVersion >= 5);
-  ok('/api/health batafsil baza va sxema holatini qaytaradi');
+  assert.deepEqual(Object.keys(h.data), ['ok']);
+  ok("/api/health anonim so'rovga faqat { ok: true } qaytaradi");
 
   const st1 = await raw('/');
   assert.equal(st1.status, 200);
@@ -91,6 +90,13 @@ try {
 
   const adminCli = new Client();
   assert.equal((await adminCli.call('POST', '/api/register', { username: 'boss_admin', password: 'admin-parol-2026' })).status, 201);
+
+  const adminH = await adminCli.call('GET', '/api/health');
+  assert.equal(adminH.status, 200);
+  assert.equal(adminH.data.ok, true);
+  assert.equal(adminH.data.db, 'ok');
+  assert.ok(adminH.data.schemaVersion >= 5);
+  ok('/api/health batafsil baza va sxema holatini faqat admin seansiga qaytaradi');
 
   assert.equal((await adminCli.call('PUT', '/api/data', null)).status, 400);
   assert.equal((await adminCli.call('PUT', '/api/data', [])).status, 400);

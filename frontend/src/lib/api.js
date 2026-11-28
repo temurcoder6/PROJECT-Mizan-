@@ -61,4 +61,10 @@ export const api = {
   trackPartnerClick: (partnerId, source = 'assistant') => call('POST', '/partners/click', { partnerId, source }),
   aiHealthScore: (payload) => call('POST', '/ai/health-score', payload),
   adminReply: (payload) => call('POST', '/admin/tickets/reply', payload),
+  adminSetPro: (userId, action, days) => call('POST', '/admin/users/pro', { userId, action, days }),
+  proOptions: () => call('GET', '/pro/options'),
+  proCheckout: (plan, provider) => call('POST', '/pro/checkout', { plan, provider }),
+  proDemo: () => call('POST', '/pro/demo', {}),
+  referral: () => call('GET', '/referral'),
+  claimReferral: (code) => call('POST', '/referral/claim', { code }),
 };

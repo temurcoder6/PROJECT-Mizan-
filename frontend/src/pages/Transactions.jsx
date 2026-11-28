@@ -50,21 +50,23 @@ export default function Transactions() {
         </div>
       </div>
 
-      <Card className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-1">
+      <div className="grid gap-4 xl:grid-cols-[20rem_1fr] xl:items-start">
+      <Card className="flex flex-wrap items-center justify-between gap-3 xl:sticky xl:top-20 xl:flex-col xl:items-stretch xl:gap-3.5">
+        <div className="flex items-center gap-1 xl:justify-between">
           <IconButton label="Oldingi oy" icon={ChevronLeft} onClick={() => setRef(shiftMonth(ref, -1))} />
           <span className="min-w-32 text-center font-semibold text-plaster">{monthLabel(ref)}</span>
           <IconButton label="Keyingi oy" icon={ChevronRight} onClick={() => setRef(shiftMonth(ref, 1))} />
         </div>
-        <div className="flex gap-4 text-sm tabular-nums">
+        <div className="flex gap-4 text-sm tabular-nums xl:justify-between">
           <span className="text-turq-soft">+{money(s.income)}</span>
           <span className="text-plaster/80">−{money(s.expense)}</span>
         </div>
-        <label className="relative block w-full sm:w-48">
+        <label className="relative block w-full sm:w-48 xl:w-full">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-plaster/45" />
           <input type="search" aria-label="Yozuvlardan qidirish" placeholder="Qidirish" value={query} onChange={(e) => { setQuery(e.target.value); setLimit(80); }} className={`${inputCls} pl-8`} />
         </label>
         <Segmented
+          className="xl:flex"
           value={filter}
           onChange={setFilter}
           options={[
@@ -98,6 +100,7 @@ export default function Transactions() {
           </div>
         )}
       </Card>
+      </div>
 
       {form && (
         <TransactionForm

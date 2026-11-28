@@ -239,6 +239,36 @@ const MIGRATIONS = [
   () => {
     addColumn('users', 'is_admin INTEGER NOT NULL DEFAULT 0');
   },
+  () => {
+    // Pro: pro_until = ISO sana (UTC), NULL = bepul. Faqat server yozadi (to'lov webhooki, admin, demo, referal).
+    addColumn('users', 'pro_until TEXT');
+    addColumn('users', 'ref_code TEXT');
+    addColumn('users', 'pro_demo_used INTEGER NOT NULL DEFAULT 0');
+    db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_users_ref_code ON users(ref_code) WHERE ref_code IS NOT NULL');
+    // Faqat buyurtma raqami, tarif, usul va summa: karta ma'lumoti BU YERDA HECH QACHON saqlanmaydi.
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS pro_orders (
+        id TEXT PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        plan TEXT NOT NULL,
+        provider TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        created_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_pro_orders_user ON pro_orders(user_id, created_at);
+      CREATE TABLE IF NOT EXISTS referrals (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        referrer_id INTEGER NOT NULL,
+        referee_id INTEGER NOT NULL UNIQUE,
+        ip_hash TEXT NOT NULL,
+        rewarded INTEGER NOT NULL,
+        created_at INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_referrals_referrer ON referrals(referrer_id, created_at);
+      CREATE INDEX IF NOT EXISTS idx_referrals_ip ON referrals(ip_hash, created_at);
+    `);
+  },
 ];
 export const SCHEMA_VERSION = MIGRATIONS.length;
 {
@@ -256,7 +286,7 @@ const DATA_TABLES = ['transactions', 'debt_payments', 'debts', 'goal_adds', 'goa
 
 const q = {
   userByName: db.prepare('SELECT * FROM users WHERE username = ?'),
-  userById: db.prepare('SELECT id, username, revision, created_at, (recovery_hash IS NOT NULL) AS has_recovery, COALESCE(has_password, 1) AS has_password, COALESCE(is_admin, 0) AS is_admin FROM users WHERE id = ?'),
+  userById: db.prepare('SELECT id, username, revision, created_at, (recovery_hash IS NOT NULL) AS has_recovery, COALESCE(has_password, 1) AS has_password, COALESCE(is_admin, 0) AS is_admin, pro_until FROM users WHERE id = ?'),
   setRecovery: db.prepare('UPDATE users SET recovery_salt = ?, recovery_hash = ? WHERE id = ?'),
   insertUser: db.prepare('INSERT INTO users (username, pw_salt, pw_hash, created_at) VALUES (?, ?, ?, ?)'),
   insertOAuthUser: db.prepare('INSERT INTO users (username, pw_salt, pw_hash, has_password, created_at) VALUES (?, ?, ?, 0, ?)'),
@@ -282,7 +312,7 @@ const q = {
   replyTicket: db.prepare("UPDATE support_tickets SET status = ?, reply = CASE WHEN ? != '' THEN ? ELSE reply END, updated_at = ? WHERE id = ?"),
   adminUsers: db.prepare(`
     SELECT u.id, u.username, COALESCE(u.is_admin, 0) AS is_admin, COALESCE(u.has_password, 1) AS has_password,
-           (u.recovery_hash IS NOT NULL) AS has_recovery, u.revision, u.created_at,
+           (u.recovery_hash IS NOT NULL) AS has_recovery, u.revision, u.created_at, u.pro_until,
            (SELECT MAX(COALESCE(s.last_seen, s.created_at)) FROM sessions s WHERE s.user_id = u.id) AS last_seen,
            (SELECT COUNT(*) FROM transactions tx WHERE tx.user_id = u.id) AS tx_count,
            (SELECT COUNT(*) FROM cards c WHERE c.user_id = u.id) AS card_count,
@@ -418,7 +448,10 @@ const globalLimit = new Map();
 const writeLimit = new Map();
 const oauthLimit = new Map();
 const oauthStates = new Map();
-export const limiters = { attempts, registrations, supportLimit, globalLimit, writeLimit, oauthLimit };
+const proLimit = new Map();
+const referralTries = new Map();
+const referralIp = new Map();
+export const limiters = { attempts, registrations, supportLimit, globalLimit, writeLimit, oauthLimit, proLimit, referralTries, referralIp };
 
 function pruneMap(map) {
   const now = Date.now();
@@ -535,8 +568,82 @@ function userPayload(u) {
     hasRecovery: Boolean(u.has_recovery ?? u.recovery_hash),
     hasPassword: u.has_password !== 0,
     isAdmin: isAdminUser(u),
+    isPro: proActive(u.pro_until),
+    proUntil: u.pro_until || null,
     oauth,
   };
+}
+
+// ---------- Pro muddati, to'lov oqimi va referal ----------
+
+const DAY_MS = 86400000;
+// Pro faqat server tomonda: pro_until > hozir. Mijoz hech qachon o'zi Pro bo'la olmaydi.
+export const proActive = (iso, now = Date.now()) => {
+  if (!iso) return false;
+  const t = Date.parse(iso);
+  return Number.isFinite(t) && t > now;
+};
+
+// Mavjud pro_until ustiga (yoki hozirdan) `days` kun qo'shadi. To'lov webhooki, demo, referal va admin shu orqali ishlaydi.
+export function extendPro(userId, days) {
+  const row = db.prepare('SELECT pro_until FROM users WHERE id = ?').get(userId);
+  if (!row) return null;
+  const cur = row.pro_until ? Date.parse(row.pro_until) : 0;
+  const base = Math.max(Date.now(), Number.isFinite(cur) ? cur : 0);
+  const until = new Date(base + days * DAY_MS).toISOString();
+  db.prepare('UPDATE users SET pro_until = ? WHERE id = ?').run(until, userId);
+  return until;
+}
+export function revokePro(userId) {
+  db.prepare('UPDATE users SET pro_until = NULL WHERE id = ?').run(userId);
+}
+
+export const PRO_PLANS = {
+  monthly: { amount: 19000, days: 30 },
+  yearly: { amount: 149000, days: 365 },
+};
+export const PAYMENT_PROVIDERS = ['payme', 'click', 'uzum'];
+const DEMO_PRO_DAYS = 7;
+const demoPaymentsOn = () => process.env.DEMO_PAYMENTS === '1';
+const envInt = (name, def) => {
+  const n = Number.parseInt(process.env[name] ?? '', 10);
+  return Number.isFinite(n) && n > 0 ? n : def;
+};
+
+// PAYMENT_PROVIDER_URL_<NOM> — provayderning o'z to'lov sahifasi (hosted checkout). Bo'sh yoki noto'g'ri bo'lsa usul o'chiq.
+function providerUrl(name) {
+  const raw = String(process.env[`PAYMENT_PROVIDER_URL_${String(name).toUpperCase()}`] || '').trim();
+  if (!raw) return '';
+  try {
+    const u = new URL(raw);
+    const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(u.hostname);
+    if (u.protocol === 'https:' || (u.protocol === 'http:' && local)) return u.toString();
+  } catch {
+    // noto'g'ri URL: usul o'chiq turadi
+  }
+  return '';
+}
+
+const referralCfg = () => ({
+  bonusDays: envInt('REFERRAL_BONUS_DAYS', 30),
+  monthlyMax: envInt('REFERRAL_MONTHLY_MAX', 12),
+  ipDaily: envInt('REFERRAL_IP_DAILY', 3),
+  newAccountHours: envInt('REFERRAL_NEW_ACCOUNT_HOURS', 48),
+});
+
+function ensureRefCode(userId) {
+  const read = () => db.prepare('SELECT ref_code FROM users WHERE id = ?').get(userId)?.ref_code || '';
+  let code = read();
+  for (let i = 0; !code && i < 10; i++) {
+    const cand = Array.from({ length: 8 }, () => CODE_CHARS[crypto.randomInt(CODE_CHARS.length)]).join('');
+    try {
+      db.prepare('UPDATE users SET ref_code = ? WHERE id = ? AND ref_code IS NULL').run(cand, userId);
+    } catch {
+      // kod band (UNIQUE): yangisini sinaymiz
+    }
+    code = read();
+  }
+  return code;
 }
 
 // ---------- Google & GitHub OAuth 2.0 ----------
@@ -904,7 +1011,12 @@ async function api(req, res, pathname, url) {
   if (pathname === '/api/health' && method === 'GET') {
     try {
       db.prepare('SELECT 1').get();
-      return send(res, 200, { ok: true, db: 'ok', supabase: isSupabaseConfigured(), schemaVersion: SCHEMA_VERSION, uptimeSec: Math.round(process.uptime()) });
+      let viewer = null;
+      try { viewer = currentUser(req); } catch { viewer = null; }
+      if (viewer && isAdminUser(viewer)) {
+        return send(res, 200, { ok: true, db: 'ok', supabase: isSupabaseConfigured(), schemaVersion: SCHEMA_VERSION, uptimeSec: Math.round(process.uptime()) });
+      }
+      return send(res, 200, { ok: true });
     } catch {
       throw new HttpError(503, 'Baza javob bermayapti.');
     }
@@ -1042,6 +1154,128 @@ async function api(req, res, pathname, url) {
     );
   }
 
+  // ----- Mizan Pro: tariflar, to'lov yo'naltirish, sinov rejimi -----
+
+  if (pathname === '/api/pro/options' && method === 'GET') {
+    return send(res, 200, {
+      plans: PRO_PLANS,
+      providers: Object.fromEntries(PAYMENT_PROVIDERS.map((p) => [p, Boolean(providerUrl(p))])),
+      demo: demoPaymentsOn(),
+      demoDays: DEMO_PRO_DAYS,
+    });
+  }
+
+  if (pathname === '/api/pro/checkout' && method === 'POST') {
+    const user = requireUser(req);
+    const body = await readJSON(req, SMALL_BODY);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) throw new HttpError(400, "Ma'lumot noto'g'ri.");
+    // Saytimiz karta ma'lumotini hech qachon qabul qilmaydi: to'lov provayderning o'z sahifasida bo'ladi.
+    if (findForbiddenCardKey(body)) throw new HttpError(400, "Xavfsizlik qoidasi: to'liq karta raqami, amal qilish muddati, PIN yoki CVV kiritilmaydi.");
+    const plan = oneOf(body.plan, Object.keys(PRO_PLANS), '');
+    const provider = oneOf(body.provider, PAYMENT_PROVIDERS, '');
+    if (!plan) throw new HttpError(400, 'Tarifni tanlang.');
+    if (!provider) throw new HttpError(400, "To'lov usulini tanlang.");
+    const base = providerUrl(provider);
+    if (!base) throw new HttpError(503, "Bu to'lov usuli hali ulanmagan (shartnoma jarayonida).");
+    const key = `checkout|${user.id}`;
+    if (tooMany(proLimit, key, 10, 3600000)) throw new HttpError(429, "Juda ko'p urinish. Keyinroq qayta urinib ko'ring.");
+    hit(proLimit, key, 3600000);
+    const orderId = crypto.randomBytes(12).toString('hex');
+    db.prepare('INSERT INTO pro_orders (id, user_id, plan, provider, amount, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(orderId, user.id, plan, provider, PRO_PLANS[plan].amount, Date.now());
+    const target = new URL(base);
+    target.searchParams.set('order_id', orderId);
+    target.searchParams.set('plan', plan);
+    target.searchParams.set('amount', String(PRO_PLANS[plan].amount));
+    return send(res, 200, { url: target.toString(), orderId });
+  }
+
+  if (pathname === '/api/pro/demo' && method === 'POST') {
+    // Faqat DEMO_PAYMENTS=1 bo'lganda mavjud; aks holda endpoint yo'qdek javob beradi.
+    if (!demoPaymentsOn()) throw new HttpError(404, 'Topilmadi.');
+    const user = requireUser(req);
+    const ipKey = `demo|${ip}`;
+    const userKey = `demo|u${user.id}`;
+    if (tooMany(proLimit, ipKey, 5, 3600000) || tooMany(proLimit, userKey, 5, 3600000)) {
+      throw new HttpError(429, "Juda ko'p urinish. Keyinroq qayta urinib ko'ring.");
+    }
+    hit(proLimit, ipKey, 3600000);
+    hit(proLimit, userKey, 3600000);
+    // Atomik: bir foydalanuvchi uchun bir marta.
+    const r = db.prepare('UPDATE users SET pro_demo_used = 1 WHERE id = ? AND pro_demo_used = 0').run(user.id);
+    if (!r.changes) throw new HttpError(409, 'Sinov Pro bu hisob uchun allaqachon ishlatilgan.');
+    extendPro(user.id, DEMO_PRO_DAYS);
+    return send(res, 200, { ok: true, days: DEMO_PRO_DAYS, user: userPayload(q.userById.get(user.id)) });
+  }
+
+  // ----- Referal: do'st hisob ochsa, ikkala tomonga bonus Pro kunlari -----
+
+  if (pathname === '/api/referral' && method === 'GET') {
+    const user = requireUser(req);
+    const cfg = referralCfg();
+    const code = ensureRefCode(user.id);
+    const since = Date.now() - 30 * DAY_MS;
+    const count = (sql, ...p) => Number(db.prepare(sql).get(...p)?.n || 0);
+    return send(res, 200, {
+      code,
+      bonusDays: cfg.bonusDays,
+      invited: count('SELECT COUNT(*) AS n FROM referrals WHERE referrer_id = ?', user.id),
+      rewardedThisMonth: count('SELECT COUNT(*) AS n FROM referrals WHERE referrer_id = ? AND rewarded = 1 AND created_at > ?', user.id, since),
+      monthlyMax: cfg.monthlyMax,
+      joinedViaInvite: count('SELECT COUNT(*) AS n FROM referrals WHERE referee_id = ?', user.id) > 0,
+    });
+  }
+
+  if (pathname === '/api/referral/claim' && method === 'POST') {
+    const user = requireUser(req);
+    const cfg = referralCfg();
+    // Kodni taxmin qilib topishga urinishlar uchun umumiy chegara (muvaffaqiyatsizlar ham sanaladi).
+    if (tooMany(referralTries, ip, 20, 3600000)) throw new HttpError(429, "Juda ko'p urinish. Keyinroq qayta urinib ko'ring.");
+    hit(referralTries, ip, 3600000);
+    const body = await readJSON(req, SMALL_BODY);
+    const code = normCode(body?.code || '');
+    if (code.length !== 8) throw new HttpError(400, "Taklif kodi noto'g'ri.");
+    if (Date.now() - Number(user.created_at) > cfg.newAccountHours * 3600000) {
+      throw new HttpError(403, "Taklif bonusi faqat yangi ochilgan hisob uchun.");
+    }
+    if (db.prepare('SELECT 1 AS x FROM referrals WHERE referee_id = ?').get(user.id)) {
+      throw new HttpError(409, 'Bu hisob taklif bonusini allaqachon olgan.');
+    }
+    const referrer = db.prepare('SELECT id FROM users WHERE ref_code = ?').get(code);
+    if (!referrer) throw new HttpError(404, 'Taklif kodi topilmadi.');
+    if (referrer.id === user.id) throw new HttpError(400, "O'z taklif kodingizdan foydalana olmaysiz.");
+    // Ikki hisob bir-birini taklif qilib bonus yig'masligi uchun.
+    if (db.prepare('SELECT 1 AS x FROM referrals WHERE referrer_id = ? AND referee_id = ?').get(user.id, referrer.id)) {
+      throw new HttpError(409, 'Bu taklif kodidan foydalanib bo\'lmaydi.');
+    }
+    const ipHash = sha(`ref|${ip}`).slice(0, 32);
+    const dayAgo = Date.now() - DAY_MS;
+    const ipCount = Number(db.prepare('SELECT COUNT(*) AS n FROM referrals WHERE ip_hash = ? AND created_at > ?').get(ipHash, dayAgo)?.n || 0);
+    if (tooMany(referralIp, ip, cfg.ipDaily, DAY_MS) || ipCount >= cfg.ipDaily) {
+      throw new HttpError(429, "Bu tarmoqdan bugun juda ko'p taklif bonusi olingan. Ertaga urinib ko'ring.");
+    }
+    let rewardedReferrer = false;
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      const monthCount = Number(db.prepare('SELECT COUNT(*) AS n FROM referrals WHERE referrer_id = ? AND rewarded = 1 AND created_at > ?').get(referrer.id, Date.now() - 30 * DAY_MS)?.n || 0);
+      rewardedReferrer = monthCount < cfg.monthlyMax;
+      db.prepare('INSERT INTO referrals (referrer_id, referee_id, ip_hash, rewarded, created_at) VALUES (?, ?, ?, ?, ?)')
+        .run(referrer.id, user.id, ipHash, rewardedReferrer ? 1 : 0, Date.now());
+      extendPro(user.id, cfg.bonusDays);
+      if (rewardedReferrer) extendPro(referrer.id, cfg.bonusDays);
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      if (e?.code === 'ERR_SQLITE_CONSTRAINT' || /UNIQUE constraint/i.test(e?.message || '')) {
+        throw new HttpError(409, 'Bu hisob taklif bonusini allaqachon olgan.');
+      }
+      throw e;
+    }
+    hit(referralIp, ip, DAY_MS);
+    // Taklif qilgan odamning shaxsiy ma'lumoti qaytarilmaydi.
+    return send(res, 200, { ok: true, days: cfg.bonusDays, user: userPayload(q.userById.get(user.id)) });
+  }
+
   if (pathname === '/api/telegram/status' && method === 'GET') {
     const user = requireUser(req);
     const linked = db.prepare('SELECT 1 AS x FROM telegram_chats WHERE user_id = ?').get(user.id) !== undefined;
@@ -1106,6 +1340,8 @@ async function api(req, res, pathname, url) {
       isAdmin: Number(u.is_admin) === 1 || adminNameSet().has(String(u.username || '').toLowerCase()),
       hasPassword: u.has_password !== 0,
       hasRecovery: Boolean(u.has_recovery),
+      isPro: proActive(u.pro_until),
+      proUntil: u.pro_until || null,
       revision: u.revision,
       txCount: u.tx_count,
       cardCount: u.card_count,
@@ -1131,6 +1367,23 @@ async function api(req, res, pathname, url) {
       throw new HttpError(400, "O'zingizdan admin huquqini ololmaysiz.");
     }
     q.setAdminRole.run(body.isAdmin ? 1 : 0, target.id);
+    return send(res, 200, { ok: true, user: userPayload(q.userById.get(target.id)) });
+  }
+
+  if (pathname === '/api/admin/users/pro' && method === 'POST') {
+    const admin = requireAdmin(req);
+    const body = await readJSON(req);
+    const action = oneOf(body?.action, ['grant', 'revoke'], '');
+    if (!action) throw new HttpError(400, "Amalni tanlang: berish yoki olish.");
+    const target = q.userById.get(int(body.userId));
+    if (!target) throw new HttpError(404, 'Foydalanuvchi topilmadi.');
+    if (action === 'grant') {
+      const days = Math.min(3650, Math.max(1, int(body.days) || 30));
+      extendPro(target.id, days);
+    } else {
+      revokePro(target.id);
+    }
+    console.log(`Admin ${admin.id}: foydalanuvchi ${target.id} uchun Pro ${action}`);
     return send(res, 200, { ok: true, user: userPayload(q.userById.get(target.id)) });
   }
 
@@ -1408,11 +1661,11 @@ async function api(req, res, pathname, url) {
     const partnerId = str(body?.partnerId || '', 64).trim();
     const partner = PARTNERS[partnerId];
     if (!partner) throw new HttpError(404, 'Hamkor topilmadi.');
-    const user = currentUser(req);
+    // Faqat hamkor ID, manba va vaqt yoziladi: foydalanuvchi shaxsi saqlanmaydi.
     const source = str(body?.source || 'assistant', 32).trim() || 'assistant';
     db.prepare('INSERT INTO partner_clicks (partner_id, user_id, source, created_at) VALUES (?, ?, ?, ?)').run(
       partnerId,
-      user ? user.id : null,
+      null,
       source,
       Date.now(),
     );

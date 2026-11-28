@@ -66,8 +66,8 @@ export default function Help() {
   const tooShort = message.trim().length < 10;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster">Yordam va shikoyat</h1>
+    <div className="mx-auto max-w-3xl space-y-4 xl:grid xl:max-w-none xl:grid-cols-2 xl:items-start xl:gap-4 xl:space-y-0">
+      <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-plaster xl:col-span-full">Yordam va shikoyat</h1>
 
       <Card>
         <CardTitle icon={LifeBuoy}>Ko'p uchraydigan savollar</CardTitle>
@@ -78,7 +78,7 @@ export default function Help() {
                 {q}
                 <ChevronDown className="size-4 shrink-0 text-ochre transition group-open:rotate-180" />
               </summary>
-              <p className="mt-2 text-sm text-plaster/70">{a}</p>
+              <p className="measure mt-2 text-sm text-plaster/70">{a}</p>
             </details>
           ))}
         </div>

@@ -49,6 +49,7 @@ html {
   text-size-adjust: 100%;
   -webkit-text-size-adjust: 100%;
   overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
 }
 body {
@@ -58,10 +59,9 @@ body {
   color: #f4f1ea;
   user-select: none;
   -webkit-user-select: none;
-  overscroll-behavior-y: contain;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
 }
 button, a, nav, header, footer, svg, img {
@@ -174,3 +174,16 @@ html.demo body::-webkit-scrollbar {
 .formula-term { position: relative; display: inline-block; animation: term-in .32s cubic-bezier(.16,1,.3,1) both; }
 .formula-term::after { content: ''; position: absolute; left: 0; right: 0; bottom: -3px; height: 1px; background: #C9962B; transform-origin: left; animation: term-rule .3s cubic-bezier(.16,1,.3,1) both; animation-delay: inherit; }
 html.lite .formula-term, html.lite .formula-term::after { animation: none; }
+
+/* Ilova karkasi: keng ekranda kontent maydoni kengayadi, telefonda hozirgidek qoladi. */
+.app-container {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 64rem;
+}
+@media (min-width: 1280px) { .app-container { max-width: 82rem; } }
+@media (min-width: 1536px) { .app-container { max-width: 94rem; } }
+@media (min-width: 1800px) { .app-container { max-width: 104rem; } }
+
+/* Uzun matnli bloklar: keng ekranda ham qator ~72 belgidan oshmaydi. */
+.measure { max-width: 72ch; }

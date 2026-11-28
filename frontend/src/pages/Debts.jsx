@@ -265,8 +265,10 @@ export default function Debts() {
         </div>
       </div>
 
-      <DebtPlanCard debts={open} />
-      <RecurringCard />
+      <div className="grid gap-4 xl:grid-cols-2 xl:items-start">
+        <DebtPlanCard debts={open} />
+        <RecurringCard />
+      </div>
 
       <p className="app-glass flex gap-2 rounded-xl border border-turq/25 px-3 py-2.5 text-sm text-plaster/80">
         <Info className="mt-0.5 size-4 shrink-0 text-turq-soft" aria-hidden />
@@ -288,7 +290,7 @@ export default function Debts() {
           <Empty icon={HandCoins} title={filter === 'open' ? "Ochiq qarz yo'q" : "Yozuv yo'q"} text="Kimga qarz berganingiz yoki kimdan olganingizni yozing — qoldiq va muddatni kuzatamiz." />
         </Card>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3 xl:items-start">
           {list.map((d) => (
             <DebtCard key={d.id} debt={d} onEdit={setForm} />
           ))}

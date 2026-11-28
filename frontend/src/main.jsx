@@ -4,9 +4,13 @@ import './index.css'
 import './lib/perf.js'
 import App from './App.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import { captureReferral } from './lib/referral.js'
 
 if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('demo')) {
   document.documentElement.classList.add('demo');
+} else {
+  // ?ref=KOD: kod brauzerda saqlanadi, do'st hisob ochganda store.jsx uni serverga yuboradi.
+  captureReferral();
 }
 
 if ('serviceWorker' in navigator && import.meta.env.PROD && import.meta.env.MODE !== 'single') {
