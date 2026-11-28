@@ -101,7 +101,7 @@ export default function Safety() {
           </span>
         </CardTitle>
         <p className="mb-3 text-sm text-plaster/70">
-          Shubhali SMS, Telegram xabari, havola matnini qo'ying yoki xabar skrinshotini yuklang (Ctrl+V bilan ham qo'yish mumkin). Mizan AI firibgarlik belgilarini darhol tekshirib beradi.
+          Shubhali SMS, Telegram xabari, havola matnini yozing yoki xabar skrinshotini yuklang. Mizan AI firibgarlik belgilarini darhol tekshirib beradi.
         </p>
 
         <textarea
@@ -113,7 +113,7 @@ export default function Safety() {
             setText(e.target.value);
             setResult(null);
           }}
-          placeholder="Xabar matnini shu yerga qo'ying yoki skrinshotni Ctrl+V qiling..."
+          placeholder="Shubhali xabar matnini shu yerga yozing yoki nusxasini qo'ying..."
         />
 
         <div className="mt-3 flex flex-wrap items-center gap-3">
