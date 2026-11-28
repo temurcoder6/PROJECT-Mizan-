@@ -9,11 +9,50 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "24"
+      # Saytning tashqi manzili. Birinchi joylashdan keyin Render bergan manzilni
+      # (masalan https://mizan-app.onrender.com) shu yerga yozing: Google va GitHub
+      # orqali kirish aynan shu manzilga qaytadi.
+      - key: PUBLIC_URL
+        sync: false
+      # Admin paneli uchun parol va admin foydalanuvchi nomlari.
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_USERNAMES
+        sync: false
+      # Google va GitHub orqali kirish (ixtiyoriy; sozlanmasa tugmalar o'chiq turadi).
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      # Yordamchi (ixtiyoriy).
       - key: GEMINI_API_KEY
         sync: false
+      # Telegram bot (ixtiyoriy).
       - key: BOT_TOKEN
         sync: false
       - key: BOT_USERNAME
         sync: false
-      - key: ADMIN_USERNAMES
+      # Bulutli zaxira (ixtiyoriy).
+      - key: SUPABASE_URL
         sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+
+# Ma'lumotlar bazasi haqida ogohlantirish
+# ---------------------------------------
+# Bepul (free) tarifda Render diskni saqlamaydi: har bir yangi joylashda yoki
+# server qayta yoqilganda `backend/data/pulim.db` fayli nolga qaytadi, ya'ni
+# ro'yxatdan o'tgan hisoblar va kiritilgan yozuvlar yo'qoladi. Namoyish uchun bu
+# yetarli, lekin haqiqiy foydalanuvchilar uchun emas.
+#
+# Bazani saqlab qolish uchun tarifni starter ga ko'taring va disk qo'shing:
+#
+#    plan: starter
+#    disk:
+#      name: mizan-data
+#      mountPath: /opt/render/project/src/backend/data
+#      sizeGB: 1
