@@ -79,6 +79,19 @@ async function callGemini({ model, key, systemPrompt, contents, timeoutMs = 1800
   return text;
 }
 
+// Reklama faqat foydalanuvchida haqiqiy pul muammosi bo'lganda chiqadi (balans manfiy,
+// kunlik limitdan oshgan yoki 3 kun ichida muddati keladigan qarz bor).
+export function hasMoneyStress(ctx = {}) {
+  const bal = Number(ctx.balance);
+  if (Number.isFinite(bal) && bal < 0) return true;
+  if (Number(ctx.dailyLimit) > 0 && Number(ctx.todaySpent) > Number(ctx.dailyLimit)) return true;
+  const today = new Date().toISOString().slice(0, 10);
+  const soon = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+  return (Array.isArray(ctx.debts) ? ctx.debts : []).some(
+    (d) => Number(d.remaining) > 0 && d.direction === 'borrowed' && d.dueDate && d.dueDate >= today && d.dueDate <= soon,
+  );
+}
+
 export async function askJarvisAI({ prompt, context = {}, history = [], apiKey }) {
   const key = apiKey || process.env.GEMINI_API_KEY;
   if (!key) {
@@ -123,7 +136,7 @@ ${liveSearch ? `=== SAVOLGA OID JONLI QIDIRUV VA NARXLAR ===\n${liveSearch}\n` :
 
 === AQLLI VA BEZOVTA QILMAYDIGAN REKLAMA (HAMKORLIK) QOIDASI ===
 - HAR BIR JAVOBGA REKLAMA TIQISHTIRMA! Agar foydalanuvchi sog'liq, o'qish, yo'qolgan narsa, salomlashish yoki oddiy maslahat so'rayotgan bo'lsa, PARTNER_JSON UMUMAN YOZMA!
-- Faqat QULAY FURSATDA — ya'ni foydalanuvchi aniq bir mahsulot (telefon/texnika) sotib olmoqchi, bank kartasi ochmoqchi, omonat/kredit/muddatli to'lov qidirayotgan yoki pul yig'ayotgan bo'lsa, shunda uning vaziyatiga ENG MOS 1–2 ta hamkorni PARTNER_JSON orqali tavsiya qil.
+- AVVAL raqamli hisobni ayt (kuniga, haftasiga, oyiga). Reklama FAQAT ikki shart bilan: (1) foydalanuvchi qarz, nasiya, kredit yoki muddatli to'lov so'raganda yoki pulim yetmayapti deganda, VA (2) kontekstda haqiqiy pul muammosi bo'lsa (balans manfiy, kunlik limitdan oshgan, 3 kun ichida qarz muddati). Shunda ENG MOS 1–2 ta hamkorni PARTNER_JSON orqali tavsiya qil. Bu shartlar bo'lmasa PARTNER_JSON yozma.
 - Mavjud hamkor IDlari:
 ${buildPartnerCatalogText()}
 
@@ -195,8 +208,11 @@ Foydalanuvchi xabari:
 
     // Reklamani faqat AI o'rinli deb bilgan qulay fursatda yoki aniq xarid/bank kontekstida chiqaramiz
     const isCommerceQuery = /(olmoqchi|sotib|narx|bozor|do'kon|dukon|nasiya|rassrochka|muddatli|karta|omonat|kredit|mikroqarz|bank|iphone|samsung|noutbuk|telefon|televizor|muzlatgich|konditsioner|keshbek|komissiya)/i.test(prompt);
-    let partners = resolvePartners(pPartner.value).slice(0, 2);
-    if (!partners.length && isCommerceQuery) {
+    // Pul muammosi bo'lmasa (yoki qarz/nasiya so'ralmagan bo'lsa) reklama umuman chiqmaydi.
+    const moneyAsk = /(yetmay|yetmaydi|\bkam\b|kamlik|qarz|nasiya|kredit|muddatli|bo'lib\s*to'l|rassrochka|omonat|mikroqarz)/i.test(prompt);
+    const allowAds = hasMoneyStress(context) || moneyAsk;
+    let partners = allowAds ? resolvePartners(pPartner.value).slice(0, 2) : [];
+    if (allowAds && !partners.length && isCommerceQuery) {
       partners = inferPartnersFromReply(text).slice(0, 2);
     }
 

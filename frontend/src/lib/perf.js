@@ -5,10 +5,27 @@ export function detectLite() {
   const q = new URLSearchParams(location.search);
   if (q.get('lite') === '0') return false;
   if (q.get('lite') === '1') return true;
+  try {
+    const saved = localStorage.getItem('mizan_lite');
+    if (saved === '1') return true;
+    if (saved === '0') return false;
+  } catch {
+    /* saqlanmagan bo'lsa avtomatik aniqlash */
+  }
   const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const cores = navigator.hardwareConcurrency || 4;
   const mem = navigator.deviceMemory || 4;
   return Boolean(reduce || cores <= 2 || mem <= 2);
+}
+
+// Sozlamadan o'zgartirish: tanlovni saqlaydi va sahifani qayta yuklaydi.
+export function setLiteOverride(on) {
+  try {
+    localStorage.setItem('mizan_lite', on ? '1' : '0');
+  } catch {
+    /* ignore */
+  }
+  location.reload();
 }
 
 export const LITE = detectLite();

@@ -300,6 +300,19 @@ function loadCatalog() {
   return catalogPromise;
 }
 
+// Reklama faqat pul muammosi bo'lganda (yoki qarz/nasiya so'ralganda) chiqadi.
+const MONEY_ASK_RX = /(yetmay|yetmaydi|\bkam\b|kamlik|qarz|nasiya|kredit|muddatli|bo'lib\s*to'l|rassrochka|omonat|mikroqarz)/i;
+function moneyTight(store) {
+  const today = todayISO();
+  const plan = dailyPlan({ profile: store.profile, transactions: store.transactions, debts: store.debts, goals: store.goals, today });
+  if (plan.status === 'deficit') return true;
+  const soon = addDays(today, 3);
+  return (store.debts || []).some((d) => debtRemaining(d) > 0 && d.direction === 'borrowed' && d.dueDate && d.dueDate >= today && d.dueDate <= soon);
+}
+function adsAllowed(store, input) {
+  return moneyTight(store) || MONEY_ASK_RX.test(input);
+}
+
 // Mahalliy rejimda so'zlar bo'yicha hamkor kartalari; ketma-ket ikki javobga reklama qo'yilmaydi.
 async function localAds(input, chat) {
   const lastAssistant = [...chat].reverse().find((m) => m.role === 'assistant');
@@ -446,7 +459,7 @@ export default function Assistant({ go }) {
           // Reklamani ketma-ket har javobda chiqarmaslik (qulay fursat nazorati)
           const lastAssistant = [...chat].reverse().find((m) => m.role === 'assistant');
           const hadRecentAd = Boolean(lastAssistant?.partners?.length);
-          const aiPartners = res.partners?.length ? res.partners : await localAds(input, chat);
+          const aiPartners = res.partners?.length ? res.partners : adsAllowed(store, input) ? await localAds(input, chat) : [];
           const safePartners = hadRecentAd ? [] : aiPartners;
 
           const drafts =
@@ -503,7 +516,7 @@ export default function Assistant({ go }) {
     // Lokal qoidalar asosidagi tezkor yordamchi (xarajat/daromad kiritish va oflayn rejim)
     const data = { transactions: store.transactions, debts: store.debts, goals: store.goals, profile: store.profile };
     const { reply, pending: next } = respond(input, { data, today: todayISO(), pending });
-    if (!reply.drafts?.length && !next) {
+    if (!reply.drafts?.length && !next && adsAllowed(store, input)) {
       const ads = await localAds(input, chat);
       if (ads.length) reply.partners = ads;
     }

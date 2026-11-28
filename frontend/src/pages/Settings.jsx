@@ -4,6 +4,7 @@ import { AccountCard, TelegramCard } from '../components/Account';
 import ProModal from '../components/ProModal';
 import ReferralBlock from '../components/ReferralBlock';
 import { Button, Card, CardTitle, Field, Toggle, inputCls } from '../components/ui';
+import { setLiteOverride } from '../lib/perf';
 import { DEPENDS_ON_DEVICE, NEXT_STAGE, WORKS_NOW } from '../lib/status';
 import { VOICE_LANGS, voiceInputSupported, voiceOutputSupported } from '../lib/voice';
 import { exportCSV, exportJSON, useStore } from '../store';
@@ -65,6 +66,13 @@ export default function Settings({ go }) {
               <p className="text-xs text-plaster/55">O'chirsangiz, kirish sahifasi va harakatlar sokin bo'ladi (kuchsiz telefonlar uchun).</p>
             </div>
             <Toggle label="Animatsiyalar" checked={settings.animations} onChange={(v) => actions.setSetting('animations', v)} />
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="font-semibold text-plaster">Kam quvvatli rejim</p>
+              <p className="text-xs text-plaster/55">Sekin telefon yoki noutbukda 3D va harakatlarni o'chiradi, sahifa silliq ishlaydi. Yoqilganda sahifa qayta yuklanadi.</p>
+            </div>
+            <Toggle label="Kam quvvatli rejim" checked={document.documentElement.classList.contains('lite')} onChange={(v) => setLiteOverride(v)} />
           </div>
           <Field label="Qarz eslatmasi: muddatdan necha kun oldin">
             <select className={inputCls} value={settings.remindDays} onChange={(e) => actions.setSetting('remindDays', Number(e.target.value))}>
